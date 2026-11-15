@@ -18,3 +18,9 @@ data/
 
 # Secrets
 .env
+
+# Research downloads and pipeline outputs (local only, regenerable)
+research/source_pipeline/artifacts/
+research/source_documents/runs/
+*.pdf
+research/evidence_v2/local_inputs.json

@@ -1,0 +1,381 @@
+evidence_id,ticker,issuer,document_title,fiscal_year,fiscal_year_end,language,pdf_page,printed_page,section,channel_candidate,direction,excerpt,interpretation,document_file,sha256,source_url,url_verified,quote_verified,evidence_kind,stock_return_direction,disclosed_fact,limitations,source_context_before,source_context_after,quote_start,quote_end,source_page_sha256,table_context,source_provenance_status,visual_review_status
+RBC-2025-01,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,79,77,MD&A — Credit risk exposure — Table 41,oil_gas_credit_exposure,unknown,"Oil and gas 6,377 8,671 1,520 – 2,312 18,880 6,365 8,688 2,002 – 2,052 19,107",Exposition par crédit et contreparties du secteur.,RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,"EAD oil and gas totale : 18 880 M CAD en 2025, contre 19 107 en 2024.",EAD ≠ prêts seuls ≠ perte attendue ; pétrole et gaz combinés ; aucune cause pétrolière des pertes établie.,"Credit risk exposure by portfolio, sector and geography
+The following table presents our credit risk exposures under the Basel regulatory defined classes and reflects EAD. The
+classification of our sectors aligns with our view of credit risk by industry.
+Credit risk exposure by portfolio, sector and geography Table 41
+As at
+October 31
+2025
+October 31
+2024
+Counterparty credit risk (5) Counterparty credit risk (5)
+Credit risk (1), (2) Credit risk (1), (2) Off-balance sheet
+Off-balance sheet
+On-balance
+amount (3) Repo-style
+Total
+On-balance
+amount (3) Repo-style
+sheet amount
+transactions
+(Millions of Canadian dollars) Undrawn Other (4) Derivatives Undrawn Other (4) Derivatives
+exposure
+sheet amount
+transactions
+Total
+exposure
+Retail
+Residential secured (6) $ 514,623 $ 132,502 $ – $ – $ – $ 647,125 $ 498,014 $ 124,743 $ – $ – $ – $ 622,757
+Qualifying revolving (7) 36,407 104,369 – – – 140,776 33,571 95,776 – – – 129,347
+Other retail 57,003 22,522 164 – – 79,689 53,257 21,530 162 – – 74,949
+Total retail $ 608,033 $ 259,393 $ 164 $ – $ – $ 867,590 $ 584,842 $ 242,049 $ 162 $ – $ – $ 827,053
+Wholesale
+Agriculture $ 14,181 $ 3,344 $ 86 $ – $ 263 $ 17,874 $ 13,257 $ 3,241 $ 77 $ – $ 210 $ 16,785
+Automotive 14,188 9,602 677 – 1,053 25,520 14,424 9,605 639 – 1,454 26,122
+Banking 96,268 3,674 1,797 97,585 32,577 231,901 87,601 3,187 2,967 91,791 32,949 218,495
+Consumer discretionary 28,435 11,544 893 – 1,779 42,651 24,516 11,719 918 – 1,242 38,395
+Consumer staples 11,355 10,393 957 – 2,299 25,004 10,094 8,631 795 – 1,907 21,427
+","
+Financial services 62,170 29,087 4,508 78,257 33,739 207,761 51,313 23,405 4,103 73,020 29,958 181,799
+Financing products 3,938 1,180 2,134 1,339 1,713 10,304 3,945 1,235 2,388 604 1,684 9,856
+Forest products 2,499 1,524 373 – 76 4,472 2,225 1,589 387 – 84 4,285
+Governments 330,943 8,762 2,251 18,150 10,031 370,137 283,893 7,891 2,149 13,334 7,933 315,200
+Industrial products 15,966 12,871 1,121 – 922 30,880 15,526 12,463 940 – 1,052 29,981
+Information technology 6,308 9,360 230 – 845 16,743 6,353 7,892 251 42 976 15,514
+Investments 32,124 7,769 794 19 344 41,050 30,015 7,151 786 103 99 38,154
+Mining and metals 2,795 4,004 1,848 – 520 9,167 2,821 3,950 1,684 – 427 8,882
+Public works and
+infrastructure 2,786 2,499 1,513 – 341 7,139 2,871 2,329 1,383 – 300 6,883
+Real estate and related 123,801 24,890 2,289 169 1,478 152,627 115,332 26,197 2,209 83 1,115 144,936
+Other services 37,857 17,367 3,293 – 1,621 60,138 35,980 15,870 3,461 – 1,236 56,547
+Telecommunication and
+media 9,123 6,837 151 – 2,674 18,785 7,814 7,210 159 – 2,874 18,057
+Transportation 9,594 7,608 2,042 – 2,450 21,694 10,517 7,235 1,533 – 2,470 21,755
+Utilities 14,281 23,822 6,302 – 5,845 50,250 14,652 21,110 5,993 – 5,451 47,206
+Other sectors 7,632 1,526 1,467 276 31,090 41,991 11,119 2,578 1,887 227 24,520 40,331
+Total wholesale $ 832,621 $ 206,334 $ 36,246 $ 195,795 $ 133,972 $ 1,404,968 $ 750,633 $ 193,176 $ 36,711 $ 179,204 $ 119,993 $ 1,279,717
+Total exposure (1) $ 1,440,654 $ 465,727 $ 36,410 $ 195,795 $ 133,972 $ 2,272,558 $ 1,335,475 $ 435,225 $ 36,873 $ 179,204 $ 119,993 $ 2,106,770
+By geography (8)
+Canada U.S. Europe $ 883,575 $ 335,487 $ 15,107 $ 76,722 $ 61,861 $ 1,372,752 $ 845,343 $ 320,434 $ 15,533 $ 72,852 $ 51,427 $ 1,305,589
+421,280 96,502 16,939 60,424 25,020 620,165 360,803 84,633 15,277 56,415 22,201 539,329
+58,568 24,150 2,141 40,398 31,158 156,415 55,936 21,879 3,432 31,987 31,555 144,789
+Other International 77,231 9,588 2,223 18,251 15,933 123,226 73,393 8,279 2,631 17,950 14,810 117,063
+Total exposure (1) $ 1,440,654 $ 465,727 $ 36,410 $ 195,795 $ 133,972 $ 2,272,558 $ 1,335,475 $ 435,225 $ 36,873 $ 179,204 $ 119,993 $ 2,106,770
+(1) (2) (3) (4) (5) (6) (7) (8) Excludes securitization, banking book equities and other assets not subject to the standardized or IRB approach.
+EAD for standardized exposures are reported net of allowance for impaired assets and EAD for IRB exposures are reported gross of all ACL and partial write-offs as per
+regulatory definitions.
+EAD for undrawn credit commitments and other off-balance sheet amounts are reported after the application of credit conversion factors.
+Includes other off-balance sheet exposures such as letters of credit and guarantees.
+Counterparty credit risk EAD reflects exposure amounts after netting. Collateral is included in EAD for repo-style transactions to the extent allowed by regulatory
+guidelines. Exchange traded derivatives are included in Other sectors.
+Includes residential mortgages and home equity lines of credit.
+Includes credit cards, unsecured lines of credit and overdraft protection products.
+Geographic profile is based on country of residence of the borrower.
+2025 vs. 2024
+Total credit risk exposure increased $166 billion or 8% from last year, primarily due to an increase in securities, higher
+counterparty credit risk exposures and volume growth in loans and undrawn commitments.
+Management’s Discussion and Analysis Royal Bank of Canada: Annual Report 2025 77",1542,1619,43648a2acb42d73258bee3db372b2527ce8376793b2fdd0653bbe27fd2d4be99,"{""title"": ""Table 41 — Credit risk exposure by portfolio, sector and geography"", ""units"": ""Millions CAD"", ""columns"": ""2025 puis 2024 : on-balance, undrawn, other, repo-style, derivatives, total"", ""scope"": ""Wholesale / Oil and gas ; au 31 octobre"", ""footnote_review"": ""Notes 1–5 : exclusions réglementaires ; net/brut selon approche ; hors bilan après conversion ; other inclut lettres de crédit/garanties ; dérivés après compensation. Note 8 : résidence emprunteur.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+RBC-2025-02,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,130,128,MD&A — Loans and acceptances — Table 72,oil_gas_lending,unknown,"Oil and gas 6,352 6,362",Financement du secteur directement documenté.,RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,Prêts et acceptations oil and gas : 6 352 M CAD en 2025 et 6 362 en 2024.,Ne pas additionner ces prêts à l’EAD ; solde ≠ financement annuel ni pertes.,"Loans and acceptances by portfolio and sector As at October 31 (Millions of Canadian dollars) 2025 Table 72
+2024
+Residential mortgages $ 493,413 $ 477,544
+Personal 115,345 108,338
+Credit cards 26,789 25,565
+Small business 16,797 15,531
+Retail $ 652,344 $ 626,978
+Agriculture 13,958 13,065
+Automotive 14,155 14,386
+Banking 9,397 8,829
+Consumer discretionary 27,132 23,670
+Consumer staples 11,193 9,885
+","
+Financial services 47,894 40,997
+Financing products 27,826 18,161
+Forest products 2,452 2,200
+Governments 5,716 5,816
+Industrial products 15,743 15,347
+Information technology 5,875 5,788
+Investments 23,842 21,454
+Mining and metals 2,715 2,757
+Public works and infrastructure 3,246 3,325
+Real estate and related 111,132 102,885
+Other services 34,096 31,758
+Telecommunication and media 9,065 7,745
+Transportation 10,440 10,450
+Utilities 14,219 14,484
+Other sectors 742 1,110
+Wholesale $ 397,190 $ 360,474
+Total loans and acceptances $ 1,049,534 $ 987,452
+Total allowance for credit losses (7,093) (6,037)
+Total loans and acceptances, net of allowance for credit losses $ 1,042,441 $ 981,415
+128 Royal Bank of Canada: Annual Report 2025 Management’s Discussion and Analysis",401,424,0a70f72097349e592ab234bc54f98720e6f580740eb0a975784dbcb74f171b64,"{""title"": ""Table 72 — Loans and acceptances by portfolio and sector"", ""units"": ""Millions CAD"", ""columns"": ""2025, 2024"", ""scope"": ""Au 31 octobre ; Oil and gas wholesale"", ""footnote_review"": ""Aucune note spécifique ; allocation totale déduite séparément au bas du tableau.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+RBC-2025-03,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,131,129,MD&A — Gross impaired loans — Table 73,oil_gas_impaired_credit,unknown,Oil and gas 28 9,"Risque de crédit observable, causalité pétrolière non établie.",RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,"Prêts bruts dépréciés oil and gas : 28 M CAD en 2025 et 9 en 2024, section globale.",Première occurrence globale ; la ligne identique Canada n’est pas une exposition supplémentaire.,"Gross impaired loans by portfolio and geography As at October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 73
+2024
+Residential mortgages $ 1,681 $ 1,233
+Personal 437 408
+Small business 411 321
+Retail 2,529 1,962
+Agriculture $ 283 $ 127
+Automotive 157 263
+Banking 30 54
+Consumer discretionary 555 401
+Consumer staples 115 138
+","
+Financial services 213 120
+Financing products 324 228
+Forest products 82 147
+Governments 31 12
+Industrial products 271 235
+Information technology 106 74
+Investments 63 82
+Mining and metals 21 3
+Public works and infrastructure 38 11
+Real estate and related 1,759 1,404
+Other services 1,588 263
+Telecommunication and media 117 105
+Transportation 303 172
+Utilities 23 30
+Other sectors 46 27
+Wholesale (1) 6,153 3,905
+Total GIL (2) $ 8,682 $ 5,867
+Canada (3)
+Residential mortgages $ 1,435 $ 1,007
+Personal 383 354
+Small business 411 321
+Retail 2,229 1,682
+Agriculture 282 126
+Automotive 155 238
+Banking 30 54
+Consumer discretionary 423 298
+Consumer staples 42 67
+Oil and gas 28 9
+Financial services 19 24
+Financing products 193 228
+Forest products 82 147
+Governments 31 10
+Industrial products 231 137
+Information technology 53 38
+Investments 26 21
+Mining and metals 21 3
+Public works and infrastructure 32 6
+Real estate and related 1,101 750
+Other services 191 140
+Telecommunication and media 19 15
+Transportation 282 139
+Utilities 23 –
+Other sectors 1 1
+Wholesale 3,265 2,451
+Total $ 5,494 $ 4,133
+U.S. (3)
+Retail $ 172 $ 125
+Wholesale 1,096 1,165
+Total $ 1,268 $ 1,290
+Other International (3)
+Retail $ 128 $ 155
+Wholesale 1,792 289
+Total $ 1,920 $ 444
+Total GIL $ 8,682 $ 5,867
+Allowance on impaired loans (1,986) (1,516)
+Net impaired loans $ 6,696 $ 4,351
+GIL as a % of loans and acceptances Residential mortgages 0.34% 0.26%
+Personal 0.38% 0.38%
+Small business 2.45% 2.07%
+Retail 0.39% 0.31%
+Wholesale 1.55% 1.08%
+Total 0.83% 0.59%
+Allowance on impaired loans as a % of GIL 22.88% 25.85%
+(1) (2) (3) Includes $195 million of purchased or originated credit-impaired loans (October 31, 2024 – $109 million).
+Past due loans greater than 90 days not included in impaired loans were $330 million in 2025 (2024 – $267 million). For further details, refer to Note 5 of our 2025 Annual
+Consolidated Financial Statements.
+Geographic information is based on residence of borrower.
+Management’s Discussion and Analysis Royal Bank of Canada: Annual Report 2025 129",356,372,3f9421151d040fe5037a33cee21e58bc96d02e4eed5b842b4151cf9c71c6c0e3,"{""title"": ""Table 73 — Gross impaired loans by portfolio and geography"", ""units"": ""Millions CAD ; ratios dans section distincte"", ""columns"": ""2025, 2024"", ""scope"": ""Au 31 octobre ; section globale avant Canada"", ""footnote_review"": ""Note 1 : purchased/originated credit-impaired inclus ; note 2 : prêts échus >90 jours non classés impaired distingués ; note 3 : résidence emprunteur.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+RBC-2025-04,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,132,130,MD&A — Provision for credit losses — Table 74,oil_gas_credit_loss_provision,unknown,Oil and gas 6 (51),Flux de coût de crédit distinct des encours.,RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,"PCL oil and gas sur prêts dépréciés : charge de 6 M CAD en 2025 et reprise de 51 M CAD en 2024, section globale.",Ce n’est pas la PCL totale du groupe ni une estimation de toutes les pertes futures ; parenthèses = négatif/reprise.,"Provision for credit losses by portfolio and geography For the year ended October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 74
+2024
+Residential mortgages $ 141 $ 86
+Personal 821 680
+Credit cards 828 670
+Small business 171 150
+Retail 1,961 1,586
+Agriculture $ 43 $ 24
+Automotive 121 115
+Banking 4 33
+Consumer discretionary 299 97
+Consumer staples 62 59
+","
+Financial services 47 19
+Financing products 110 40
+Forest products 60 48
+Governments (7) 2
+Industrial products 74 68
+Information technology 35 21
+Investments 23 3
+Mining and metals 14 (1)
+Public works and infrastructure 8 (6)
+Real estate and related 230 403
+Other services 427 40
+Telecommunication and media 80 42
+Transportation 117 63
+Utilities 1 3
+Other sectors 19 12
+Wholesale 1,773 1,034
+Total PCL on impaired loans $ 3,734 $ 2,620
+Canada (1)
+Residential mortgages $ 152 $ 96
+Personal 805 672
+Credit cards 803 653
+Small business 171 150
+Retail 1,931 1,571
+Agriculture 41 24
+Automotive 121 114
+Banking 4 36
+Consumer discretionary 259 86
+Consumer staples 13 33
+Oil and gas 7 (4)
+Financial services 5 11
+Financing products 21 40
+Forest products 60 48
+Governments (6) 2
+Industrial products 82 61
+Information technology 17 18
+Investments 21 1
+Mining and metals 14 (1)
+Public works and infrastructure 8 (6)
+Real estate and related 177 116
+Other services 112 32
+Telecommunication and media 8 8
+Transportation 110 44
+Utilities 4 –
+Other sectors 8 –
+Wholesale 1,086 663
+Total $ 3,017 $ 2,234
+U.S. (1)
+Retail $ 52 $ 33
+Wholesale 225 366
+Total $ 277 $ 399
+Other International (1)
+Retail $ (22) $ (19)
+Wholesale 462 6
+Total $ 440 $ (13)
+Total PCL on impaired loans $ 3,734 $ 2,620
+Total PCL on performing loans 622 627
+Total PCL on other financial assets 6 (15)
+Total PCL $ 4,362 $ 3,232
+PCL on loans as a % of average net loans and acceptances 0.43% 0.35%
+PCL on impaired loans as a % of average net loans and acceptances (1) 0.37% 0.28%
+(1) 130 Geographic information is based on residence of borrower.
+Royal Bank of Canada: Annual Report 2025 Management’s Discussion and Analysis",386,404,2bc8c9df4b883bc6bb74c49f8a0d31c08a630e60a836f28292a21c990ece6d7e,"{""title"": ""Table 74 — Provision for credit losses by portfolio and geography"", ""units"": ""Millions CAD ; ratios séparés"", ""columns"": ""2025, 2024"", ""scope"": ""Exercice clos le 31 octobre ; section Total PCL on impaired loans"", ""footnote_review"": ""Note 1 : résidence emprunteur ; performing loans et other financial assets présentés séparément en bas.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+RBC-2025-05,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,133,131,MD&A — Allowance on loans — Table 75,oil_gas_credit_allowance,unknown,Oil and gas 7 1,Réserve comptable distincte du flux de provisions.,RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,"Allocation sur prêts dépréciés oil and gas au Canada : 7 M CAD en 2025, 1 en 2024.",Périmètre Canada seulement ; ce ne sont pas des write-offs ou pertes boursières.,"Allowance on loans by portfolio and geography (1) As at and for the year ended October 31 (Millions of Canadian dollars, except percentage amounts) 2025 Table 75
+2024
+Allowance against impaired loans
+Canada (2)
+Residential mortgages $ 255 $ 163
+Personal 205 185
+Small business 138 105
+Retail $ 598 $ 453
+Agriculture $ 29 $ 26
+Automotive 141 104
+Banking 18 34
+Consumer discretionary 154 54
+Consumer staples 40 40
+","
+Financial services 14 11
+Financing products 56 39
+Forest products 16 45
+Governments – 1
+Industrial products 77 57
+Information technology 15 15
+Investments 24 7
+Mining and metals 14 1
+Public works and infrastructure 12 5
+Real estate and related 172 127
+Other services 92 26
+Telecommunication and media 7 6
+Transportation 30 44
+Utilities 4 –
+Other sectors 15 –
+Wholesale $ 937 $ 643
+Total $ 1,535 $ 1,096
+U.S. (2)
+Retail $ 23 $ 19
+Wholesale 160 237
+Total $ 183 $ 256
+Other International (2)
+Retail $ 65 $ 76
+Wholesale 203 88
+Total $ 268 $ 164
+Total allowance on impaired loans $ 1,986 $ 1,516
+Allowance on performing loans
+Residential mortgages $ 480 $ 341
+Personal 1,406 1,272
+Credit cards 1,356 1,232
+Small business 212 166
+Retail $ 3,454 $ 3,011
+Wholesale $ 2,019 $ 1,825
+Total allowance on performing loans $ 5,473 $ 4,836
+Total allowance on loans $ 7,459 $ 6,352
+Key ratios
+Allowance on loans as a % of loans and acceptances Net write-offs as a % of average net loans and acceptances 0.71% 0.28% 0.64%
+0.22%
+(1) (2) Includes loans, acceptances and commitments.
+Geographic information is based on residence of borrower.
+Management’s Discussion and Analysis Royal Bank of Canada: Annual Report 2025 131",412,427,303111ce7dc0d7354df7f7975093a171be8e194a04669803dbb591e8e8f97869,"{""title"": ""Table 75 — Allowance on loans by portfolio and geography"", ""units"": ""Millions CAD ; ratios séparés"", ""columns"": ""2025, 2024"", ""scope"": ""Allowance against impaired loans / Canada ; au et pour l’exercice clos le 31 octobre"", ""footnote_review"": ""Note 1 : loans, acceptances and commitments ; note 2 : résidence emprunteur.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+RBC-2025-06,RY.TO,Royal Bank of Canada,Royal Bank of Canada Annual Report 2025,2025,2025-10-31,en,185,183,Financial Statements — Forward looking macroeconomic variables,credit_scenario_design,unknown,"Our downside scenarios include two additional and more severe downside scenarios designed for trade disruptions and the
+real estate sector. During Q2 2025, in response to U.S. international trade policy, we designed a trade disruption scenario to
+replace our energy sector scenario.",La conception du modèle de risque évolue ; ne pas présenter le scénario énergie comme encore actif.,RBC_2025_EN_a0e79381aea0.pdf,a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc,https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf,True,True,operational,unknown,RBC a remplacé son scénario sectoriel énergie par un scénario de perturbations commerciales au T2 2025.,"Choix de scénario ECL, pas beta de rendement ni mesure d’un choc pétrolier.","Key inputs and assumptions
+The measurement of expected credit losses is a complex calculation that involves a significant number of interrelated inputs
+and assumptions and the allowance is not sensitive to any one single factor. The key drivers of changes in expected credit
+losses include the following:
+• Changes in the credit quality of the borrower or instrument, primarily reflected in changes in internal risk ratings;
+• Changes in forward-looking macroeconomic conditions, specifically the macroeconomic variables to which our models
+are calibrated, which are those most closely correlated with credit losses in the relevant portfolio;
+• Changes in scenario design and the weight assigned to each scenario; and
+• Transfers between stages, which can be triggered by changes to any of the above inputs.
+To reflect relevant risk factors not captured in our modelled results, we applied expert credit judgment in determining the
+measurement of our weighted allowance for credit losses. The measurement of expected credit losses, including scenario design
+and weightings, determining significant increases in credit risk since origination and application of expert credit judgment, is
+overseen by a senior management committee that includes representation from Finance, Group Risk Management and
+Economics.
+Internal risk ratings
+Internal risk ratings are assigned according to the risk management framework outlined under the headings Wholesale credit
+risk and Retail credit risk of the Credit risk section of Management’s Discussion and Analysis. Changes in internal risk ratings are
+primarily reflected in the PD parameters, which are estimated based on our historical loss experience at the relevant risk
+segment or risk rating level, adjusted for forward-looking information.
+Scenario design and weightings
+Our estimation of expected credit losses in Stage 1 and Stage 2 considers five distinct future macroeconomic scenarios.
+Scenarios are designed to capture a wide range of possible outcomes and are weighted according to our expectation of the
+relative likelihood of the range of outcomes that each scenario represents at the reporting date. We weight each scenario to
+take into account historical frequency, current trends, and forward-looking conditions which will change over time. Scenario
+weightings take into consideration the extent to which the base case scenario includes both favourable and unfavourable
+economic expectations, and upside and downside risks to the base scenario materializing in the future. The base case scenario
+is based on forecasts of the expected rate, value, or yield for each relevant macroeconomic variable. The upside and downside
+scenarios are set by adjusting our base projections to construct reasonably possible scenarios and weightings that are more
+optimistic and pessimistic, respectively, than the base case. Two additional downside scenarios capture the non-linear nature of
+potential credit losses across our portfolios. When the economy is at or near equilibrium, the severity of the downside scenario
+generally reflects an adverse event typical for a business cycle and both the non-linear downside scenarios reflect an outcome
+that is materially more adverse than the downside scenario.
+The impact of each of our five scenarios varies across our portfolios given the portfolios have different sensitivities to
+movements in each macroeconomic variable.
+The impact of weighting these multiple scenarios increased our ACL on performing loans, relative to our base scenario, by
+$1,268 million as at October 31, 2025 (October 31, 2024 – $945 million).
+Forward looking macroeconomic variables
+The PD, LGD and EAD inputs used to estimate Stage 1 and Stage 2 credit loss allowances are modelled based on the
+macroeconomic variables (or changes in macroeconomic variables) that are most closely correlated with credit losses in the
+relevant portfolio. Each macroeconomic scenario used in our expected credit loss calculation includes a projection of all
+relevant macroeconomic variables used in our models for a five-year horizon, reverting to long-run averages generally within
+the 2 to 5 year period. Depending on their usage in the models, macroeconomic variables are projected at a country, province/
+state or more granular level. These include one or more of the variables described below, which differ by portfolio and region.
+Our allowance for credit losses reflects our economic outlook as at October 31, 2025. Subsequent changes to this forecast and
+related estimates will be reflected in our allowance for credit losses in future periods.
+Our base scenario reflects the Canadian unemployment rate peaking in calendar Q4 2025, followed by gradual declines
+beginning in early calendar 2026 and for the U.S. unemployment rate to rise, peaking in calendar Q1 2026, followed by a return to
+equilibrium by calendar Q4 2026. The central bank policy rate in Canada is expected to remain unchanged until the end of
+calendar 2026 and cuts are expected in the U.S. until the middle of calendar 2026.
+"," Our downside scenarios reflect the possibility of moderate and escalating macroeconomic
+shocks beginning in calendar Q1 2026 relative to our base scenario. In these scenarios, conditions are expected to deteriorate
+from calendar Q4 2025 levels for up to 18 months, followed by a recovery for the remainder of the period. These scenarios
+assume monetary policy responses that return the economy to a long-run, sustainable growth rate within the forecast period.
+Our upside scenario reflects slightly stronger economic growth than the base scenario, without prompting a further
+offsetting monetary policy response as compared to our base scenario, followed by a return to a long-run sustainable growth
+rate within the forecast period.
+We increased weight to our downside scenarios relative to October 31, 2024 to reflect the heightened economic uncertainty
+related to U.S. international trade policy as compared to our base scenario.
+Consolidated Financial Statements Royal Bank of Canada: Annual Report 2025 183",5048,5330,318f3573031345eee55d156f0ce86728f34b6f07f55da04917dd2b933301bb32,{},official_issuer_url_in_acquisition_receipt,rendered_page_reviewed

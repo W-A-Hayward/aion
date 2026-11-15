@@ -1,0 +1,94 @@
+{
+  "reviews": [
+    {
+      "register_id": "SRC-021",
+      "candidate_id": "SRC-021-Q3",
+      "document_sha256": "5738a5db93a41d5ff563406fdc782ae2ba1aa8ccc2f14d1ffc08b0572934d4e2",
+      "document_title": "BMO Financial Group Reports Third Quarter 2026 Results - Aug 25, 2026",
+      "issuer": "Bank of Montreal",
+      "publication_date": "2026-08-25",
+      "reporting_period": "Q3 FY2026; quarter ended 2026-07-31",
+      "source_url": "https://newsroom.bmo.com/2026-08-25-BMO-Financial-Group-Reports-Third-Quarter-2026-Results",
+      "source_verification": "retrieved_from_BMO_publisher_subdomain",
+      "scope": "document_identity_only",
+      "financial_claims": "UNVERIFIED",
+      "citation_approved": false,
+      "stock_return_direction": "unknown",
+      "reviewed_by": "Codex assistant",
+      "method": "Read of local source extraction and acquisition receipts; no financial-table or investment-claim validation",
+      "reviewed_at": "2026-11-15T17:10:12.539297+00:00",
+      "anchors": [
+        {
+          "field": "title",
+          "pdf_page": null,
+          "printed_page": null,
+          "start": 0,
+          "end": 69,
+          "text": "BMO Financial Group Reports Third Quarter 2026 Results - Aug 25, 2026"
+        },
+        {
+          "field": "publication_date",
+          "pdf_page": null,
+          "printed_page": null,
+          "start": 6772,
+          "end": 6845,
+          "text": "TORONTO , Aug. 25, 2026 /CNW/ -- BMO Financial Group (TSX:BMO) (NYSE:BMO)"
+        },
+        {
+          "field": "reporting_period",
+          "pdf_page": null,
+          "printed_page": null,
+          "start": 5410,
+          "end": 5444,
+          "text": "for the period ended July 31, 2026"
+        }
+      ],
+      "remaining_scope": "BMO Q3 2026 release identity reviewed; FY2025 annual report remains missing in this acquisition. Financial excerpts and oil-related lending evidence still require review."
+    },
+    {
+      "register_id": "SRC-027",
+      "candidate_id": "SRC-027",
+      "document_sha256": "7b7e42718ba1dec8f0504e704eedf0bccc02bd2688da3dbbf638323230d056e4",
+      "document_title": "FORTIS INC. REPORTS FOURTH QUARTER & ANNUAL 2025 RESULTS",
+      "issuer": "Fortis",
+      "publication_date": "2026-02-12",
+      "reporting_period": "Q4 and FY2025; year ended 2025-12-31",
+      "source_url": "https://fortisinc.com/docs/default-source/investor-presentations/q4-2025---pr-mda-fs---final.pdf?sfvrsn=5239ccca_1",
+      "source_verification": "publisher_page_exact_href_observed",
+      "scope": "document_identity_only",
+      "financial_claims": "UNVERIFIED",
+      "citation_approved": false,
+      "stock_return_direction": "unknown",
+      "reviewed_by": "Codex assistant",
+      "method": "Read of local source extraction and acquisition receipts; no financial-table or investment-claim validation",
+      "reviewed_at": "2026-11-15T17:10:12.540240+00:00",
+      "anchors": [
+        {
+          "field": "title",
+          "pdf_page": 1,
+          "printed_page": "i",
+          "start": 35,
+          "end": 91,
+          "text": "FORTIS INC. REPORTS FOURTH QUARTER & ANNUAL 2025 RESULTS"
+        },
+        {
+          "field": "publication_date",
+          "pdf_page": 1,
+          "printed_page": "i",
+          "start": 0,
+          "end": 34,
+          "text": "St. John's, NL - February 12, 2026"
+        },
+        {
+          "field": "reporting_period",
+          "pdf_page": 2,
+          "printed_page": "ii",
+          "start": 1096,
+          "end": 1124,
+          "text": "year ended December 31, 2025"
+        }
+      ],
+      "remaining_scope": "Fortis FY2025/Q4 results PDF identity and issuer-page link reviewed. Q3 2026 and financial evidence on fuel-cost recovery still require review."
+    }
+  ]
+}

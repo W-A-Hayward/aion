@@ -1,0 +1,17 @@
+HTTP/2 200 
+server: keycdn
+date: Sun, 15 Nov 2026 14:23:46 GMT
+content-type: application/pdf
+content-length: 18205072
+x-amz-id-2: tflYygS1v3HLjhKORGrQbYuG0goGIwNUfxx1xYm18aSE45it7IQx/3mlSA8J5L+7uUj2ce3Z/k4DSkqXa/ogEL9XInPs3UHE
+x-amz-request-id: Y4MET7Y9G7BF4MDY
+last-modified: Mon, 09 Mar 2026 19:00:44 GMT
+etag: "6ee93e69803f910732f45ab019f063fd-1"
+expires: Sun, 15 Nov 2026 15:23:46 GMT
+cache-control: max-age=3600
+x-cache: MISS
+x-shield: active
+x-edge-location: camo
+access-control-allow-origin: *
+accept-ranges: bytes
+

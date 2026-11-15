@@ -2,9 +2,12 @@
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "PutJob",
+      "Sid": "PutJobAndRateCounters",
       "Effect": "Allow",
-      "Action": "dynamodb:PutItem",
+      "Action": [
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem"
+      ],
       "Resource": "arn:aws:dynamodb:us-east-1:339713040194:table/cascade-jobs"
     },
     {

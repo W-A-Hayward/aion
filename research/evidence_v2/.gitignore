@@ -1,0 +1,6 @@
+# Machine-specific input paths; copy local_inputs.example.json to create it.
+local_inputs.json
+# Real source documents and copied datasets stay out of Git by default.
+*.pdf
+*.xlsx
+inputs_local/

@@ -84,6 +84,10 @@ label rules: green = p_simple<0.05 AND p_ex2022<0.05 with the same sign AND (sha
              For universe = extra, green/yellow also require q_simple<0.10, otherwise grey.
 
 AWS names: region us-east-1; Glue database cascade; Athena workgroup cascade; DynamoDB table cascade-jobs
-(key jobId, TTL expiresAt); SQS agent-jobs + agent-jobs-dlq; Lambdas cascade-tools|submit|worker|status;
-roles cascade-<name>-lambda; agent cascade-agent, alias live; KB cascade-evidence; guardrail cascade-guardrail.
+(key jobId, TTL expiresAt; also holds rate#... rate-limit counters); SQS agent-jobs + agent-jobs-dlq;
+Lambdas cascade-tools|research|submit|worker|status; roles cascade-<name>-lambda; AgentCore runtime cascade_agent
+with role cascade-agentcore-runtime; HTTP API cascade-api (POST /jobs, GET /jobs/{id}, GET /research?ticker=);
+KB cascade-evidence; guardrail cascade-guardrail. Setup steps: docs/infrastructure.md.
+Job ownership: header X-Cascade-Session (32-128 chars [A-Za-z0-9_-]) or a JWT sub; jobs store only ownerHash
+(SHA-256), and GET /jobs/{id} answers 404 to anyone but the owner.
 ```

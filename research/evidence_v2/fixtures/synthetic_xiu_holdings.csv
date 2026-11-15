@@ -1,0 +1,10 @@
+﻿SYNTHETIC TEST FIXTURE - not the official iShares file; names and weights copied for testing only
+Fund Holdings as of,"Nov 12, 2026"
+ 
+Ticker,Name,Sector,Asset Class,Weight (%),Exchange,Currency
+RY,ROYAL BANK OF CANADA,Synthetic,Equity,9.58,Toronto Stock Exchange,CAD
+CNQ,CANADIAN NATURAL RESOURCES LTD,Synthetic,Equity,3.45,Toronto Stock Exchange,CAD
+CP,CANADIAN PACIFIC KANSAS CITY,Synthetic,Equity,2.83,Toronto Stock Exchange,CAD
+CNR,CANADIAN NATIONAL RAILWAY,Synthetic,Equity,2.39,Toronto Stock Exchange,CAD
+ATD,ALIMENTATION COUCHE TARD INC,Synthetic,Equity,1.46,Toronto Stock Exchange,CAD
+SYN,SYNTHETIC OTHER HOLDINGS,Synthetic,Equity,80.29,Toronto Stock Exchange,CAD

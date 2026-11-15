@@ -1,0 +1,65 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AthenaWorkgroupQueries",
+      "Effect": "Allow",
+      "Action": [
+        "athena:StartQueryExecution",
+        "athena:GetQueryExecution",
+        "athena:GetQueryResults"
+      ],
+      "Resource": "arn:aws:athena:us-east-1:339713040194:workgroup/cascade"
+    },
+    {
+      "Sid": "GlueCatalogReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "glue:GetDatabase",
+        "glue:GetTable",
+        "glue:GetTables",
+        "glue:GetPartitions"
+      ],
+      "Resource": [
+        "arn:aws:glue:us-east-1:339713040194:catalog",
+        "arn:aws:glue:us-east-1:339713040194:database/cascade",
+        "arn:aws:glue:us-east-1:339713040194:table/cascade/*"
+      ]
+    },
+    {
+      "Sid": "ReadProcessedData",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::cascade-s3-bucket/processed/*"
+    },
+    {
+      "Sid": "ListProcessedAndResultsPrefixes",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::cascade-s3-bucket",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": [
+            "processed/*",
+            "athena-results/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "AthenaResultsObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::cascade-s3-bucket/athena-results/*"
+    },
+    {
+      "Sid": "AthenaResultsBucketLocation",
+      "Effect": "Allow",
+      "Action": "s3:GetBucketLocation",
+      "Resource": "arn:aws:s3:::cascade-s3-bucket"
+    }
+  ]
+}

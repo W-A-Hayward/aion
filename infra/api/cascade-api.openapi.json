@@ -1,0 +1,129 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "cascade-api",
+    "version": "1.0",
+    "description": "HTTP API for the cascade frontend. Import in API Gateway > Create API > HTTP API > Import. Replace REPLACE_WITH_FRONTEND_ORIGIN first. See docs/infrastructure.md."
+  },
+  "x-amazon-apigateway-cors": {
+    "allowOrigins": [
+      "REPLACE_WITH_FRONTEND_ORIGIN"
+    ],
+    "allowMethods": [
+      "GET",
+      "POST",
+      "OPTIONS"
+    ],
+    "allowHeaders": [
+      "content-type",
+      "x-cascade-session",
+      "authorization"
+    ],
+    "exposeHeaders": [
+      "retry-after"
+    ],
+    "maxAge": 600,
+    "allowCredentials": false
+  },
+  "paths": {
+    "/jobs": {
+      "post": {
+        "summary": "Submit a question (lambdas/submit). Requires the x-cascade-session header or a JWT.",
+        "responses": {
+          "202": {
+            "description": "Queued: {jobId, sessionId}"
+          },
+          "400": {
+            "description": "Invalid body"
+          },
+          "401": {
+            "description": "No owner identity"
+          },
+          "429": {
+            "description": "Rate limited"
+          },
+          "503": {
+            "description": "Could not queue"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "payloadFormatVersion": "2.0",
+          "timeoutInMillis": 29000,
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-submit/invocations"
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "summary": "Job status (lambdas/status). Only the submitting owner can read it.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{jobId, status, answer?, toolCalls?, citations?, error?, durationMs?}"
+          },
+          "401": {
+            "description": "No owner identity"
+          },
+          "404": {
+            "description": "Not found or not yours"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "payloadFormatVersion": "2.0",
+          "timeoutInMillis": 29000,
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-status/invocations"
+        }
+      }
+    },
+    "/research": {
+      "get": {
+        "summary": "Research tables for one ticker (lambdas/research). Public, read-only.",
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table envelope + meta"
+          },
+          "400": {
+            "description": "Unsupported ticker"
+          },
+          "404": {
+            "description": "Ticker missing from this run"
+          },
+          "502": {
+            "description": "sensitivities unreadable"
+          }
+        },
+        "x-amazon-apigateway-integration": {
+          "type": "aws_proxy",
+          "httpMethod": "POST",
+          "payloadFormatVersion": "2.0",
+          "timeoutInMillis": 29000,
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-research/invocations"
+        }
+      }
+    }
+  }
+}

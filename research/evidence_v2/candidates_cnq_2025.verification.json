@@ -1,0 +1,508 @@
+{
+  "batch": "oil_batch_2025",
+  "generated_at": "2026-11-15T13:56:23+00:00",
+  "catalog_kind": "research_only",
+  "document": {
+    "document_id": "doc:sha256:497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+    "sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+    "sha256_matches_receipt": true,
+    "issuer": "Canadian Natural Resources Limited",
+    "title": "Canadian Natural 2025 Annual Report",
+    "ticker": "CNQ.TO",
+    "fiscal_year_end": "2025-12-31",
+    "language": "en",
+    "pdf_pages": 118,
+    "local_file": "runs/20261115T131702Z_d4fbb4fa/CNQ_2025_EN_497adbc4c8be.pdf",
+    "official_url": "https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf",
+    "landing_url": "https://www.cnrl.com/investors/financials/",
+    "retrieved_at": "2026-11-15T13:17:22.830244+00:00",
+    "regulatory_alternative_url": null,
+    "provenance_status": "official_issuer_url_retrieved",
+    "provenance_note": "PDF retrieved from www.cnrl.com, the issuer's own domain; exact path read from the issuer's financials page (acquisition receipt). Not re-fetched in this batch.",
+    "url_verified_in_this_batch": false
+  },
+  "candidates": [
+    {
+      "research_id": "CNQ-2025-01",
+      "evidence_id": "ev:sha256:91ee02882a78a3cef136301d11e6a7dfb71ad5b6d9b18f65c7e2fe5bffe1e501",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 19,
+      "printed_page": "18",
+      "section": "Management's Discussion and Analysis — Product Prices",
+      "form": "narrative",
+      "operational_channel": "realized_price_benchmark_linkage",
+      "company_disclosed_text": "The Company's realized product pricing is reflective of the prevailing benchmark pricing.",
+      "our_interpretation": "Management statement that realized prices follow benchmarks. It establishes the transmission from WTI/Brent to revenue, not its size.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "PRODUCT PRICES"
+      ],
+      "context_before": "…realized crude oil and NGLs prices decreased 8% to average $71.54 per bbl from $77.76 per bbl in 2024 (2023 – $72.36 per bbl), and the 2025 realized natural gas price increased 35% to average $2.51 per Mcf from $1.86 per Mcf in 2024 (2023 – $3.10 per Mcf). In the Oil Sands Mining and Upgrading segment, the Company's 2025 realized SCO sales price averaged $86.41 per bbl, a decrease of 12% from $98.03 per bbl in 2024 (2023 – $100.06 per bbl).",
+      "context_after": "Crude oil and NGLs and natural gas prices are discussed in detail in the 'Business Environment and Outlook', 'Realized Product Prices – Exploration and Production', and the 'Realized Product Prices, Royalties and Transportation – Oil Sands Mining and Upgrading' sections of this MD&A. PRODUCTION EXPENSE In the Company's Exploration and Production segments, the 2025 crude oil and NGLs production expense(1) averaged $14.33 per bbl, comparable with…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": true,
+        "whitespace_normalized_match": true,
+        "match_method": "byte_exact",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "PRODUCT PRICES": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "18"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (byte_exact); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-02",
+      "evidence_id": "ev:sha256:a350a4d68817a59ccce35f723fe8681c7d8070fc79073d28da340cda1d2c8790",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 19,
+      "printed_page": "18",
+      "section": "Management's Discussion and Analysis — Summary of Quarterly Financial Results",
+      "form": "narrative",
+      "operational_channel": "earnings_volatility_drivers",
+      "company_disclosed_text": "Crude oil pricing – Fluctuations in global supply/demand including crude oil production levels from OPEC+ and its impact on world supply, the impact of geopolitical and market uncertainties (including those due to the conflicts in the Middle East, Ukraine and Venezuela, and the impacts of ongoing tariff and trade uncertainty) on worldwide benchmark pricing, the impact of shale oil production in North America, the impact of the start-up of the Trans Mountain Expansion (\"TMX\") pipeline in 2024, the impact of the WCS Heavy Differential from WTI in North America, and the impact of the differential between WTI and Brent benchmark pricing in the International segments.",
+      "our_interpretation": "Management attributes quarterly net-earnings volatility first to crude oil pricing, naming both the WCS-WTI and WTI-Brent differentials. This is about earnings volatility, not share-price behaviour.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Volatility in the quarterly net earnings over the eight most recently completed quarters was primarily due to:"
+      ],
+      "context_before": "…to the Company's audited consolidated financial statements. Common share, per common share, dividend, and stock option amounts have been updated to reflect the two for one common share split. Further details are disclosed in the 'Advisory' section of this MD&A and in note 1 to the Company's audited consolidated financial statements. Volatility in the quarterly net earnings over the eight most recently completed quarters was primarily due to: ▪",
+      "context_after": "▪ Natural gas pricing – Fluctuations in both the demand for natural gas and inventory storage levels, the impact of third- party pipeline maintenance and outages, the impact of geopolitical and market uncertainties, the impact of seasonal conditions, the impact of liquefied natural gas (\"LNG\") demand and exports, and the impact of shale gas production in the US. (1) Calculated as respective production expense divided by respective sales…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Volatility in the quarterly net earnings over the eight most recently completed quarters was primarily due to:": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "18"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-03",
+      "evidence_id": "ev:sha256:6fa948c72ce46ecf7cbe8adb71acd9b7b613ffd0ff6e581cf6ef6488662c4124",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 21,
+      "printed_page": "20",
+      "section": "Management's Discussion and Analysis — Business Environment — Benchmark Commodity Prices",
+      "form": "narrative",
+      "operational_channel": "benchmark_price_linkage",
+      "company_disclosed_text": "Substantially all of the Company's production is sold based on US dollar benchmark pricing, with crude oil marketed based on WTI and Brent indices, and natural gas marketed using a diversified mix of AECO- and NYMEX-based pricing.",
+      "our_interpretation": "Direct price channel: crude revenue is indexed to WTI and Brent in US dollars, so realized prices in C$ also depend on USD/CAD (the next sentence on the page says so).",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "BENCHMARK COMMODITY PRICES",
+        "The Company's realized prices are directly impacted by fluctuations in foreign exchange rates"
+      ],
+      "context_before": "…$ 69.02 $ 80.75 $ 82.61 WCS Heavy Differential from WTI (US$/bbl) $ 11.10 $ 14.73 $ 18.62 SCO price (US$/bbl) $ 64.42 $ 75.09 $ 79.64 Condensate benchmark price (US$/bbl) $ 63.32 $ 72.94 $ 76.55 NYMEX benchmark price (US$/MMBtu) $ 3.43 $ 2.27 $ 2.74 AECO benchmark price (C$/GJ) $ 1.76 $ 1.36 $ 2.77 US/Canadian dollar average exchange rate (US$) $ 0.7155 $ 0.7300 $ 0.7409 US/Canadian dollar year end exchange rate (US$) $ 0.7292 $ 0.6942 $ 0.7573",
+      "context_after": "The Company's realized prices are directly impacted by fluctuations in foreign exchange rates resulting in product revenues being impacted by changes in Canadian dollar sales prices relative to the US dollar benchmark prices. Crude oil sales contracts in North America are typically based on WTI benchmark pricing. WTI averaged US$64.77 per bbl for 2025, a decrease of 14% from US$75.72 per bbl for 2024 (2023 – US$77.61 per bbl). Crude oil sales…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "BENCHMARK COMMODITY PRICES": true,
+          "The Company's realized prices are directly impacted by fluctuations in foreign exchange rates": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "20"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-04",
+      "evidence_id": "ev:sha256:8bf543227e135596a49c1236718d3f20813e84b50e2e6278a3fe2b990d03b025",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 21,
+      "printed_page": "20",
+      "section": "Management's Discussion and Analysis — Business Environment — Benchmark Commodity Prices (table)",
+      "form": "table_row",
+      "operational_channel": "benchmark_prices_and_differentials",
+      "company_disclosed_text": "WTI benchmark price (US$/bbl) $ 64.77 $ 75.72 $ 77.61 Dated Brent benchmark price (US$/bbl) $ 69.02 $ 80.75 $ 82.61 WCS Heavy Differential from WTI (US$/bbl) $ 11.10 $ 14.73 $ 18.62",
+      "our_interpretation": "Disclosed benchmark levels. Our arithmetic: WTI fell US$10.95 (-14%) while the WCS discount narrowed US$3.63, so heavy-oil realizations fell less than WTI.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Benchmark Commodity Prices",
+        "units": "US$ per barrel, yearly average",
+        "columns": [
+          "2025",
+          "2024",
+          "2023"
+        ],
+        "values": {
+          "WTI": [
+            "64.77",
+            "75.72",
+            "77.61"
+          ],
+          "Dated Brent": [
+            "69.02",
+            "80.75",
+            "82.61"
+          ],
+          "WCS Heavy Differential from WTI": [
+            "11.10",
+            "14.73",
+            "18.62"
+          ]
+        },
+        "footnotes": []
+      },
+      "unit_basis": null,
+      "anchors": [
+        "BENCHMARK COMMODITY PRICES",
+        "(Yearly average) 2025 2024 2023"
+      ],
+      "context_before": "BENCHMARK COMMODITY PRICES (Yearly average) 2025 2024 2023",
+      "context_after": "SCO price (US$/bbl) $ 64.42 $ 75.09 $ 79.64 Condensate benchmark price (US$/bbl) $ 63.32 $ 72.94 $ 76.55 NYMEX benchmark price (US$/MMBtu) $ 3.43 $ 2.27 $ 2.74 AECO benchmark price (C$/GJ) $ 1.76 $ 1.36 $ 2.77 US/Canadian dollar average exchange rate (US$) $ 0.7155 $ 0.7300 $ 0.7409 US/Canadian dollar year end exchange rate (US$) $ 0.7292 $ 0.6942 $ 0.7573 Substantially all of the Company's production is sold based on US dollar benchmark…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "BENCHMARK COMMODITY PRICES": true,
+          "(Yearly average) 2025 2024 2023": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "20"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-05",
+      "evidence_id": "ev:sha256:8d68da15692a05d7a040613eaea2c56288f6ccc75783c557fe43e5353b27201c",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 21,
+      "printed_page": "20",
+      "section": "Management's Discussion and Analysis — Business Environment — Benchmark Commodity Prices",
+      "form": "narrative",
+      "operational_channel": "wcs_differential",
+      "company_disclosed_text": "The WCS Heavy Differential averaged US$11.10 per bbl for 2025 compared with US$14.73 per bbl for 2024 (2023 – US$18.62 per bbl). The narrowing of the WCS Heavy Differential for 2025 from 2024 primarily reflected full year takeaway capacity on the TMX pipeline and strong US Gulf Coast heavy oil pricing.",
+      "our_interpretation": "Company-stated cause of the narrower differential: TMX pipeline capacity and US Gulf Coast heavy-oil demand. Infrastructure, not just the WTI level, drives Canadian heavy-oil realizations.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "BENCHMARK COMMODITY PRICES"
+      ],
+      "context_before": "…demand. Brent averaged US$69.02 per bbl for 2025, a decrease of 15% from US$80.75 per bbl for 2024 (2023 – US$82.61 per bbl). The decrease in WTI and Brent benchmark pricing for 2025 from 2024 primarily reflected increased global supply and inventory builds driven by near-record production from non-OPEC+ producers and higher OPEC+ output. Supply gains exceeded global demand growth, which remained muted amid ongoing tariff and trade uncertainty.",
+      "context_after": "The SCO price averaged US$64.42 per bbl for 2025, a decrease of 14% from US$75.09 per bbl for 2024 (2023 – US$79.64 per bbl). The decrease in SCO pricing for 2025 from 2024 primarily reflected weaker WTI benchmark pricing. NYMEX benchmark pricing averaged US$3.43 per MMBtu for 2025, an increase of 51% from US$2.27 per MMBtu for 2024 (2023 – US$2.74 per MMBtu). The increase in NYMEX natural gas pricing for 2025 from 2024 primarily reflected…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "BENCHMARK COMMODITY PRICES": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "20"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": false,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-06",
+      "evidence_id": "ev:sha256:ad919d7c4fed90f12fc147dedd607db2779c70705fc15dfd8570d0bdcb0fa65a",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 26,
+      "printed_page": "25",
+      "section": "Management's Discussion and Analysis — Realized Product Prices – Exploration and Production — North America",
+      "form": "narrative",
+      "operational_channel": "realized_price",
+      "company_disclosed_text": "North America realized crude oil and NGLs prices decreased 7% to average $70.90 per bbl for 2025 from $76.37 per bbl for 2024 (2023 – $70.51 per bbl), primarily reflecting lower WTI benchmark pricing, partially offset by a narrowing of the WCS Heavy Differential.",
+      "our_interpretation": "Both channels at work in one sentence: realized C$ prices fell 7% versus a 14% fall in US$ WTI, with the narrower WCS discount (and FX) cushioning the decline.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "REALIZED PRODUCT PRICES – EXPLORATION AND PRODUCTION",
+        "North America"
+      ],
+      "context_before": "…$ 50.54 (1) (2) (3) For crude oil and NGLs and BOE sales volumes, refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A. For natural gas sales volumes, refer to the 'Daily Production, before royalties' section of this MD&A. Non-GAAP Ratio. Refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A. Calculated as crude oil and NGLs sales, and natural gas sales divided by respective sales volumes. North America",
+      "context_after": "The Company remains focused on its crude oil blending and marketing strategy, which includes expanding market access within existing pipeline infrastructure, supporting pipeline projects that increase transportation capacity to new markets, and collaborating with refiners to enhance heavy conversion capacity. During 2025, the Company contributed approximately 223,000 bbl/d of heavy crude oil blends to the WCS stream. North America realized…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "REALIZED PRODUCT PRICES – EXPLORATION AND PRODUCTION": true,
+          "North America": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "25"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-07",
+      "evidence_id": "ev:sha256:3af54fad51db4c786999d012f2d259206b73807bbc8b58bb7d37a456316573c3",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 54,
+      "printed_page": "53",
+      "section": "Management's Discussion and Analysis — Other — Sensitivity Analysis",
+      "form": "table_row",
+      "operational_channel": "price_sensitivity",
+      "company_disclosed_text": "Crude oil – WTI US$1.00/bbl $ 409 $ 0.20 $ 409 $ 0.20",
+      "our_interpretation": "Strongest quantitative disclosure in the batch: a US$1.00/bbl change in WTI changes annualized operating cash flow and net earnings by about $409 million each. This is operating sensitivity on Q4 2025 volumes, not a share-price beta.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Sensitivity Analysis",
+        "units": "Annualized; $ millions and $ per common share (basic)",
+        "basis": "Fourth-quarter 2025 business conditions and sales volumes; excludes mark-to-market on risk management; one variable at a time",
+        "columns": [
+          "Cash flows from operating activities ($ millions)",
+          "Cash flows from operating activities (per common share, basic)",
+          "Net earnings ($ millions)",
+          "Net earnings (per common share, basic)"
+        ],
+        "values": [
+          "409",
+          "0.20",
+          "409",
+          "0.20"
+        ],
+        "footnotes": [
+          "(1) on other rows: For details of financial instruments in place, refer to note 18."
+        ],
+        "column_mapping_check": "Visual check of the rendered page confirms the column order above."
+      },
+      "unit_basis": null,
+      "anchors": [
+        "SENSITIVITY ANALYSIS",
+        "The following table is indicative of the annualized sensitivities of cash flows from operating activities and net earnings due to changes in certain key variables.",
+        "The analysis is based on business conditions and sales volumes during the fourth quarter of 2025, excluding mark-to-market gains (losses) on risk management activities and is not necessarily indicative of future results.",
+        "Each separate line item in the sensitivity analysis shows the effect of a change in that variable only with all other variables being held constant.",
+        "($ millions)",
+        "Price changes"
+      ],
+      "context_before": "…gains (losses) on risk management activities and is not necessarily indicative of future results. Each separate line item in the sensitivity analysis shows the effect of a change in that variable only with all other variables being held constant. Cash flows from Operating Activities ($ millions) Cash flows from Operating Activities (per common share, basic) Net earnings ($ millions) Net earnings (per common share, basic) Price changes",
+      "context_after": "Natural gas – AECO C$0.10/Mcf (1) Excluding financial derivatives $ 52 $ 0.02 $ 52 $ 0.02 Including financial derivatives $ 51 $ 0.02 $ 51 $ 0.02 Volume changes Crude oil – 10,000 bbl/d $ 136 $ 0.07 $ 114 $ 0.05 Natural gas – 10 MMcf/d $ 3 $ — $ (3) $ — Foreign currency rate change $0.01 change in US$ (1) Including financial derivatives $ 267 $ 0.13 $ 78 $ 0.04 Interest rate change – 1% $ 33 $ 0.02 $ 33 $ 0.02 (1) For details of financial…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": true,
+        "whitespace_normalized_match": true,
+        "match_method": "byte_exact",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "SENSITIVITY ANALYSIS": true,
+          "The following table is indicative of the annualized sensitivities of cash flows from operating activities and net earnings due to changes in certain key variables.": true,
+          "The analysis is based on business conditions and sales volumes during the fourth quarter of 2025, excluding mark-to-market gains (losses) on risk management activities and is not necessarily indicative of future results.": true,
+          "Each separate line item in the sensitivity analysis shows the effect of a change in that variable only with all other variables being held constant.": true,
+          "($ millions)": true,
+          "Price changes": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "53"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (byte_exact); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CNQ-2025-08",
+      "evidence_id": "ev:sha256:8ac510afa745243a3b8ea4b487301a7b23371c53e4ff4aec885b9a572646fedb",
+      "subject_ticker": "CNQ.TO",
+      "subject_type": "company",
+      "pdf_page": 96,
+      "printed_page": "95",
+      "section": "Note 18 Financial Instruments — Financial Risk Factors — a) Market risk — Commodity price risk management",
+      "form": "narrative",
+      "operational_channel": "hedging_policy",
+      "company_disclosed_text": "The Company periodically uses commodity derivative financial instruments to manage its exposure to commodity price risk associated with the sale of its future crude oil and natural gas production, and with natural gas purchases.",
+      "our_interpretation": "Possible mitigant. 'Periodically' and the absence of crude-oil contract volumes on this page mean we cannot assume the WTI sensitivity is hedged. The $409M figure excludes mark-to-market on risk management by construction.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "COMMODITY PRICE RISK MANAGEMENT",
+        "These financial instruments are entered into solely for hedging purposes and are not used for speculative purposes."
+      ],
+      "context_before": "FINANCIAL RISK FACTORS The Company's financial risks are consistent with those disclosed in notes 1 and 3. a) Market risk Market risk is the risk that the fair value or future cash flows of a financial instrument will fluctuate because of changes in market prices. The Company's market risk is comprised of commodity price risk, interest rate risk, and foreign currency exchange rate risk. COMMODITY PRICE RISK MANAGEMENT",
+      "context_after": "These financial instruments are entered into solely for hedging purposes and are not used for speculative purposes. The Company's outstanding commodity derivative financial instruments are expected to be settled monthly based on the applicable index pricing for the respective contract month. INTEREST RATE RISK MANAGEMENT The Company is exposed to interest rate price risk on its fixed rate long-term debt and to interest rate cash flow risk on…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "COMMODITY PRICE RISK MANAGEMENT": true,
+          "These financial instruments are entered into solely for hedging purposes and are not used for speculative purposes.": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "95"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -1",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    }
+  ],
+  "hypotheses_not_documented": [
+    {
+      "hypothesis": "CNQ.TO share returns rise with WTI.",
+      "status": "Operationally strongly supported (US$1/bbl WTI = $409M annualized cash flow), but a share-price direction is a market outcome and is not established by this disclosure.",
+      "statistical_test_needed": "Estimate CNQ.TO's beta to Brent and to WTI (already computed in compute/stats.py for the extra universe); test whether the WCS differential adds explanatory power beyond WTI."
+    },
+    {
+      "hypothesis": "A wider WCS discount lowers CNQ's realized prices independently of WTI.",
+      "status": "Directly documented for 2025 (narrowing partially offset lower WTI).",
+      "statistical_test_needed": "Needs a WCS series, which is not in the data contract; add it before testing."
+    }
+  ],
+  "limitations": [
+    "Quotes were matched against the PDF text layer; table columns were additionally checked visually.",
+    "Interpretations are the research team's, not the issuer's; no stock-return direction is inferred.",
+    "No URL was re-fetched; no AWS, S3 or production pipeline was used."
+  ],
+  "source_csv_sha256": "1d1c729d6ca11959e003e78f20cdbae091725bf09609ae07b97af41576d58191"
+}

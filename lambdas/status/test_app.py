@@ -22,6 +22,9 @@ class FakeTable:
 
 JOB = str(uuid.uuid4())
 OTHER = str(uuid.uuid4())
+LEGACY = str(uuid.uuid4())
+TOKEN = "t" * 40
+OWNER_HASH = app.owner_of({"headers": {"x-cascade-session": TOKEN}})
 
 
 @pytest.fixture(autouse=True)
@@ -38,14 +41,19 @@ def table(monkeypatch):
                 "question": "secret question",
                 "sessionId": "s",
                 "traceKey": "traces/x.json",
-            }
+                "ownerHash": OWNER_HASH,
+            },
+            LEGACY: {"jobId": LEGACY, "status": "DONE", "answer": "no owner"},
         }
     )
     monkeypatch.setattr(app, "_table", lambda: t)
 
 
-def call(i):
-    return app.lambda_handler({"pathParameters": {"id": i}}, None)
+def call(i, token=TOKEN):
+    event = {"pathParameters": {"id": i}}
+    if token is not None:
+        event["headers"] = {"X-Cascade-Session": token}
+    return app.lambda_handler(event, None)
 
 
 def test_done():
@@ -66,4 +74,22 @@ def test_invalid_id(bad):
 
 
 def test_missing_path_params():
-    assert app.lambda_handler({}, None)["statusCode"] == 400
+    assert app.lambda_handler({"headers": {"x-cascade-session": TOKEN}}, None)["statusCode"] == 400
+
+
+def test_requires_identity():
+    assert call(JOB, token=None)["statusCode"] == 401
+
+
+def test_other_owner_sees_not_found():
+    r = call(JOB, token="u" * 40)
+    assert r["statusCode"] == 404 and "hi" not in r["body"]
+
+
+def test_job_without_owner_is_not_readable():
+    assert call(LEGACY)["statusCode"] == 404
+
+
+def test_signed_in_owner():
+    event = {"pathParameters": {"id": JOB}, "requestContext": {"authorizer": {"jwt": {"claims": {"sub": "u1"}}}}}
+    assert app.lambda_handler(event, None)["statusCode"] == 404  # owned by a session token, not by u1

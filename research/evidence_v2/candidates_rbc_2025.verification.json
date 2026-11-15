@@ -1,0 +1,496 @@
+{
+  "batch": "oil_batch_2025",
+  "generated_at": "2026-11-15T13:56:23+00:00",
+  "catalog_kind": "research_only",
+  "document": {
+    "document_id": "doc:sha256:a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+    "sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+    "sha256_matches_receipt": true,
+    "issuer": "Royal Bank of Canada",
+    "title": "Royal Bank of Canada Annual Report 2025",
+    "ticker": "RY.TO",
+    "fiscal_year_end": "2025-10-31",
+    "language": "en",
+    "pdf_pages": 246,
+    "local_file": "runs/20261115T131702Z_d4fbb4fa/RBC_2025_EN_a0e79381aea0.pdf",
+    "official_url": "https://www.rbc.com/investor-relations/_assets-custom/pdf/ar_2025_e.pdf",
+    "landing_url": "https://www.rbc.com/investor-relations/financial-information.html",
+    "retrieved_at": "2026-11-15T13:17:20.324403+00:00",
+    "regulatory_alternative_url": null,
+    "provenance_status": "official_issuer_url_retrieved",
+    "provenance_note": "PDF retrieved from www.rbc.com, the issuer's own domain; exact href read from the issuer's financial-information page (acquisition receipt). Not re-fetched in this batch.",
+    "url_verified_in_this_batch": false
+  },
+  "candidates": [
+    {
+      "research_id": "RBC-2025-01",
+      "evidence_id": "ev:sha256:b74b135b95471353a8ec10d8640bb2e71c7dfce77794dcad59f11f548758ea2b",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 78,
+      "printed_page": "76",
+      "section": "Management's Discussion and Analysis — Credit risk — Credit risk limits",
+      "form": "narrative",
+      "operational_channel": "credit_concentration_policy",
+      "company_disclosed_text": "Concentration risk is defined as the risk arising from an overexposure in particular industry sectors, countries, or credit products within the portfolio, reflecting the potential for credit deterioration and default to be relatively highly correlated.",
+      "our_interpretation": "Framework, not oil-specific: RBC treats industry-sector overexposure as a correlated-default risk. It is the lens for reading the oil-and-gas rows in Tables 41 and 72-74.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Credit risk limits",
+        "Credit concentration limits are reviewed on a regular basis after considering business, economic, financial and regulatory environments."
+      ],
+      "context_before": "…levels: single name; regional, country and industrial sector (notional and economic capital); regulatory large exposure; product and portfolio; and underwriting and distribution. These limits apply across all businesses, portfolios, transactions and products. We actively manage credit exposures and limits to ensure alignment with our risk appetite, to maintain our target business mix and to ensure that there is no undue concentration risk.",
+      "context_after": "Credit concentration limits are reviewed on a regular basis after considering business, economic, financial and regulatory environments. Credit risk administration Loan forbearance In our overall management of borrower relationships, economic, legal or other reasons may necessitate forbearance to certain clients with respect to the original terms and conditions of their loans. We have specialized groups and formalized policies that direct the…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Credit risk limits": true,
+          "Credit concentration limits are reviewed on a regular basis after considering business, economic, financial and regulatory environments.": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "76"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-02",
+      "evidence_id": "ev:sha256:a6d1079aef85c1215fa4ff3e0194d6d4162dd2625f3e0937e74074ecbdfd22d1",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 79,
+      "printed_page": "77",
+      "section": "Management's Discussion and Analysis — Credit risk exposure by portfolio, sector and geography (Table 41)",
+      "form": "table_row",
+      "operational_channel": "oil_gas_credit_exposure",
+      "company_disclosed_text": "Oil and gas 6,377 8,671 1,520 – 2,312 18,880 6,365 8,688 2,002 – 2,052 19,107",
+      "our_interpretation": "Disclosed fact: oil-and-gas EAD of $18,880 million at October 31, 2025 (2024: $19,107 million). Our arithmetic, not RBC's: about 0.83% of total EAD ($2,272,558 million) and 1.34% of total wholesale EAD. Almost half (8,671) is undrawn commitments, which could be drawn under stress.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Credit risk exposure by portfolio, sector and geography (Table 41)",
+        "units": "Millions of Canadian dollars; exposure at default (EAD) under Basel regulatory classes",
+        "as_at": "October 31, 2025 and October 31, 2024",
+        "columns": [
+          "2025 on-balance sheet amount",
+          "2025 undrawn",
+          "2025 other off-balance sheet (4)",
+          "2025 repo-style transactions",
+          "2025 derivatives",
+          "2025 total exposure",
+          "2024 on-balance sheet amount",
+          "2024 undrawn",
+          "2024 other off-balance sheet (4)",
+          "2024 repo-style transactions",
+          "2024 derivatives",
+          "2024 total exposure"
+        ],
+        "values": [
+          "6,377",
+          "8,671",
+          "1,520",
+          "–",
+          "2,312",
+          "18,880",
+          "6,365",
+          "8,688",
+          "2,002",
+          "–",
+          "2,052",
+          "19,107"
+        ],
+        "footnotes": [
+          "(1) Excludes securitization, banking book equities and other assets not subject to the standardized or IRB approach.",
+          "(3) EAD for undrawn credit commitments and other off-balance sheet amounts are reported after the application of credit conversion factors.",
+          "(4) Includes other off-balance sheet exposures such as letters of credit and guarantees.",
+          "(5) Counterparty credit risk EAD reflects exposure amounts after netting."
+        ],
+        "column_mapping_check": "Visual check of the rendered page confirms the column order above."
+      },
+      "unit_basis": null,
+      "anchors": [
+        "Credit risk exposure by portfolio, sector and geography Table 41",
+        "(Millions of Canadian dollars)",
+        "Undrawn",
+        "Derivatives",
+        "Total wholesale $ 832,621 $ 206,334 $ 36,246 $ 195,795 $ 133,972 $ 1,404,968",
+        "Total exposure (1) $ 1,440,654 $ 465,727 $ 36,410 $ 195,795 $ 133,972 $ 2,272,558",
+        "EAD for undrawn credit commitments and other off-balance sheet amounts are reported after the application of credit conversion factors."
+      ],
+      "context_before": "…827,053 Wholesale Agriculture $ 14,181 $ 3,344 $ 86 $ – $ 263 $ 17,874 $ 13,257 $ 3,241 $ 77 $ – $ 210 $ 16,785 Automotive 14,188 9,602 677 – 1,053 25,520 14,424 9,605 639 – 1,454 26,122 Banking 96,268 3,674 1,797 97,585 32,577 231,901 87,601 3,187 2,967 91,791 32,949 218,495 Consumer discretionary 28,435 11,544 893 – 1,779 42,651 24,516 11,719 918 – 1,242 38,395 Consumer staples 11,355 10,393 957 – 2,299 25,004 10,094 8,631 795 – 1,907 21,427",
+      "context_after": "Financial services 62,170 29,087 4,508 78,257 33,739 207,761 51,313 23,405 4,103 73,020 29,958 181,799 Financing products 3,938 1,180 2,134 1,339 1,713 10,304 3,945 1,235 2,388 604 1,684 9,856 Forest products 2,499 1,524 373 – 76 4,472 2,225 1,589 387 – 84 4,285 Governments 330,943 8,762 2,251 18,150 10,031 370,137 283,893 7,891 2,149 13,334 7,933 315,200 Industrial products 15,966 12,871 1,121 – 922 30,880 15,526 12,463 940 – 1,052 29,981…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": true,
+        "whitespace_normalized_match": true,
+        "match_method": "byte_exact",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Credit risk exposure by portfolio, sector and geography Table 41": true,
+          "(Millions of Canadian dollars)": true,
+          "Undrawn": true,
+          "Derivatives": true,
+          "Total wholesale $ 832,621 $ 206,334 $ 36,246 $ 195,795 $ 133,972 $ 1,404,968": true,
+          "Total exposure (1) $ 1,440,654 $ 465,727 $ 36,410 $ 195,795 $ 133,972 $ 2,272,558": true,
+          "EAD for undrawn credit commitments and other off-balance sheet amounts are reported after the application of credit conversion factors.": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "77"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (byte_exact); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-03",
+      "evidence_id": "ev:sha256:825b3096cb1bff2196d61a36205827ec8db0c8035edcefb951b06a28a09936c5",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 130,
+      "printed_page": "128",
+      "section": "Management's Discussion and Analysis — Supplementary information — Loans and acceptances by portfolio and sector (Table 72)",
+      "form": "table_row",
+      "operational_channel": "oil_gas_credit_exposure",
+      "company_disclosed_text": "Oil and gas 6,352 6,362",
+      "our_interpretation": "Disclosed fact: drawn oil-and-gas loans and acceptances of $6,352 million (2024: $6,362 million). Our arithmetic: about 0.61% of total loans and acceptances and 1.6% of wholesale loans. Flat year over year while total loans grew about 6%.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Loans and acceptances by portfolio and sector (Table 72)",
+        "units": "Millions of Canadian dollars",
+        "as_at": "October 31",
+        "columns": [
+          "2025",
+          "2024"
+        ],
+        "values": [
+          "6,352",
+          "6,362"
+        ],
+        "footnotes": []
+      },
+      "unit_basis": null,
+      "anchors": [
+        "Loans and acceptances by portfolio and sector As at October 31 (Millions of Canadian dollars) 2025 Table 72",
+        "Wholesale $ 397,190 $ 360,474",
+        "Total loans and acceptances $ 1,049,534 $ 987,452"
+      ],
+      "context_before": "Loans and acceptances by portfolio and sector As at October 31 (Millions of Canadian dollars) 2025 Table 72 2024 Residential mortgages $ 493,413 $ 477,544 Personal 115,345 108,338 Credit cards 26,789 25,565 Small business 16,797 15,531 Retail $ 652,344 $ 626,978 Agriculture 13,958 13,065 Automotive 14,155 14,386 Banking 9,397 8,829 Consumer discretionary 27,132 23,670 Consumer staples 11,193 9,885",
+      "context_after": "Financial services 47,894 40,997 Financing products 27,826 18,161 Forest products 2,452 2,200 Governments 5,716 5,816 Industrial products 15,743 15,347 Information technology 5,875 5,788 Investments 23,842 21,454 Mining and metals 2,715 2,757 Public works and infrastructure 3,246 3,325 Real estate and related 111,132 102,885 Other services 34,096 31,758 Telecommunication and media 9,065 7,745 Transportation 10,440 10,450 Utilities 14,219 14,484…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": true,
+        "whitespace_normalized_match": true,
+        "match_method": "byte_exact",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Loans and acceptances by portfolio and sector As at October 31 (Millions of Canadian dollars) 2025 Table 72": true,
+          "Wholesale $ 397,190 $ 360,474": true,
+          "Total loans and acceptances $ 1,049,534 $ 987,452": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "128"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (byte_exact); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-04",
+      "evidence_id": "ev:sha256:c247c0266a62db84549a904fc3e643901813596c96885c8c01ee442ec45be39c",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 131,
+      "printed_page": "129",
+      "section": "Management's Discussion and Analysis — Supplementary information — Gross impaired loans by portfolio and geography (Table 73)",
+      "form": "table_row",
+      "operational_channel": "oil_gas_credit_quality",
+      "company_disclosed_text": "Consumer staples 115 138 Oil and gas 28 9 Financial services 213 120",
+      "our_interpretation": "Disclosed fact: gross impaired oil-and-gas loans rose from $9 million to $28 million. Our reading: small in absolute terms (0.3% of total GIL of $8,682 million) and not a sign of sector stress at fiscal year-end.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Gross impaired loans by portfolio and geography (Table 73), total-bank section",
+        "units": "Millions of Canadian dollars",
+        "as_at": "October 31",
+        "columns": [
+          "2025",
+          "2024"
+        ],
+        "values": [
+          "28",
+          "9"
+        ],
+        "footnotes": [
+          "The Oil and gas row appears twice on the page (total bank, then Canada, both 28 / 9); the excerpt includes neighbouring rows to pin the total-bank occurrence."
+        ]
+      },
+      "unit_basis": null,
+      "anchors": [
+        "Gross impaired loans by portfolio and geography As at October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 73",
+        "Total GIL (2) $ 8,682 $ 5,867"
+      ],
+      "context_before": "Gross impaired loans by portfolio and geography As at October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 73 2024 Residential mortgages $ 1,681 $ 1,233 Personal 437 408 Small business 411 321 Retail 2,529 1,962 Agriculture $ 283 $ 127 Automotive 157 263 Banking 30 54 Consumer discretionary 555 401",
+      "context_after": "Financing products 324 228 Forest products 82 147 Governments 31 12 Industrial products 271 235 Information technology 106 74 Investments 63 82 Mining and metals 21 3 Public works and infrastructure 38 11 Real estate and related 1,759 1,404 Other services 1,588 263 Telecommunication and media 117 105 Transportation 303 172 Utilities 23 30 Other sectors 46 27 Wholesale (1) 6,153 3,905 Total GIL (2) $ 8,682 $ 5,867 Canada (3) Residential…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Gross impaired loans by portfolio and geography As at October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 73": true,
+          "Total GIL (2) $ 8,682 $ 5,867": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "129"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-05",
+      "evidence_id": "ev:sha256:94eac7852aab1d2cce7ea5759ce181afa75f81e627fa0cf3ea42f8725fe0a2c0",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 132,
+      "printed_page": "130",
+      "section": "Management's Discussion and Analysis — Supplementary information — Provision for credit losses by portfolio and geography (Table 74)",
+      "form": "table_row",
+      "operational_channel": "oil_gas_credit_quality",
+      "company_disclosed_text": "Oil and gas 6 (51)",
+      "our_interpretation": "Disclosed fact: PCL on impaired oil-and-gas loans of $6 million in fiscal 2025 after a $51 million net recovery in 2024. Oil-and-gas credit costs were negligible in both years.",
+      "stock_return_direction": "unknown",
+      "table": {
+        "title": "Provision for credit losses by portfolio and geography (Table 74)",
+        "units": "Millions of Canadian dollars",
+        "period": "For the year ended October 31",
+        "columns": [
+          "2025",
+          "2024"
+        ],
+        "values": [
+          "6",
+          "(51)"
+        ],
+        "footnotes": [
+          "(51) is in parentheses: a net recovery (negative provision) in fiscal 2024.",
+          "Visual check of the rendered page confirms 2025 is the left (shaded) column."
+        ]
+      },
+      "unit_basis": null,
+      "anchors": [
+        "Provision for credit losses by portfolio and geography For the year ended October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 74",
+        "Total PCL on impaired loans $ 3,734 $ 2,620"
+      ],
+      "context_before": "Provision for credit losses by portfolio and geography For the year ended October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 74 2024 Residential mortgages $ 141 $ 86 Personal 821 680 Credit cards 828 670 Small business 171 150 Retail 1,961 1,586 Agriculture $ 43 $ 24 Automotive 121 115 Banking 4 33 Consumer discretionary 299 97 Consumer staples 62 59",
+      "context_after": "Financial services 47 19 Financing products 110 40 Forest products 60 48 Governments (7) 2 Industrial products 74 68 Information technology 35 21 Investments 23 3 Mining and metals 14 (1) Public works and infrastructure 8 (6) Real estate and related 230 403 Other services 427 40 Telecommunication and media 80 42 Transportation 117 63 Utilities 1 3 Other sectors 19 12 Wholesale 1,773 1,034 Total PCL on impaired loans $ 3,734 $ 2,620 Canada (1)…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": true,
+        "whitespace_normalized_match": true,
+        "match_method": "byte_exact",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Provision for credit losses by portfolio and geography For the year ended October 31 (Millions of Canadian dollars, except for percentage amounts) 2025 Table 74": true,
+          "Total PCL on impaired loans $ 3,734 $ 2,620": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [],
+          "footer_match": null,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (byte_exact); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-06",
+      "evidence_id": "ev:sha256:42a2f5581979ac98af3bce7b7c2591b25a82c3faaec9738180d4604e70195c86",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 156,
+      "printed_page": "154",
+      "section": "Note 2 Summary of material accounting policies, estimates and judgments — Allowance for credit losses — Use of forward-looking information",
+      "form": "narrative",
+      "operational_channel": "ecl_commodity_price_input",
+      "company_disclosed_text": "Macroeconomic variables used in our expected credit loss models include, but are not limited to, unemployment rates, gross domestic product growth rates, equity return indices, commodity prices and Canadian housing prices.",
+      "our_interpretation": "Mechanism: commodity prices are an input to RBC's expected-credit-loss models, so an oil price shock can change allowances through forward-looking scenarios. RBC does not say how large that effect is or which commodities are used.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Use of forward-looking information",
+        "Note 2 Summary of material accounting policies, estimates and judgments"
+      ],
+      "context_before": "…to estimate Stage 1 and Stage 2 credit loss allowances are modelled based on the macroeconomic variables (or changes in macroeconomic variables) that are most closely correlated with credit losses in the relevant portfolio. Each macroeconomic scenario used in our expected credit loss calculation includes a projection of all relevant macroeconomic variables used in our models for a five-year period, subsequently reverting to long-run averages.",
+      "context_after": "Depending on their usage in the models, macroeconomic variables may be projected at a country, province/state or more granular level. Our estimation of expected credit losses in Stage 1 and Stage 2 is a discounted probability-weighted estimate that considers a minimum of three future macroeconomic scenarios. Our base case scenario is based on macroeconomic forecasts published by our internal economics group. The published forecasts are…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Use of forward-looking information": true,
+          "Note 2 Summary of material accounting policies, estimates and judgments": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "154"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "RBC-2025-07",
+      "evidence_id": "ev:sha256:c865eeb6854042328be437b932ddf3a92be845ec6c4c28aaaa252f758712d0bc",
+      "subject_ticker": "RY.TO",
+      "subject_type": "company",
+      "pdf_page": 185,
+      "printed_page": "183",
+      "section": "Note 5 Loans and allowance for credit losses — Key inputs and assumptions — Scenario design and weightings",
+      "form": "narrative",
+      "operational_channel": "ecl_scenario_design",
+      "company_disclosed_text": "During Q2 2025, in response to U.S. international trade policy, we designed a trade disruption scenario to replace our energy sector scenario.",
+      "our_interpretation": "Disclosed fact: RBC had an energy-sector downside scenario and replaced it in Q2 2025. Our reading: management judged trade disruption a more relevant downside than an energy shock for fiscal 2025 allowances. This is not evidence that energy risk disappeared.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Key inputs and assumptions",
+        "Scenario design and weightings"
+      ],
+      "context_before": "…2026 and for the U.S. unemployment rate to rise, peaking in calendar Q1 2026, followed by a return to equilibrium by calendar Q4 2026. The central bank policy rate in Canada is expected to remain unchanged until the end of calendar 2026 and cuts are expected in the U.S. until the middle of calendar 2026. Our downside scenarios include two additional and more severe downside scenarios designed for trade disruptions and the real estate sector.",
+      "context_after": "Our downside scenarios reflect the possibility of moderate and escalating macroeconomic shocks beginning in calendar Q1 2026 relative to our base scenario. In these scenarios, conditions are expected to deteriorate from calendar Q4 2025 levels for up to 18 months, followed by a recovery for the remainder of the period. These scenarios assume monetary policy responses that return the economy to a long-run, sustainable growth rate within the…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Key inputs and assumptions": true,
+          "Scenario design and weightings": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "183"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page -2",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    }
+  ],
+  "hypotheses_not_documented": [
+    {
+      "hypothesis": "Oil-price declines raise RBC's credit losses through oil-and-gas borrowers.",
+      "status": "Not supported by FY2025 data: oil-and-gas PCL was $6M (2024: -$51M) and EAD is about 0.8% of total. Indirect channels (Alberta consumer and commercial credit, ECL scenarios) are undisclosed by sector.",
+      "statistical_test_needed": "Regress RY.TO weekly returns on Brent with a market control; event-study around large oil moves; compare with sector PCL history across a full oil cycle (2015-16, 2020)."
+    }
+  ],
+  "limitations": [
+    "Quotes were matched against the PDF text layer; table columns were additionally checked visually.",
+    "Interpretations are the research team's, not the issuer's; no stock-return direction is inferred.",
+    "No URL was re-fetched; no AWS, S3 or production pipeline was used."
+  ],
+  "source_csv_sha256": "9175f55bcbf02a7df10cecddb6e883c5dc0581a0ba6f68e5b5e6d7243fc375d3"
+}

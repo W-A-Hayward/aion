@@ -1,0 +1,19 @@
+{
+  "_comment": "Copy to local_inputs.json (git-ignored) and set the paths for this machine. Paths may be absolute, start with ~, or be relative to this file. The hashes identify the reviewed files; do not change them unless the team reviews a new snapshot.",
+  "xiu_holdings": {
+    "path": "~/Downloads/xiu_holdings.csv",
+    "sha256": "9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+    "as_of": "2026-11-12",
+    "source": {
+      "issuer": "BlackRock Asset Management Canada (iShares)",
+      "fund": "iShares S&P/TSX 60 Index ETF (XIU)",
+      "url": "https://www.blackrock.com/ca/investors/en/products/239832/ishares-sptsx-60-index-etf/1464253357814.ajax?fileType=csv&fileName=XIU_holdings&dataType=fund",
+      "url_basis": "ingest/fetch_to_s3.py HOLDINGS['xiu']",
+      "identity_limit": "The CSV preamble does not name the fund; its link to XIU rests on this reviewed file hash, not on the file name or URL."
+    }
+  },
+  "research_register": {
+    "path": "~/Downloads/RIPPLE_Official_Research_Register_2026-11-15.xlsx",
+    "sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214"
+  }
+}

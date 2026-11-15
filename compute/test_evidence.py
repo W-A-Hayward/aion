@@ -48,7 +48,9 @@ def test_classify_retries_once_then_skips():
         def converse(self, **kw):
             self.calls += 1
             assert kw["inferenceConfig"] == {"maxTokens": 500}
-            assert kw["toolConfig"]["toolChoice"] == {"tool": {"name": "record_evidence"}}
+            # "auto" since abb7dec: a forced tool choice is incompatible with the model's thinking
+            # mode, so plain-text JSON answers are parsed as a fallback (see converse_once).
+            assert kw["toolConfig"]["toolChoice"] == {"auto": {}}
             spec = kw["toolConfig"]["tools"][0]["toolSpec"]
             assert spec["name"] == "record_evidence"
             props = spec["inputSchema"]["json"]["properties"]
@@ -65,6 +67,13 @@ def test_classify_retries_once_then_skips():
     c = Client([text_only, tool_reply({"relevant": True}, name="other_tool")])
     assert ev.classify_passage(c, "m", "XOM", "doc", "p", u) is None
     assert c.calls == 2
+    # With toolChoice auto the model may answer in text; fenced JSON is accepted on the first try.
+    fenced = {"output": {"message": {"content": [{"text": '```json\n{"relevant": false}\n```'}]}},
+              "usage": {"inputTokens": 1, "outputTokens": 1}}
+    counts = {}
+    c = Client([fenced])
+    assert ev.classify_passage(c, "m", "XOM", "doc", "p", u, counts) == {"relevant": False}
+    assert c.calls == 1 and counts == {"text": 1}
 
 
 # --- passages and selection -------------------------------------------------
@@ -269,4 +278,5 @@ def test_edges():
     cited = e.iloc[1]
     assert cited["from_node"] == "oil" and cited["to_node"] == "XOM"
     assert pd.isna(cited["beta"]) and cited["evidence_id"] == "XOM-direct-1"
-    assert e.iloc[0]["evidence_id"] is None
+    # None in pandas 2, NaN in pandas 3 (string dtype); both are written as a Parquet null.
+    assert pd.isna(e.iloc[0]["evidence_id"])

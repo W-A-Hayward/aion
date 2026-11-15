@@ -14,6 +14,9 @@ MAX_TOOL_RESPONSE = 1000
 MAX_PARAM_VALUE = 500
 MAX_EXCERPT = 500
 MIN_SESSION_ID = 33
+# A RUNNING job older than this is assumed orphaned by a crashed worker and may be reclaimed.
+# Keep it above the Lambda timeout so a live invocation is never claimed twice.
+STALE_RUNNING_SECONDS = int(os.environ.get("STALE_RUNNING_SECONDS", "1200"))
 THROTTLE_CODES = {
     "ThrottlingException",
     "throttlingException",
@@ -110,13 +113,15 @@ def process(job_id):
     if not item:
         print(json.dumps({"jobId": job_id, "status": "MISSING", "durationMs": 0}))
         return
+    now = int(time.time())
     try:
         _table().update_item(
             Key={"jobId": job_id},
-            UpdateExpression="SET #s = :running",
-            ConditionExpression="#s = :pending",
+            UpdateExpression="SET #s = :running, startedAtEpoch = :now",
+            ConditionExpression="#s = :pending OR (#s = :running AND startedAtEpoch < :stale)",
             ExpressionAttributeNames={"#s": "status"},
-            ExpressionAttributeValues={":running": "RUNNING", ":pending": "PENDING"},
+            ExpressionAttributeValues={":running": "RUNNING", ":pending": "PENDING",
+                                       ":now": now, ":stale": now - STALE_RUNNING_SECONDS},
         )
     except ClientError as e:
         if _error_code(e) == "ConditionalCheckFailedException":
@@ -127,7 +132,7 @@ def process(job_id):
     try:
         resp = _agent().invoke_agent_runtime(
             agentRuntimeArn=os.environ["AGENT_RUNTIME_ARN"],
-            runtimeSessionId=session_id_for(item["sessionId"]),
+            runtimeSessionId=session_id_for(item.get("agentSessionId") or item["sessionId"]),
             payload=json.dumps(
                 {"question": item["question"], "persona": item["persona"], "level": item["level"]}
             ),

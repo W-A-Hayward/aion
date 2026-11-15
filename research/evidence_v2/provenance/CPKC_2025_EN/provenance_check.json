@@ -1,0 +1,85 @@
+{
+  "source_id": "CPKC_2025_EN",
+  "question": "Does the issuer's financial-reports page hyperlink to the acquired PDF?",
+  "acquired_pdf": {
+    "url": "https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf",
+    "sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f"
+  },
+  "checks": [
+    {
+      "check": "issuer pages fetched directly",
+      "result": "blocked",
+      "attempts": [
+        {
+          "url": "https://investor.cpkcr.com/financials/",
+          "client": "curl (browser user agent)",
+          "attempted_at": "2026-11-15T14:22:52+00:00",
+          "http_status": 403,
+          "response": "Cloudflare challenge page ('Just a moment...'); no issuer content served",
+          "archived_body": "blocked_response_financials.html",
+          "archived_body_sha256": "79ac59f28fae0c011cb8892e8e65c88a5dbb4a986f7d45a8b32d82a7bef19fda"
+        },
+        {
+          "url": "https://investor.cpkcr.com/financials/default.aspx?section=annual",
+          "client": "curl (browser user agent)",
+          "attempted_at": "2026-11-15T14:23:00+00:00",
+          "http_status": 403,
+          "response": "Cloudflare challenge page ('Just a moment...'); no issuer content served",
+          "archived_body": "blocked_response_page_87f1df.html",
+          "archived_body_sha256": "156b997c0d27ee937290c56f41acfd4f124a8b455f2739327edc8fea70d3f802"
+        },
+        {
+          "url": "https://investor.cpkcr.com/news/press-release-details/2026/CPKC-announces-filing-of-2025-annual-report-on-Form-10-K/default.aspx",
+          "client": "curl (browser user agent)",
+          "attempted_at": "2026-11-15T14:23:00+00:00",
+          "http_status": 403,
+          "response": "Cloudflare challenge page ('Just a moment...'); no issuer content served",
+          "archived_body": "blocked_response_page_861837.html",
+          "archived_body_sha256": "c0544b22967dcb711cbd4f08122bf2c7f4c4c288f8d57d6c78cc51e56628b84a"
+        }
+      ],
+      "note": "Not bypassed. A further attempt to query the site's Q4 report feed was declined by this session's permission guard as unauthorized access and was not retried."
+    },
+    {
+      "check": "issuer financials page via WebFetch (summarizing model; raw HTML not retained)",
+      "url": "https://investor.cpkcr.com/financials/",
+      "checked_at": "2026-11-15, this session",
+      "result": "Page shell served. 'Latest Annual Report' and 'Archived Annual Reports' sections contained no document links in the capture (populated client-side). The only q4cdn.com URLs were design images under the same account path //s21.q4cdn.com/736796105/files/design/.",
+      "evidence_grade": "secondary: model summary, not an archived page"
+    },
+    {
+      "check": "issuer press release via WebFetch",
+      "url": "https://investor.cpkcr.com/news/press-release-details/2026/CPKC-announces-filing-of-2025-annual-report-on-Form-10-K/default.aspx",
+      "checked_at": "2026-11-15, this session",
+      "result": "Title 'CPKC announces filing of 2025 annual report on Form 10-K', February 26, 2026. Text: \"A copy of CPKC's 2025 Annual Report is available at https://investor.cpkcr.com/\". No direct link to the PDF or to q4cdn.com.",
+      "evidence_grade": "secondary: model summary, not an archived page"
+    },
+    {
+      "check": "acquired CDN URL re-fetched and hashed (file not retained)",
+      "fetched_at": "2026-11-15T14:23:46Z",
+      "final_url": "https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf",
+      "http_status": 200,
+      "redirects": 0,
+      "content_type": "application/pdf",
+      "bytes": 18205072,
+      "sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+      "sha256_matches_acquired": true,
+      "last_modified": "Mon, 09 Mar 2026 19:00:44 GMT",
+      "headers_file": "cdn_response_headers.txt",
+      "note": "Proves the file is unchanged since acquisition. Says nothing about who links to it."
+    }
+  ],
+  "corroboration_not_proof": [
+    "The issuer's IR page serves its own design assets from the same CDN account path (s21.q4cdn.com/736796105/).",
+    "The PDF content is a CPKC Form 10-K (issuer, title and period matched at acquisition)."
+  ],
+  "conclusion": {
+    "provenance_status": "pending_issuer_to_cdn_link",
+    "upgraded": false,
+    "reason": "No captured issuer page contains a hyperlink to the acquired PDF URL. Corroboration is not the demonstrated issuer-to-file relationship required for an upgrade."
+  },
+  "to_resolve": [
+    "A person opens https://investor.cpkcr.com/financials/default.aspx?section=annual in a normal browser, confirms the 2025 Annual Report link target equals the acquired URL, and saves the page (HTML or print-to-PDF) plus a timestamped screenshot here.",
+    "Alternatively compare with the SEC EDGAR filing cp-20251231.htm listed on the receipt: verifies the content as filed, not the CDN link."
+  ]
+}

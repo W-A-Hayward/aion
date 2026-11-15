@@ -1,0 +1,318 @@
+evidence_id,ticker,issuer,document_title,fiscal_year,fiscal_year_end,language,pdf_page,printed_page,section,channel_candidate,direction,excerpt,interpretation,document_file,sha256,source_url,url_verified,quote_verified,evidence_kind,stock_return_direction,disclosed_fact,limitations,source_context_before,source_context_after,quote_start,quote_end,source_page_sha256,table_context,source_provenance_status,visual_review_status
+CPKC-2025-01,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,21,30,"Form 10-K — Business / Energy, Chemicals and Plastics",energy_related_freight,unknown,"The Company’s Energy, chemicals and plastics business represented approximately 43% of merchandise revenues and 20% of total Freight revenues in
+2025.
+The Company moves energy products consisting of commodities such as fuel oil, liquefied petroleum gas (""L.P.G.""), gasoline, and other refined energy
+products.",Exposition commerciale au transport de produits énergétiques.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,"ECP représente environ 20 % des revenus de fret 2025 ; produits énergétiques dont fuel oil, GPL, essence et raffinés.","20 % inclut chimie et plastiques ; ce n’est ni pétrole seul, ni poids XIU, ni beta.","CPKC 2025 ANNUAL REPORT / 30
+MERCHANDISE
+The Company’s Merchandise business represented approximately 46% of total Freight revenues in 2025.
+Merchandise products move in both mixed freight and unit trains in a variety of car types. Service involves delivering products to a wide variety of
+customers and destinations. In addition to traditional rail services, the Company moves merchandise traffic through a network of truck-rail transload
+facilities, expanding the reach of the Company's network to non-rail served facilities.
+The following chart shows the percentage of the Company's merchandise freight revenue by line of business in 2025:
+Forest products
+12%
+Automotive
+19%
+Metals,
+minerals &
+consumer
+products
+26%
+Energy,
+chemicals &
+plastics
+43%
+2025 Merchandise Revenues
+(46% of Freight Revenues)
+Forest Products
+The Company’s Forest products business represented approximately 12% of merchandise revenues and 5% of total Freight revenues in 2025.
+Forest products traffic primarily includes pulp and paper as well as lumber and panel products from key production areas in the U.S. Gulf Coast, B.C., the
+U.S. Southeast, Ontario, and Alberta to destinations throughout North America including the U.S. Midwest, eastern U.S., Mexico, and the U.S. Gulf Coast.
+Energy, Chemicals and Plastics
+"," The majority of the Company’s energy traffic originates in the Alberta Industrial Heartland (Canada's largest hydrocarbon processing region), the
+U.S. Gulf Coast, Mexico, and Saskatchewan. The Company accesses key destinations and export markets in Mexico, the U.S. Midwest, western Canada,
+the U.S. Gulf Coast, and the U.S. Pacific Northwest. The Company is a main transportation provider of refined fuels from the U.S. Gulf Coast into Mexico.
+The Company’s chemical traffic includes products such as ethylene glycol, chlorine, soda ash, caustic soda, sulphuric acid, and other chemical products.
+These shipments mainly originate from the U.S. Gulf Coast, western Canada, the U.S. Southeast, Mexico, and the U.S. Midwest and move to end markets
+in the U.S., Mexico, Canada, and overseas.
+The most commonly shipped plastics products are polyethylene and polypropylene. The majority of the Company’s plastics traffic originates from the U.S.
+Gulf Coast, Alberta, and Mexico and moves to various North American destinations.
+The Company's biofuels traffic originates mainly from facilities in the U.S. Midwest, shipping primarily to destinations in the U.S. Northeast, the U.S.
+Southeast, Alberta, and B.C.
+The Company moves crude primarily from production facilities throughout Alberta and Saskatchewan to refining markets primarily in the U.S. Gulf Coast.
+The majority of the Company’s crude is now moving as DRUbitTM, a sustainable heavy crude specifically designed for rail transportation and produced at
+an innovative facility known as a Diluent Recovery Unit, which enables the removal of diluent at origin. This technology enables the safe and economical
+transportation of crude and is cost competitive with pipeline transportation. The Company transports DRUbitTM on a single line haul from the Hardisty Rail
+Terminal in Alberta to Port Arthur, Texas.",1294,1603,d806da8af45e97723e3d37ae09b6c1d0f5193ef7733f7f7013735db090ec7bdd,{},pending_issuer_to_cdn,original_PDF_text_reviewed
+CPKC-2025-02,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,23,32,Form 10-K — Fuel Cost Adjustment Program,fuel_surcharge_pass_through,unknown,"The short-term volatility in fuel prices may adversely or positively impact revenues. The Company employs a fuel cost adjustment program designed to
+respond to fluctuations in fuel prices and help reduce volatility to changing fuel prices. Fuel surcharge revenues are earned on individual shipments and
+are based primarily on the price of On-Highway Diesel in Canada and the U.S. and the public fuel price for Petróleos Mexicanos (""PEMEX"") TAR Irapuato
+in Mexico. As such, fuel surcharge revenues are a function of freight volumes and fuel prices. Fuel surcharge revenues accounted for approximately 10%
+of the Company's Freight revenues in 2025. The Company is also subject to carbon taxation systems and levies in some jurisdictions in which it operates,
+the costs of which are passed on to the shipper. As such, fuel surcharge revenue includes recoveries of carbon taxes and levies.",La facturation peut amortir une partie du choc de coût carburant.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,Surcharges fondées surtout sur On-Highway Diesel Canada/USA et prix PEMEX Mexique ; environ 10 % des revenus de fret 2025.,"Pas de garantie de compensation intégrale ; taxes incluses ; références diesel, pas Brent.","CPKC 2025 ANNUAL REPORT / 32
+INTERMODAL
+The Company’s Intermodal business represented approximately 18% of total Freight revenues in 2025.
+The Company's Intermodal freight revenues are generated from domestic and international movements. Domestic intermodal freight consists primarily of
+manufactured consumer products that are predominantly moved in 53-foot containers within North America. International intermodal freight moves in
+marine containers to and from ports and North American inland markets.
+The following chart shows the percentage of the Company's Intermodal freight revenues generated from domestic intermodal and international
+intermodal in 2025.
+International
+Intermodal
+46%
+Domestic
+Intermodal
+54%
+2025 Intermodal Revenues
+(18% of Freight Revenues)
+Domestic Intermodal
+The Company's domestic intermodal business represented approximately 54% of Intermodal revenues and 10% of total Freight revenues in 2025.
+The Company’s domestic intermodal business moves goods from a broad spectrum of industries including wholesale, retail, food, and various other
+commodities. Key service factors in domestic intermodal include consistent on-time delivery and the ability to provide door-to-door service. The majority of
+the Company’s domestic intermodal business originates in Canada, where the Company markets its services directly to retailers and manufacturers and
+maintains direct relationships with its customers. In Mexico and the U.S., the Company’s services are delivered mainly through intermodal marketing
+companies. The Company's Mexico Midwest Express (""MMX"") is a premium intermodal service providing the first truck-competitive, single-line rail option
+between the U.S. Midwest and Mexico. In 2024, the Company and CSX Corporation created a new east-west Class I corridor that connects shippers in
+Mexico, Texas, and the U.S. Southeast providing customers with a new rail transportation routing option via the Southeast Mexico Express (""SMX"").
+International Intermodal
+The Company's international intermodal business represented approximately 46% of Intermodal revenues and 8% of total Freight revenues in 2025.
+The Company’s international intermodal business consists primarily of containerized traffic moving between the Port of Vancouver, the Port of Lázaro
+Cárdenas, the Port of Montréal, and the Port of Saint John, and inland points across North America. Import traffic from the Port of Vancouver is mainly
+long-haul business destined for eastern Canada and the U.S. Upper Midwest. Import traffic from the Port of Lázaro Cárdenas is primarily destined for
+Mexico. The Company works closely with the Port of Montréal, a major year-round East Coast gateway to Europe, to serve markets primarily in Canada
+and the U.S. Midwest. The Company's access to the Port of Saint John provides the fastest rail service between the East Coast and Canadian and U.S.
+markets for imports from and exports to Asia, Europe, and South America.
+Fuel Cost Adjustment Program
+",,2981,3866,497d29e5da7a22aa80f6807cb5a07d409d6ab6e041c11bf8d55d200e572fe67e,{},pending_issuer_to_cdn,original_PDF_text_reviewed
+CPKC-2025-03,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,24,33,Form 10-K — Fuel Cost Adjustment Program (continued),fuel_surcharge_recovery_timing,unknown,"Freight revenues included fuel surcharge revenues of $1,483 million in 2025, a decrease of $168 million, or 10%, from $1,651 million in the same period
+of 2024. This decrease was primarily due to lower fuel prices, which includes lower carbon levy surcharge revenue due to the elimination of the Canadian
+federal carbon tax program effective April 1, 2025, and the unfavourable impact from the timing of recoveries under the Company's fuel cost adjustment
+program, partially offset by higher volumes and the favourable impact of the change in foreign exchange (""FX"") rates.",Le calendrier des recouvrements peut laisser une exposition temporaire.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,"Surcharges 1 483 M CAD en 2025 contre 1 651 en 2024 ; facteurs prix, taxes, calendrier, volumes et FX cités.",Aucun délai de deux mois indiqué : ne pas transférer celui de CNR. Pas d’effet boursier inféré.,"33 / CPKC 2025 ANNUAL REPORT
+","
+Significant Customers
+For each of the years ended December 31, 2025 and 2024, the Company's revenues and operations were not dependent on any major customers.
+Competition
+The Company is in the ground transportation and logistics business and competes with other railways, motor carriers, ship and barge operators, and
+pipelines. Depending on the specific market, competing railways, motor carriers, and other competitors may exert pressure on price and service levels. The
+Company continually evaluates the market needs and the competition. The Company responds as it deems appropriate to provide competitive services to
+the market. This includes developing new offerings such as transload facilities, new train services, and other logistics services.
+Seasonality
+Volumes and revenues from certain goods are higher during different periods of the year. First-quarter revenues are typically lower mainly due to winter
+weather conditions which result in reduced capacity under the winter operating plan with train length restrictions, the closure of the Port of Thunder Bay,
+and reduced transportation of retail goods. Second and third quarter revenues generally improve compared to the first quarter, as fertilizer volumes are
+typically highest during the second quarter and demand for construction-related goods is generally highest in the third quarter. Revenues are typically
+highest in the fourth quarter primarily as a result of the transportation of grain after the harvest, fall fertilizer programs, and increased demand for retail
+goods moved by rail. Operating income is also affected by seasonal fluctuations. Operating income is typically lowest in the first quarter due to lower
+freight revenues and higher operating costs associated with winter conditions.
+Government Regulation
+The Company’s railway operations are subject to extensive federal laws, regulations, and rules in the countries in which it operates, which directly affect
+how operations and business activities are managed.
+Canada
+The Company’s rail operations in Canada are subject to economic regulation by the Canadian Transportation Agency (the ""Agency"") pursuant to
+authorities under the CTA. The CTA establishes a common carrier obligation and it indirectly regulates rates by providing shippers access to regulatory
+mechanisms for challenging freight rates, including ancillary charges, and access to regulated interswitching rates and long-haul interswitching rates, and
+regulatory mechanisms to challenge level of service. The CTA also establishes an MRE for the transportation of Canadian export grain and other
+agriculture products, which is administered by the Agency. Finally, the Agency makes regulatory determinations regarding the construction and
+abandonment of railway lines, commuter and passenger access, and noise and vibration-related disputes.
+The Company’s rail operations in Canada are subject to safety and security regulatory requirements enforced by Transport Canada (""TC"") pursuant to the
+Railway Safety Act (""RSA"") and the Transportation of Dangerous Goods Act (the ""TDGA""). The RSA regulates safety-related aspects of railway operations
+in Canada, including the delegation of inspection, investigation, and enforcement powers to TC. TC is also responsible for overseeing the safe and secure
+transportation of dangerous goods.
+Various other regulators directly and indirectly affect the Company’s operations in areas such as health, safety, environment, climate, sustainability, and
+other matters.
+U.S.
+The Company’s U.S. rail operations are subject to economic regulation by the U.S. Surface Transportation Board (the ""STB""), which administers portions
+of Title 49 of the United States Code and related Code of Federal Regulations. The STB has jurisdiction over railroad rate and service issues, proposed
+railroad mergers, and other transactions.
+The Company’s U.S. operations are subject to safety regulations enforced by the Federal Railroad Administration (the ""FRA""), and the Pipeline and
+Hazardous Materials Safety Administration (""PHMSA""). The FRA regulates safety-related aspects of the Company’s railway operations in the U.S. under
+Title 49 of the Code of Federal Regulations, the Federal Railroad Safety Act, as well as rail portions of other safety statutes. The PHMSA regulates the safe
+transportation of hazardous materials by rail. The Company’s U.S. rail operations are also subject to security regulations and directives by the
+Transportation Security Administration (""TSA""), a component of the U.S. Department of Homeland Security.",29,602,11a2f48950c49d0851e388e1ea5fe43b2da2f7e07b300ac2b656272995016a0e,{},pending_issuer_to_cdn,original_PDF_text_reviewed
+CPKC-2025-04,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,32,41,Form 10-K — Risk factors / Supply Chain Risks,diesel_supply_dependency,unknown,"Additionally, the Company’s operations are dependent on the availability of diesel fuel. A significant fuel supply shortage arising from production
+decreases, increased demand in existing or emerging foreign markets, disruption of oil imports, disruption of domestic refinery production, damage to
+refinery or pipeline infrastructure, political unrest, war or other factors could have a material adverse effect on the Company's results of operations,
+financial position, and liquidity in a particular year or quarter.",Canal de disponibilité physique distinct du seul prix.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,"Dépendance au diesel ; pénurie susceptible d’affecter opérations, situation financière et liquidité.",Risque conditionnel déclaré ; ne prouve pas une pénurie réalisée ni sa probabilité.,"41 / CPKC 2025 ANNUAL REPORT
+The Company is subject to environmental laws and regulations that may result in significant costs. The Company’s operations are subject
+to extensive federal, state, provincial (Canada) and local environmental laws and regulations, including those governing air pollutants, GHG emissions,
+management and remediation of historical contaminant sites, discharges to waters and the handling, storage, transportation, and disposal of waste and
+other materials. (Please see ""Environmental Laws, Regulations and Strategies"" and ""Sustainability-Related Laws, Regulations and Strategies"" in Item 1.
+Business for further discussion). Violation of these laws and regulations can result in significant fines and penalties, as well as other potential impacts on
+the Company’s operations. These laws can impose strict, and in some circumstances, joint and several liability on both current and former owners, and on
+operators of facilities. If the Company is found to have violated such laws or regulations or to have acted in a manner that is inconsistent with regulatory
+expectations, such a finding could have a material adverse effect on the Company’s business, financial condition, or operating results.
+Such environmental liabilities may also be raised by adjacent landowners or third parties. In addition, in operating a railway, it is possible that releases of
+hazardous materials during derailments or other accidents may occur that could cause harm to human health or to the environment. Costs of remediation,
+damages and changes in regulations could materially affect the Company’s operating results and reputation. The Company has been, and may in the
+future be, subject to allegations or findings to the effect that it has violated, or is strictly liable under, environmental laws or regulations. The Company
+currently has obligations at existing sites for investigation, remediation, and monitoring, and will likely have obligations at other sites in the future. The
+actual costs associated with both current and long-term liabilities may vary from the Company’s estimates due to a number of factors including, but not
+limited to, changes in: the content or interpretation of environmental laws and regulations; required remedial actions; technology associated with site
+investigation or remediation; and the involvement and financial viability of other parties that may be responsible for portions of those liabilities. The
+Company’s Mexican operations are subject to Mexican federal and state laws and regulations relating to the protection of the environment concerning,
+among other matters, emissions to the air, land, and water, and the handling of hazardous materials and wastes, and are also subject to compliance with
+standards for water discharge, water supply, emissions, noise pollution, hazardous substances and transportation and handling of hazardous and solid
+waste. The Mexican government may bring administrative and criminal proceedings, impose economic sanctions against companies that violate
+environmental laws, and temporarily or even permanently close non-complying facilities.
+The Company is subject to claims and litigation that could result in significant expenditures. Due to the nature of its operations, the
+Company is exposed to the potential for claims and litigation arising out of personal injury, property damage or freight damage, employment, labour
+contract or other commercial disputes, and environmental, climate or sustainability, or other liability. The Company accrues for potential losses in
+accordance with applicable accounting standards, based on ongoing assessments of the likelihood of an adverse result in a claim or litigation together
+with the monetary relief or other damages sought or potentially recoverable. Material changes to litigation trends, a significant rail or other incident or
+series of incidents involving freight damage or loss, property damage, personal injury, or environmental, climate or sustainability, or other liability, and
+other significant matters could have a material adverse impact to the Company's operations, reputation, financial position, or liquidity.
+Supply Chain Risks
+Disruptions within the supply chain could negatively affect the Company's operational efficiencies and increase costs. The North
+American transportation system is integrated. The Company’s operations and service may be negatively impacted by service disruptions of other
+transportation links, such as ports, handling facilities, customer facilities, and other railways. A prolonged service disruption at one of these entities could
+have a material adverse effect on the Company's results of operations, financial condition, and liquidity.
+The Company is dependent on certain key suppliers of core railway equipment and materials that could result in increased price
+volatility or significant shortages of materials, which could adversely affect results of operations, financial condition, and liquidity.
+Due to the complexity and specialized nature of core railway equipment and infrastructure (including rolling stock equipment, locomotives, rail, and ties),
+there are a limited number of suppliers of rail equipment and materials available. Should these specialized suppliers cease production or experience
+capacity or supply shortages, this concentration of suppliers could result in the Company experiencing cost increases or difficulty in obtaining rail
+equipment and materials, which could have a material adverse effect on the Company's results of operations, financial condition, and liquidity.
+",,5586,6103,445f8c6e0ee8a932f3b019c8944308bb731f0499846dc9b0cc386b5049dd4201,{},pending_issuer_to_cdn,original_PDF_text_reviewed
+CPKC-2025-05,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,53,62,"Form 10-K — MD&A / Energy, Chemicals and Plastics",energy_freight_mix_volume,unknown,"The increase in Energy, chemicals and plastics revenue was primarily due to an increase in freight revenue per RTM and higher volumes of liquefied
+petroleum gas (""L.P.G."") from western Canada to Mexico and Texas. This increase was partially offset by lower volumes of crude, plastics, diluents, and
+fuel oil and lower fuel surcharge revenue. Freight revenue per RTM increased due to higher freight rates and the favourable impact of the change in FX
+rates.","Volumes, mix, tarifs, surcharges et change peuvent avoir des effets différents.",CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,Hausse du revenu ECP attribuée à revenu par RTM et GPL ; compensations par crude/plastics/diluents/fuel oil et surcharges.,L’agrégat ECP n’isole pas l’effet pétrole ou le rendement du titre.,"CPKC 2025 ANNUAL REPORT / 62
+Forest Products
+For the year ended December 31 2025 2024
+Total
+Change
+%
+Change
+Freight revenues (in millions) $ 792 $ 816 $ (24) (3)
+Carloads (in thousands) 130.0 139.5 (9.5) (7)
+Revenue ton-miles (in millions) 8,843 9,075 (232) (3)
+Freight revenue per carload (in dollars) $ 6,092 $ 5,849 $ 243 4
+Freight revenue per revenue ton-mile (in cents) 8.96 8.99 (0.03) —
+The decrease in Forest products revenue was primarily due to lower volumes of lumber, newsprint, and wood pulp and lower fuel surcharge revenue. This
+decrease was partially offset by higher freight rates and the favourable impact of the change in FX rates. Carloads decreased more than RTMs due to
+moving lower volumes of paperboard from Louisiana to other destinations within the southern U.S., which have shorter lengths of haul.
+Energy, Chemicals and Plastics
+For the year ended December 31 2025 2024
+Total
+Change
+%
+Change
+Freight revenues (in millions) $ 2,898 $ 2,851 $ 47 2
+Carloads (in thousands) 563.3 581.8 (18.5) (3)
+Revenue ton-miles (in millions) 37,659 38,837 (1,178) (3)
+Freight revenue per carload (in dollars) $ 5,145 $ 4,900 $ 245 5
+Freight revenue per revenue ton-mile (in cents) 7.70 7.34 0.36 5
+","
+Metals, Minerals and Consumer Products
+For the year ended December 31 2025 2024
+Total
+Change
+%
+Change
+Freight revenues (in millions) $ 1,792 $ 1,777 $ 15 1
+Carloads (in thousands) 495.0 517.6 (22.6) (4)
+Revenue ton-miles (in millions) 19,211 19,177 34 —
+Freight revenue per carload (in dollars) $ 3,620 $ 3,433 $ 187 5
+Freight revenue per revenue ton-mile (in cents) 9.33 9.27 0.06 1
+The increase in Metals, minerals and consumer products revenue was primarily due to higher volumes of frac sand, cement, and sand and stone and an
+increase in freight revenue per RTM, partially offset by lower volumes of steel and lower fuel surcharge revenue. Freight revenue per RTM increased due to
+higher freight rates and the favourable impact of the change in FX rates. Carloads decreased while RTMs remained flat due to moving lower volumes of
+steel within Mexico, which has a shorter length of haul.",1209,1665,1bb5fbccf20c63184144f54eb24f9b3e589f38563c05d63c67a4b6a9877a10a1,"{""title"": ""Energy, Chemicals and Plastics"", ""units"": ""Revenus millions CAD ; carloads milliers ; RTM millions ; dollars/carload ; cents/RTM"", ""columns"": ""2025, 2024, Total Change, % Change"", ""scope"": ""Exercice clos le 31 décembre ; ECP 2 898 vs 2 851 M CAD"", ""footnote_review"": ""Aucune note spécifique ; règle CAD page PDF 17. Revenus +2 % ≠ carloads/RTM −3 %.""}",pending_issuer_to_cdn,rendered_page_reviewed
+CPKC-2025-06,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,54,63,Form 10-K — MD&A / Operating Expenses,fuel_cost_materiality,unknown,"Fuel 1,731 1,802 (71) (4)",Charge opérationnelle directement mesurée.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,"Charge carburant : 1 731 M CAD en 2025 contre 1 802 en 2024 ; baisse 71 M CAD, soit 4 %.",Variation annuelle pas entièrement attribuable au pétrole ; voir candidat 07.,"63 / CPKC 2025 ANNUAL REPORT
+Automotive
+For the year ended December 31 2025 2024
+Total
+Change
+%
+Change
+Freight revenues (in millions) $ 1,310 $ 1,280 $ 30 2
+Carloads (in thousands) 238.9 247.8 (8.9) (4)
+Revenue ton-miles (in millions) 5,493 5,014 479 10
+Freight revenue per carload (in dollars) $ 5,483 $ 5,165 $ 318 6
+Freight revenue per revenue ton-mile (in cents) 23.85 25.53 (1.68) (7)
+The increase in Automotive revenue was primarily due to higher volumes from Mexico to Canada and higher freight rates, partially offset by a decrease in
+freight revenue per RTM due to lower fuel surcharge revenue. RTMs increased while carloads decreased due to moving higher volumes from Mexico to
+Canada, which has a longer length of haul, and moving lower volumes from Mexico to Laredo, Texas, which has a shorter length of haul.
+Intermodal
+For the year ended December 31 2025 2024
+Total
+Change
+%
+Change
+Freight revenues (in millions) $ 2,679 $ 2,524 $ 155 6
+Carloads (in thousands) 1,780.6 1,642.9 137.7 8
+Revenue ton-miles (in millions) 38,473 35,218 3,255 9
+Freight revenue per carload (in dollars) $ 1,505 $ 1,536 $ (31) (2)
+Freight revenue per revenue ton-mile (in cents) 6.96 7.17 (0.21) (3)
+The increase in Intermodal revenue was primarily due to higher international intermodal volumes to and from the Port of Vancouver and the Port of Saint
+John, including with the new Gemini Cooperation shipping alliance, higher domestic intermodal wholesale and retail volumes, higher freight rates, and
+the favourable impact of the change in FX rates. This increase was partially offset by a decrease in freight revenue per RTM and lower international
+intermodal volumes to and from the Port of Montréal. Freight revenue per RTM decreased due to lower fuel surcharge revenue.
+Operating Expenses
+For the year ended December 31
+(in millions of Canadian dollars) 2025 2024
+Total
+Change
+%
+Change
+Compensation and benefits $ 2,581 $ 2,565 $ 16 1
+","
+Materials 474 406 68 17
+Equipment rents 408 347 61 18
+Depreciation and amortization 2,019 1,900 119 6
+Purchased services and other 2,256 2,347 (91) (4)
+Total operating expenses $ 9,469 $ 9,367 $ 102 1
+Compensation and Benefits
+Compensation and benefits expense includes employee wages, salaries, fringe benefits, and stock-based compensation. The increase in Compensation
+and benefits expense was primarily due to the impact of wage and benefit inflation and increased volume variable expenses as a result of increased
+workload as measured by GTMs.
+This increase was partially offset by:
+• efficiencies gained by a reduction in headcount due to the completion of systems integration in 2025 and efficient resource planning;
+• decreased stock-based compensation of $49 million primarily due to changes in payout rates, net of impacts from share price; and
+• lower incentive compensation.",1930,1955,a2f5cce23b17009c1230c8cdcc1fa5b0ba1b3d5a22d88ef2db4c98480e4d6a14,"{""title"": ""Operating Expenses"", ""units"": ""Millions CAD"", ""columns"": ""2025, 2024, Total Change, % Change"", ""scope"": ""Exercice clos le 31 décembre ; ligne Fuel"", ""footnote_review"": ""Aucune note spécifique ; explication sur PDF 55 / imprimée 64.""}",pending_issuer_to_cdn,rendered_page_reviewed
+CPKC-2025-07,CP.TO,Canadian Pacific Kansas City Limited,CPKC 2025 Annual Report,2025,2025-12-31,en,55,64,Form 10-K — MD&A / Fuel,fuel_price_cost_bridge,unknown,"Fuel expense consists primarily of fuel used by locomotives and includes provincial, state, and federal fuel taxes. The decrease in Fuel expense was
+primarily due to the impact of lower fuel price of $159 million, which includes lower carbon tax expense due to the elimination of the Canadian federal
+carbon tax program effective April 1, 2025. This decrease was partially offset by an increase in workload, as measured by GTMs and the unfavourable
+impact of the change in FX rates of $16 million.",Ventilation de l’effet prix parmi plusieurs facteurs opérationnels.,CPKC_2025_EN_452856be75e5.pdf,452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f,https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf,False,True,operational,unknown,"Réduction de 159 M CAD attribuée à prix carburant plus faibles, taxes carbone comprises ; compensation partielle par workload et FX.","159 M CAD est une composante, pas la baisse totale de 71 M CAD ni une sensibilité Brent.","CPKC 2025 ANNUAL REPORT / 64
+Fuel
+","
+Materials
+Materials expense includes the cost of materials used for the maintenance of track, locomotives, freight cars, and buildings, as well as software
+sustainment. The increase in Materials expense was primarily due to:
+• higher locomotive material costs primarily due to a new parts agreement insourcing a subset of maintenance work with a favourable offset in
+""Purchased services and other"" effective in the fourth quarter of 2024;
+• higher freight car maintenance; and
+• increased safety material costs.
+Equipment Rents
+Equipment rents expense includes the cost associated with using other railways' freight cars, intermodal equipment, and locomotives, net of recoveries
+received from other railways for the use of the Company’s equipment. The increase in Equipment rents expense was primarily due to:
+• greater usage of pooled freight cars by the company;
+• increased cycle times increasing the Company's rental duration of other railways' freight cars; and
+• the unfavourable impact of the change in FX rates of $7 million.
+Depreciation and Amortization
+Depreciation and amortization expense is the charge associated with the use of track and roadway, rolling stock, buildings, and other depreciable assets,
+including assets related to the Company's concession granted by the Mexican government (see further discussion on the Concession in the ""Liquidity and
+Capital Resources"" section), as well as amortization of finite life intangible assets. The increase in Depreciation and amortization expense was primarily
+due to a higher depreciable asset base as a result of capital program spending in 2025 and 2024, and the unfavourable impact of the change in FX rates
+of $22 million.
+Purchased Services and Other
+Purchased services and other expense encompasses a wide range of third-party costs, including expenses for joint facilities, personal injury and damage
+claims, environmental remediation, property taxes, contractor and consulting fees, and insurance premiums. The decrease in Purchased services and other
+expense was primarily due to:
+• lower third-party locomotive costs due to insourcing and a new parts agreement embedded in ""Materials"" effective in the fourth quarter of 2024;
+• a decrease in casualty incident costs;
+• lower acquisition-related costs; and
+• lower terminal service costs.
+This decrease was partially offset by:
+• the impact of cost inflation;
+• a one-time fee of $34 million (U.S. $25 million) received in 2024 in connection with the Company's agreement to waive a departing executive's
+non-competition agreement with respect to their employment with Norfolk Southern Corporation; and
+• the unfavourable impact of the change in FX rates of $21 million.
+Other Income Statement Items
+Other (Income) Expense
+Other (income) expense consists of gains and losses from the change in FX rates on cash and working capital, the impact of foreign currency forwards,
+financing costs, shareholder costs, equity earnings, and other non-operating expenditures. Other income was $1 million, a decrease of $41 million, or
+98%, from Other income of $42 million in 2024. This decrease was primarily due to lower equity income of $29 million driven by the settlement of a
+property disposition by an equity investee in 2024 and a gain on debt extinguishments of $22 million in 2024 (see Item 8. Financial Statements and
+Supplementary Data, Note 17 Debt for details), partially offset by a higher FX gain of $8 million on cash and working capital denominated in Mexican
+pesos and U.S. dollars compared to the same period in 2024.",34,531,a6c688e629deb13715d33b6ad8043125339a08edc1d452995ea26da1b74f7af1,{},pending_issuer_to_cdn,rendered_page_reviewed

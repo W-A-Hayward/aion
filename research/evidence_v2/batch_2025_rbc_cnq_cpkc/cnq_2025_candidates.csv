@@ -1,0 +1,314 @@
+evidence_id,ticker,issuer,document_title,fiscal_year,fiscal_year_end,language,pdf_page,printed_page,section,channel_candidate,direction,excerpt,interpretation,document_file,sha256,source_url,url_verified,quote_verified,evidence_kind,stock_return_direction,disclosed_fact,limitations,source_context_before,source_context_after,quote_start,quote_end,source_page_sha256,table_context,source_provenance_status,visual_review_status
+CNQ-2025-01,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,21,20,MD&A — Benchmark commodity prices,benchmark_pricing_and_fx,unknown,"Substantially all of the Company's production is sold based on US dollar benchmark pricing, with crude oil marketed based on
+WTI and Brent indices, and natural gas marketed using a diversified mix of AECO- and NYMEX-based pricing. The Company's
+realized prices are directly impacted by fluctuations in foreign exchange rates resulting in product revenues being impacted by
+changes in Canadian dollar sales prices relative to the US dollar benchmark prices.",Séparer pétrole et USD/CAD dans l’étude statistique.,CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Tarification largement fondée sur références USD, dont WTI/Brent, avec effet du change sur prix réalisés CAD.",Le passage inclut aussi le gaz ; prix réalisé ≠ Brent ≠ rendement du titre.,"BENCHMARK COMMODITY PRICES
+(Yearly average) 2025 2024 2023
+WTI benchmark price (US$/bbl) $ 64.77 $ 75.72 $ 77.61
+Dated Brent benchmark price (US$/bbl) $ 69.02 $ 80.75 $ 82.61
+WCS Heavy Differential from WTI (US$/bbl) $ 11.10 $ 14.73 $ 18.62
+SCO price (US$/bbl) $ 64.42 $ 75.09 $ 79.64
+Condensate benchmark price (US$/bbl) $ 63.32 $ 72.94 $ 76.55
+NYMEX benchmark price (US$/MMBtu) $ 3.43 $ 2.27 $ 2.74
+AECO benchmark price (C$/GJ) $ 1.76 $ 1.36 $ 2.77
+US/Canadian dollar average exchange rate (US$) $ 0.7155 $ 0.7300 $ 0.7409
+US/Canadian dollar year end exchange rate (US$) $ 0.7292 $ 0.6942 $ 0.7573
+","
+Crude oil sales contracts in North America are typically based on WTI benchmark pricing. WTI averaged US$64.77 per bbl for
+2025, a decrease of 14% from US$75.72 per bbl for 2024 (2023 – US$77.61 per bbl).
+Crude oil sales contracts for the Company's International segments are typically based on Brent benchmark pricing, which is
+representative of international markets and overall global supply and demand. Brent averaged US$69.02 per bbl for 2025, a
+decrease of 15% from US$80.75 per bbl for 2024 (2023 – US$82.61 per bbl).
+The decrease in WTI and Brent benchmark pricing for 2025 from 2024 primarily reflected increased global supply and inventory
+builds driven by near-record production from non-OPEC+ producers and higher OPEC+ output. Supply gains exceeded global
+demand growth, which remained muted amid ongoing tariff and trade uncertainty.
+The WCS Heavy Differential averaged US$11.10 per bbl for 2025 compared with US$14.73 per bbl for 2024 (2023 –
+US$18.62 per bbl). The narrowing of the WCS Heavy Differential for 2025 from 2024 primarily reflected full year takeaway
+capacity on the TMX pipeline and strong US Gulf Coast heavy oil pricing.
+The SCO price averaged US$64.42 per bbl for 2025, a decrease of 14% from US$75.09 per bbl for 2024 (2023 – US$79.64 per
+bbl). The decrease in SCO pricing for 2025 from 2024 primarily reflected weaker WTI benchmark pricing.
+NYMEX benchmark pricing averaged US$3.43 per MMBtu for 2025, an increase of 51% from US$2.27 per MMBtu for 2024
+(2023 – US$2.74 per MMBtu). The increase in NYMEX natural gas pricing for 2025 from 2024 primarily reflected lower US
+inventory levels in the first half of 2025, combined with record LNG exports out of the US Gulf Coast.
+AECO benchmark pricing averaged $1.76 per GJ for 2025, an increase of 29% from $1.36 per GJ for 2024 (2023 –
+$2.77 per GJ). The increase in AECO natural gas pricing for 2025 from 2024 primarily reflected higher NYMEX benchmark
+pricing and increased exports out of the WCSB.
+Canadian Natural 2025 Annual Report 20",600,1056,7fdc4817b38b62943561e4d499d3868bde4e4d294d094890be14b28d4aa3048c,{},official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+CNQ-2025-02,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,21,20,MD&A — Benchmark commodity prices / WCS Heavy Differential,wcs_wti_differential,unknown,"The WCS Heavy Differential averaged US$11.10 per bbl for 2025 compared with US$14.73 per bbl for 2024 (2023 –
+US$18.62 per bbl). The narrowing of the WCS Heavy Differential for 2025 from 2024 primarily reflected full year takeaway
+capacity on the TMX pipeline and strong US Gulf Coast heavy oil pricing.",Un différentiel régional peut influer sur les revenus indépendamment du niveau de Brent.,CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Différentiel WCS-WTI : 11,10 USD/baril en 2025 contre 14,73 en 2024 ; CNQ cite TMX et les prix du brut lourd du Golfe.","Explication attribuée à l’émetteur, pas identification économétrique causale.","BENCHMARK COMMODITY PRICES
+(Yearly average) 2025 2024 2023
+WTI benchmark price (US$/bbl) $ 64.77 $ 75.72 $ 77.61
+Dated Brent benchmark price (US$/bbl) $ 69.02 $ 80.75 $ 82.61
+WCS Heavy Differential from WTI (US$/bbl) $ 11.10 $ 14.73 $ 18.62
+SCO price (US$/bbl) $ 64.42 $ 75.09 $ 79.64
+Condensate benchmark price (US$/bbl) $ 63.32 $ 72.94 $ 76.55
+NYMEX benchmark price (US$/MMBtu) $ 3.43 $ 2.27 $ 2.74
+AECO benchmark price (C$/GJ) $ 1.76 $ 1.36 $ 2.77
+US/Canadian dollar average exchange rate (US$) $ 0.7155 $ 0.7300 $ 0.7409
+US/Canadian dollar year end exchange rate (US$) $ 0.7292 $ 0.6942 $ 0.7573
+Substantially all of the Company's production is sold based on US dollar benchmark pricing, with crude oil marketed based on
+WTI and Brent indices, and natural gas marketed using a diversified mix of AECO- and NYMEX-based pricing. The Company's
+realized prices are directly impacted by fluctuations in foreign exchange rates resulting in product revenues being impacted by
+changes in Canadian dollar sales prices relative to the US dollar benchmark prices.
+Crude oil sales contracts in North America are typically based on WTI benchmark pricing. WTI averaged US$64.77 per bbl for
+2025, a decrease of 14% from US$75.72 per bbl for 2024 (2023 – US$77.61 per bbl).
+Crude oil sales contracts for the Company's International segments are typically based on Brent benchmark pricing, which is
+representative of international markets and overall global supply and demand. Brent averaged US$69.02 per bbl for 2025, a
+decrease of 15% from US$80.75 per bbl for 2024 (2023 – US$82.61 per bbl).
+The decrease in WTI and Brent benchmark pricing for 2025 from 2024 primarily reflected increased global supply and inventory
+builds driven by near-record production from non-OPEC+ producers and higher OPEC+ output. Supply gains exceeded global
+demand growth, which remained muted amid ongoing tariff and trade uncertainty.
+","
+The SCO price averaged US$64.42 per bbl for 2025, a decrease of 14% from US$75.09 per bbl for 2024 (2023 – US$79.64 per
+bbl). The decrease in SCO pricing for 2025 from 2024 primarily reflected weaker WTI benchmark pricing.
+NYMEX benchmark pricing averaged US$3.43 per MMBtu for 2025, an increase of 51% from US$2.27 per MMBtu for 2024
+(2023 – US$2.74 per MMBtu). The increase in NYMEX natural gas pricing for 2025 from 2024 primarily reflected lower US
+inventory levels in the first half of 2025, combined with record LNG exports out of the US Gulf Coast.
+AECO benchmark pricing averaged $1.76 per GJ for 2025, an increase of 29% from $1.36 per GJ for 2024 (2023 –
+$2.77 per GJ). The increase in AECO natural gas pricing for 2025 from 2024 primarily reflected higher NYMEX benchmark
+pricing and increased exports out of the WCSB.
+Canadian Natural 2025 Annual Report 20",1905,2208,7fdc4817b38b62943561e4d499d3868bde4e4d294d094890be14b28d4aa3048c,"{""title"": ""BENCHMARK COMMODITY PRICES"", ""units"": ""USD/baril pour WTI, Brent, différentiel WCS"", ""columns"": ""Moyennes annuelles 2025, 2024, 2023"", ""scope"": ""Références de marché, pas prix réalisés de toute la production"", ""footnote_review"": ""Aucune note spécifique ; gaz et change ont d’autres unités.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+CNQ-2025-03,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,26,25,MD&A — Realized product prices / North America,realized_crude_pricing,unknown,"North America realized crude oil and NGLs prices decreased 7% to average $70.90 per bbl for 2025 from $76.37 per bbl for
+2024 (2023 – $70.51 per bbl), primarily reflecting lower WTI benchmark pricing, partially offset by a narrowing of the WCS
+Heavy Differential.",Niveau de référence et différentiel influent sur les prix de vente.,CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Prix réalisé nord-américain pétrole/NGLs : 70,90 CAD/baril en 2025 contre 76,37 en 2024 ; WTI plus faible compensé en partie par WCS.","Ratio non-GAAP, périmètre E&P nord-américain incluant NGLs ; ne pas mélanger CAD et USD.","REALIZED PRODUCT PRICES – EXPLORATION AND PRODUCTION
+2025 2024 2023
+Crude oil and NGLs ($/bbl) (1)
+North America (2) $ 70.90 $ 76.37 $ 70.51
+International average (3) North Sea (3) Offshore Africa (3) $ 98.07 $ 108.80 $ 107.46
+$ 97.26 $ 111.53 $ 110.99
+$ 99.71 $ 106.00 $ 106.25
+Crude oil and NGLs average (2) $ 71.54 $ 77.76 $ 72.36
+Natural gas ($/Mcf) (1) (3)
+North America $ 2.47 $ 1.81 $ 3.04
+International average North Sea Offshore Africa $ 12.45 $ 12.01 $ 12.81
+$ 11.77 $ 9.93 $ 10.45
+$ 12.77 $ 12.46 $ 13.19
+Natural gas average $ 2.51 $ 1.86 $ 3.10
+Average ($/BOE) (1) (2) $ 47.98 $ 50.82 $ 50.54
+(1) (2) (3) For crude oil and NGLs and BOE sales volumes, refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A. For natural gas sales volumes,
+refer to the 'Daily Production, before royalties' section of this MD&A.
+Non-GAAP Ratio. Refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A.
+Calculated as crude oil and NGLs sales, and natural gas sales divided by respective sales volumes.
+North America
+","
+The Company remains focused on its crude oil blending and marketing strategy, which includes expanding market access
+within existing pipeline infrastructure, supporting pipeline projects that increase transportation capacity to new markets, and
+collaborating with refiners to enhance heavy conversion capacity. During 2025, the Company contributed approximately
+223,000 bbl/d of heavy crude oil blends to the WCS stream.
+North America realized natural gas prices increased 36% to average $2.47 per Mcf for 2025 from $1.81 per Mcf for 2024
+(2023 – $3.04 per Mcf). The increase in realized natural gas prices per Mcf for 2025 from 2024 primarily reflected higher AECO
+benchmark and export pricing.
+The prices received in the North America Exploration and Production segment by product type were as follows:
+(Yearly average) 2025 2024 2023
+Wellhead Price (1)
+Light and medium crude oil and NGLs ($/bbl) $ 65.77 $ 69.42 $ 70.72
+Pelican Lake heavy crude oil ($/bbl) $ 75.07 $ 82.83 $ 77.69
+Primary heavy crude oil ($/bbl) $ 73.74 $ 81.97 $ 75.67
+Thermal bitumen ($/bbl) $ 72.42 $ 76.57 $ 67.62
+$ 2.47 $ 1.81 $ 3.04
+Natural gas ($/Mcf) (1) Amounts expressed on a per unit basis are based on sales volumes of the respective product type.
+International
+International realized crude oil and NGLs prices averaged $98.07 per bbl for 2025, a decrease of 10% from $108.80 per bbl for
+2024 (2023 – $107.46 per bbl). Realized crude oil and NGLs prices per bbl in any particular year are dependent on the terms of
+the various sales contracts, the frequency and timing of liftings from each field, prevailing Brent benchmark prices and foreign
+exchange rates at the time of lifting.
+25 Canadian Natural 2025 Annual Report",1045,1308,230c9018b850fb403b5cc5c71584b1350fad992ece3c3032c60beff0fe9eab9c,"{""title"": ""REALIZED PRODUCT PRICES – EXPLORATION AND PRODUCTION"", ""units"": ""CAD/baril ; règle de devise page PDF 15"", ""columns"": ""2025, 2024, 2023"", ""scope"": ""Crude oil and NGLs / North America"", ""footnote_review"": ""Note 1 : volumes et rapprochements ; note 2 : Non-GAAP Ratio, applicable à North America ; note 3 : ventes/volumes.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+CNQ-2025-04,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,26,25,MD&A — Realized product prices / International,international_brent_contract_timing,unknown,"International realized crude oil and NGLs prices averaged $98.07 per bbl for 2025, a decrease of 10% from $108.80 per bbl for
+2024 (2023 – $107.46 per bbl). Realized crude oil and NGLs prices per bbl in any particular year are dependent on the terms of
+the various sales contracts, the frequency and timing of liftings from each field, prevailing Brent benchmark prices and foreign
+exchange rates at the time of lifting.",Exposition commerciale à Brent avec calendrier et termes contractuels.,CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Prix réalisé international dépendant des contrats, levées, Brent et change selon CNQ.",Le mécanisme de revenu n’établit pas le signe ou la valeur du beta boursier.,"REALIZED PRODUCT PRICES – EXPLORATION AND PRODUCTION
+2025 2024 2023
+Crude oil and NGLs ($/bbl) (1)
+North America (2) $ 70.90 $ 76.37 $ 70.51
+International average (3) North Sea (3) Offshore Africa (3) $ 98.07 $ 108.80 $ 107.46
+$ 97.26 $ 111.53 $ 110.99
+$ 99.71 $ 106.00 $ 106.25
+Crude oil and NGLs average (2) $ 71.54 $ 77.76 $ 72.36
+Natural gas ($/Mcf) (1) (3)
+North America $ 2.47 $ 1.81 $ 3.04
+International average North Sea Offshore Africa $ 12.45 $ 12.01 $ 12.81
+$ 11.77 $ 9.93 $ 10.45
+$ 12.77 $ 12.46 $ 13.19
+Natural gas average $ 2.51 $ 1.86 $ 3.10
+Average ($/BOE) (1) (2) $ 47.98 $ 50.82 $ 50.54
+(1) (2) (3) For crude oil and NGLs and BOE sales volumes, refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A. For natural gas sales volumes,
+refer to the 'Daily Production, before royalties' section of this MD&A.
+Non-GAAP Ratio. Refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A.
+Calculated as crude oil and NGLs sales, and natural gas sales divided by respective sales volumes.
+North America
+North America realized crude oil and NGLs prices decreased 7% to average $70.90 per bbl for 2025 from $76.37 per bbl for
+2024 (2023 – $70.51 per bbl), primarily reflecting lower WTI benchmark pricing, partially offset by a narrowing of the WCS
+Heavy Differential.
+The Company remains focused on its crude oil blending and marketing strategy, which includes expanding market access
+within existing pipeline infrastructure, supporting pipeline projects that increase transportation capacity to new markets, and
+collaborating with refiners to enhance heavy conversion capacity. During 2025, the Company contributed approximately
+223,000 bbl/d of heavy crude oil blends to the WCS stream.
+North America realized natural gas prices increased 36% to average $2.47 per Mcf for 2025 from $1.81 per Mcf for 2024
+(2023 – $3.04 per Mcf). The increase in realized natural gas prices per Mcf for 2025 from 2024 primarily reflected higher AECO
+benchmark and export pricing.
+The prices received in the North America Exploration and Production segment by product type were as follows:
+(Yearly average) 2025 2024 2023
+Wellhead Price (1)
+Light and medium crude oil and NGLs ($/bbl) $ 65.77 $ 69.42 $ 70.72
+Pelican Lake heavy crude oil ($/bbl) $ 75.07 $ 82.83 $ 77.69
+Primary heavy crude oil ($/bbl) $ 73.74 $ 81.97 $ 75.67
+Thermal bitumen ($/bbl) $ 72.42 $ 76.57 $ 67.62
+$ 2.47 $ 1.81 $ 3.04
+Natural gas ($/Mcf) (1) Amounts expressed on a per unit basis are based on sales volumes of the respective product type.
+International
+","
+25 Canadian Natural 2025 Annual Report",2554,2974,230c9018b850fb403b5cc5c71584b1350fad992ece3c3032c60beff0fe9eab9c,{},official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+CNQ-2025-05,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,27,26,MD&A — Royalties / North America,royalties_and_production_economics,unknown,"Government royalties on a significant portion of North America crude oil and NGLs production fall under the oil sands royalty
+regime and are calculated on a project by project basis as a percentage of gross revenue less production, capital, and
+abandonment costs incurred.
+North America crude oil and NGLs and natural gas royalties for 2025 and the comparable periods reflected movements in
+benchmark commodity prices, fluctuations in the WCS Heavy Differential and the impact of sliding scale royalty rates.",Les redevances modifient la transmission du prix de vente au résultat économique.,CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Redevances dépendantes des revenus/coûts, références et barèmes ; taux pétrole/NGLs de 17 % en 2025 contre 20 % en 2024.","Taux non-GAAP et régimes par projet, pas élasticité universelle du profit.","ROYALTIES – EXPLORATION AND PRODUCTION
+2025 2024 2023
+Crude oil and NGLs ($/bbl) (1)
+North America $ 11.77 $ 15.40 $ 12.89
+International average North Sea Offshore Africa $ 1.56 $ 2.75 $ 5.99
+$ 0.15 $ 0.26 $ 0.33
+$ 4.41 $ 5.30 $ 10.08
+Crude oil and NGLs average $ 11.53 $ 14.85 $ 12.55
+Natural gas ($/Mcf) (1)
+North America Offshore Africa $ 0.08 $ 0.04 $ 0.13
+$ 0.59 $ 0.57 $ 0.62
+Natural gas average $ 0.08 $ 0.05 $ 0.13
+Average ($/BOE) (1) $ 6.90 $ 8.96 $ 7.77
+(1) Calculated as royalties divided by respective sales volumes. For crude oil and NGLs and BOE sales volumes, refer to the 'Non-GAAP and Other Financial
+Measures' section of this MD&A. For natural gas sales volumes, refer to the 'Daily Production, before royalties' section of this MD&A.
+North America
+","
+Crude oil and NGLs royalty rates(1) averaged approximately 17% of product sales for 2025 compared with 20% of product sales
+for 2024 (2023 – 18%). The decrease in royalty rates for 2025 from 2024 primarily reflected lower benchmark pricing and the
+impact of sliding scale royalty rates.
+Natural gas royalty rates averaged approximately 3% of product sales for 2025 compared with 2% of product sales for 2024
+(2023 – 4%). The increase in royalty rates for 2025 from 2024 primarily reflected higher prevailing benchmark pricing.
+Offshore Africa
+Under the terms of the various Production Sharing Contracts, royalty rates fluctuate based on realized commodity pricing,
+capital expenditures and production expenses, the status of payouts, and the timing of liftings from each field.
+Royalty rates as a percentage of product sales averaged approximately 4% for 2025 compared with 5% of product sales for
+2024 (2023 – 9%). Royalty rates as a percentage of product sales reflected the timing of liftings, and the status of payout in the
+various fields.
+PRODUCTION EXPENSE – EXPLORATION AND PRODUCTION
+2025 2024 2023
+Crude oil and NGLs ($/bbl) (1)
+North America $ 12.19 $ 12.55 $ 14.46
+International average North Sea Offshore Africa $ 103.48 $ 62.99 $ 48.16
+$ 136.47 $ 103.28 $ 85.57
+$ 36.73 $ 21.77 $ 21.14
+Crude oil and NGLs average $ 14.33 $ 14.72 $ 16.12
+Natural gas ($/Mcf) (1)
+North America $ 1.11 $ 1.19 $ 1.27
+International average North Sea Offshore Africa $ 9.23 $ 6.51 $ 7.26
+$ 12.18 $ 8.95 $ 9.85
+$ 7.80 $ 5.98 $ 6.83
+Natural gas average $ 1.14 $ 1.22 $ 1.30
+Average ($/BOE) (1) $ 11.18 $ 11.73 $ 12.74
+(1) Calculated as production expense divided by respective sales volumes. For crude oil and NGLs and BOE sales volumes, refer to the 'Non-GAAP and Other
+Financial Measures' section of this MD&A. For natural gas sales volumes, refer to the 'Daily Production, before royalties' section of this MD&A.
+(1) Non-GAAP Ratio. Refer to the 'Non-GAAP and Other Financial Measures' section of this MD&A.
+Canadian Natural 2025 Annual Report 26",767,1275,1ab524c96e09d4158c01594802894eaa316ca38193cd380aee694b1bd3af1786,"{""title"": ""ROYALTIES – EXPLORATION AND PRODUCTION"", ""units"": ""CAD/baril pour montants unitaires ; % product sales pour taux"", ""columns"": ""2025, 2024, 2023"", ""scope"": ""North America / crude oil and NGLs"", ""footnote_review"": ""Note du taux (1) au pied : Non-GAAP Ratio ; note du tableau : royalties/sales volumes. Montant unitaire ≠ taux.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed
+CNQ-2025-06,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,50,49,MD&A — Non-GAAP and Other Financial Measures / NETBACK,netback_production_economics,unknown,"Netback is a non-GAAP ratio that represents net cash flows provided from core activities after the impact of all costs associated
+with bringing a product to market, on a per unit basis.","Compléter l’étude des prix par les coûts, redevances et transport.",CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,"Netback défini comme ratio non-GAAP de flux nets après coûts d’acheminement au marché, par unité.","Définition, pas sensibilité estimée. Présentation transport/blending modifiée en 2025 et comparatifs retraités, selon cette page.","ADJUSTED FUNDS FLOW
+Adjusted funds flow is a non-GAAP financial measure that represents cash flows from operating activities as presented in the
+Company's consolidated statements of cash flows adjusted for the net change in non-cash working capital, abandonment
+expenditures, and movements in other long-term assets. The Company considers adjusted funds flow a key measure in
+evaluating its performance, as it demonstrates the Company's ability to generate the cash flow necessary to fund future growth
+through capital investment, repay debt, and provide returns to shareholders through dividends and share buybacks. A
+reconciliation for adjusted funds flow from cash flows from operating activities is presented below.
+($ millions) 2025 2024 2023
+Cash flows from operating activities $ 15,106 $ 13,386 $ 12,353
+Net change in non-cash working capital (672) 743 2,417
+Abandonment expenditures 771 646 509
+Movements in other long-term assets (1) 255 84 (5)
+Adjusted funds flow $ 15,460 $ 14,859 $ 15,274
+(1) Includes the unamortized cost of contributions to the Company's employee bonus program, interest on PRT and corporate tax recoveries in the North Sea,
+and prepaid cost of service tolls.
+ADJUSTED NET EARNINGS FROM OPERATIONS AND ADJUSTED FUNDS FLOW, PER COMMON
+SHARE (BASIC AND DILUTED)
+Adjusted net earnings from operations and adjusted funds flow, per common share (basic and diluted) are non-GAAP ratios that
+represent those non-GAAP measures divided by the weighted average number of basic and diluted common shares
+outstanding for the period, respectively, as presented in note 16 to the Company's audited consolidated financial statements.
+These non-GAAP measures, disclosed on a per share basis, enable a comparison to the per share amounts disclosed in the
+Company's financial statements prepared in accordance with IFRS Accounting Standards.
+ABANDONMENT EXPENDITURES, NET
+Abandonment expenditures, net, is a non-GAAP financial measure that represents the abandonment expenditures to settle
+asset retirement obligations as reflected in the Company's historical annual capital budgets. Abandonment expenditures, net is
+calculated as abandonment expenditures, as presented in the Company's audited consolidated statements of cash flows,
+adjusted for the impact of government grant income under the provincial well-site rehabilitation programs. Beginning in 2023,
+the Company no longer receives government grant income under these programs and as a result, the measure no longer differs
+from the most directly comparable GAAP measure and is not reported in this MD&A.
+NETBACK
+"," The Company considers netback a key measure in evaluating its
+performance, as it demonstrates the efficiency and profitability of the Company's activities. Refer to the 'Operating Highlights –
+Exploration and Production', 'Per Unit Results – Exploration and Production', and 'Per Unit Results – Oil Sands Mining and
+Upgrading' sections of this MD&A for the netback calculations on a per unit basis for crude oil and NGLs and on a total barrels
+of oil equivalent basis.
+The netback calculations include the realized price non-GAAP financial measure which is reconciled below to its respective line
+item in note 21 to the Company's audited consolidated financial statements.
+During 2025, the Company revised its presentation of transportation expense and blending and feedstock costs, showing the
+expenses on a disaggregated basis in the consolidated statements of earnings. Previously, the Company aggregated
+transportation, blending and feedstock costs. The revision provides users with more information to evaluate the Company's
+performance. The audited consolidated financial statements and this MD&A have been updated for all periods presented. As a
+result, Transportation ($/BOE, $/bbl and $/Mcf) is no longer considered a non-GAAP ratio.
+49 Canadian Natural 2025 Annual Report",2586,2771,752f971c4731e38e52e65609824f575398770e4b626bb135adcad3cc66026788,{},official_issuer_url_in_acquisition_receipt,original_PDF_text_reviewed
+CNQ-2025-07,CNQ.TO,Canadian Natural Resources Limited,Canadian Natural 2025 Annual Report,2025,2025-12-31,en,54,53,MD&A — Other / Sensitivity analysis,issuer_cashflow_wti_sensitivity,unknown,"The following table is indicative of the annualized sensitivities of cash flows from operating activities and net earnings due to
+changes in certain key variables. The analysis is based on business conditions and sales volumes during the fourth quarter of
+2025, excluding mark-to-market gains (losses) on risk management activities and is not necessarily indicative of future results.
+Each separate line item in the sensitivity analysis shows the effect of a change in that variable only with all other variables being
+held constant.
+Cash flows
+from Operating
+Activities
+($ millions)
+Cash flows
+from Operating
+Activities
+(per common
+share, basic)
+Net
+earnings
+($ millions)
+Net
+earnings
+(per common
+share, basic)
+Price changes
+Crude oil – WTI US$1.00/bbl $ 409 $ 0.20 $ 409 $ 0.20","Point d’appui documentaire sur flux/bénéfices, à distinguer d’une régression du titre.",CNQ_2025_EN_497adbc4c8be.pdf,497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8,https://www.cnrl.com/content/uploads/2026/04/CNQ_2025-Annual-Report.pdf,True,True,operational,unknown,Variation WTI de 1 USD/baril : sensibilité annualisée affichée de 409 M CAD des flux opérationnels et 409 M CAD du résultat net.,Conditions et volumes T4 2025 ; autres variables constantes ; mark-to-market exclu ; pas nécessairement indicatif du futur ; aucun IC ni beta Brent.,"AFTER-TAX RETURN ON AVERAGE CAPITAL EMPLOYED
+After-tax return on average capital employed as defined by the Company is a non-GAAP ratio. The ratio is calculated as net
+earnings plus after-tax interest and other financing expense for the twelve month trailing period as a percentage of average
+capital employed (defined as current and long-term debt plus shareholders' equity) for the twelve month trailing period. The
+Company considers this ratio a key measure in evaluating the Company's ability to generate profit and the efficiency with which
+it employs capital. A reconciliation of the Company's after-tax return on average capital employed is presented below.
+($ millions, except ratios) 2025 2024 2023
+Interest adjusted after-tax return:
+Net earnings, 12 months trailing (1) $ 10,820 $ 6,106 $ 8,233
+Interest and other financing expense, net of tax, 12 months trailing (2) 640 454 490
+Interest adjusted after-tax return $ 11,460 $ 6,560 $ 8,723
+12 months average current portion long-term debt (3) $ 1,293 $ 1,525 $ 1,259
+12 months average long-term debt (3) 16,149 10,642 10,354
+12 months average common shareholders' equity (3) 41,208 39,635 38,974
+12 months average capital employed $ 58,650 $ 51,802 $ 50,587
+After-tax return on average capital employed 20% 13% 17%
+(1) (2) (3) Net earnings, 12 months trailing for 2025 includes a gain on acquisition, disposition, and remeasurement of $4,989 million associated with the AOSP asset
+swap. Further details are disclosed in note 6 to the Company's audited consolidated financial statements.
+The blended tax rate on interest was approximately 23% for each of the periods presented.
+For the purpose of this non-GAAP ratio, the measurement of average current and long-term debt and common shareholders' equity are determined on a
+consistent basis, as an average of the opening and quarterly period end values for the 12 month trailing period for each of the periods presented.
+Other
+SENSITIVITY ANALYSIS
+","
+Natural gas – AECO C$0.10/Mcf (1)
+Excluding financial derivatives $ 52 $ 0.02 $ 52 $ 0.02
+Including financial derivatives $ 51 $ 0.02 $ 51 $ 0.02
+Volume changes
+Crude oil – 10,000 bbl/d $ 136 $ 0.07 $ 114 $ 0.05
+Natural gas – 10 MMcf/d $ 3 $ — $ (3) $ —
+Foreign currency rate change
+$0.01 change in US$ (1)
+Including financial derivatives $ 267 $ 0.13 $ 78 $ 0.04
+Interest rate change – 1% $ 33 $ 0.02 $ 33 $ 0.02
+(1) For details of financial instruments in place, refer to note 18 to the Company's audited consolidated financial statements.
+53 Canadian Natural 2025 Annual Report",1958,2737,6448fa92c676774e6e0ae54c3575a40eba5b5e06297c95afca2324fb8f05c090,"{""title"": ""SENSITIVITY ANALYSIS"", ""units"": ""Choc : USD/baril ; impacts : millions CAD et CAD/action de base"", ""columns"": ""Cash flows ($ millions), cash flows/share basic, net earnings ($ millions), net earnings/share basic"", ""scope"": ""Sensibilités annualisées T4 2025 ; une variable à la fois"", ""footnote_review"": ""Note 1 renvoie aux instruments pour gaz/change, pas à la ligne WTI. Préambule complet conservé dans l’extrait.""}",official_issuer_url_in_acquisition_receipt,rendered_page_reviewed

@@ -1,0 +1,971 @@
+{
+  "schema_version": 2,
+  "catalog_kind": "research_only",
+  "mode": "local_read_only",
+  "investigation_ticker": "XIU.TO",
+  "resolved_at": "2026-11-15T13:38:41.303987+00:00",
+  "holdings_snapshot": {
+    "as_of": "2026-11-12",
+    "source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+    "sha256": "9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+    "membership_basis": "provided_official_snapshot_hashed_locally",
+    "s3_verification": "not_checked",
+    "row_count": 65,
+    "total_displayed_weight_pct": 100.02,
+    "weights_renormalized": false
+  },
+  "scope": {
+    "constituents": [
+      "ATD.TO",
+      "CNR.TO"
+    ],
+    "document_count": 2,
+    "passage_count": 12,
+    "constituent_weight_pct": 3.85,
+    "weight_meaning": "holdings_with_selected_candidates_not_statistical_coverage",
+    "other_holdings": "outside_this_resolver_scope"
+  },
+  "holdings": [
+    {
+      "ticker": "ATD.TO",
+      "source_row": 25,
+      "row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7",
+      "ticker_original": "ATD",
+      "company_name": "ALIMENTATION COUCHE TARD INC",
+      "sector": "Consumer Staples",
+      "asset_class": "Equity",
+      "weight_pct": 1.46,
+      "exchange": "Toronto Stock Exchange",
+      "currency": "CAD",
+      "weight_pct_original": "1.46"
+    },
+    {
+      "ticker": "CNR.TO",
+      "source_row": 17,
+      "row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641",
+      "ticker_original": "CNR",
+      "company_name": "CANADIAN NATIONAL RAILWAY",
+      "sector": "Industrials",
+      "asset_class": "Equity",
+      "weight_pct": 2.39,
+      "exchange": "Toronto Stock Exchange",
+      "currency": "CAD",
+      "weight_pct_original": "2.39"
+    }
+  ],
+  "documents": [
+    {
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "issuer": "Canadian National Railway Company",
+      "document_title": "2025 Annual Report — DRIVEN",
+      "document_file": "CNR_2025_EN_d24931ef2f25.pdf",
+      "language": "en",
+      "fiscal_year": 2025,
+      "fiscal_year_end": "2025-12-31",
+      "publication_date": null,
+      "source_url": "https://www.cn.ca/-/media/files/investors/investor-annual-report/2025-cn-annual-report.pdf",
+      "source_url_verified_claim": false,
+      "source_link_status": "unknown",
+      "issuer_verification": {
+        "status": "reported_verified",
+        "method": "historical_acquisition_receipt",
+        "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "source_verification": {
+        "status": "reported_verified",
+        "method": "historical_acquisition_receipt",
+        "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "hash_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "doc_type": "annual_report",
+      "s3_key": null,
+      "local_file": "/Users/leahemidj/Documents/GitHub/cascade/research/source_documents/runs/20261115T131702Z_d4fbb4fa/CNR_2025_EN_d24931ef2f25.pdf",
+      "local_file_verification": {
+        "status": "verified",
+        "method": "local_sha256_comparison",
+        "checked_at": "2026-11-15T13:38:41.303987+00:00",
+        "sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+        "scope": "bytes_only_not_financial_claims"
+      },
+      "publication_date_verification": "unverified",
+      "acquisition": {
+        "retrieved_at": "2026-11-15T13:17:14.127777+00:00",
+        "original_url": "https://www.cn.ca/-/media/files/investors/investor-annual-report/2025-cn-annual-report.pdf",
+        "final_url": "https://www.cn.ca/-/media/files/investors/investor-annual-report/2025-cn-annual-report.pdf",
+        "download_status_at_retrieval": "downloaded",
+        "current_link_availability": "not_checked",
+        "manifest_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "research_source_url": "https://www.cn.ca/-/media/files/investors/investor-annual-report/2025-cn-annual-report.pdf",
+        "page_count_from_receipt": 152
+      }
+    },
+    {
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "issuer": "Alimentation Couche-Tard inc.",
+      "document_title": "Rapport annuel 2026",
+      "document_file": "ATD_2026_FR_e5707264468a.pdf",
+      "language": "fr",
+      "fiscal_year": 2026,
+      "fiscal_year_end": "2026-04-26",
+      "publication_date": null,
+      "source_url": "https://corporatif.couche-tard.com/download/COTA092_ACT_Annual+Report_PRINT_FR_20260623.pdf",
+      "source_url_verified_claim": false,
+      "source_link_status": "unknown",
+      "issuer_verification": {
+        "status": "reported_verified",
+        "method": "historical_acquisition_receipt",
+        "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "source_verification": {
+        "status": "reported_verified",
+        "method": "historical_acquisition_receipt",
+        "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "hash_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "doc_type": "annual_report",
+      "s3_key": null,
+      "local_file": "/Users/leahemidj/Documents/GitHub/cascade/research/source_documents/runs/20261115T131702Z_d4fbb4fa/ATD_2026_FR_e5707264468a.pdf",
+      "local_file_verification": {
+        "status": "verified",
+        "method": "local_sha256_comparison",
+        "checked_at": "2026-11-15T13:38:41.303987+00:00",
+        "sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+        "scope": "bytes_only_not_financial_claims"
+      },
+      "publication_date_verification": "unverified",
+      "acquisition": {
+        "retrieved_at": "2026-11-15T13:17:03.759654+00:00",
+        "original_url": "https://corporatif.couche-tard.com/download/COTA092_ACT_Annual+Report_PRINT_FR_20260623.pdf",
+        "final_url": "https://filecache.investorroom.com/mr5ircnwfr_alimentationcouchetard/1305/download/COTA092_ACT_Annual%20Report_PRINT_FR_20260623.pdf",
+        "download_status_at_retrieval": "downloaded",
+        "current_link_availability": "not_checked",
+        "manifest_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+        "research_source_url": null,
+        "page_count_from_receipt": 127
+      }
+    }
+  ],
+  "passages": [
+    {
+      "evidence_id": "ev:sha256:5f6bb0fd796e15cb67701a1f61cf0837fc409f1446fa3cad1dcb1d855ddd9997",
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "research_id": "ATD-2026-01",
+      "subject_ticker": "ATD.TO",
+      "subject_type": "company",
+      "pdf_page": 66,
+      "printed_page": "64",
+      "section": "Facteurs de risque — Carburant pour le transport routier",
+      "excerpt_original": "Nos résultats sont sensibles à l’évolution du prix et de la marge brute sur le carburant pour le transport routier.",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_prices_margins",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "ATD.TO",
+      "holding_ticker_original": "ATD",
+      "holding_weight_pct": 1.46,
+      "holding_weight_pct_original": "1.46",
+      "document_sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "context": {
+        "context_id": "ctx:sha256:a3728fc18ab3a94fa935ff4f56a8af4f0a09392a3487ceb117dbd90fb0653115",
+        "evidence_id": "ev:sha256:5f6bb0fd796e15cb67701a1f61cf0837fc409f1446fa3cad1dcb1d855ddd9997",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "ATD.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:3ae0c248414613b765b31a61be2f5268ef51d92a6e55512c801ef617a668eeca",
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "research_id": "ATD-2026-02",
+      "subject_ticker": "ATD.TO",
+      "subject_type": "company",
+      "pdf_page": 66,
+      "printed_page": "64",
+      "section": "Facteurs de risque — Carburant pour le transport routier",
+      "excerpt_original": "les ventes de carburant pour le transport routier ont représenté environ 73,0 %2 de notre chiffre d’affaires total et 50,0 %2 de notre marge brute1 totale.",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_materiality",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "ATD.TO",
+      "holding_ticker_original": "ATD",
+      "holding_weight_pct": 1.46,
+      "holding_weight_pct_original": "1.46",
+      "document_sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "context": {
+        "context_id": "ctx:sha256:b4d3c23a99dca5077002986a368bcdd06387e9df8c8885611fa6a5ae393d869c",
+        "evidence_id": "ev:sha256:3ae0c248414613b765b31a61be2f5268ef51d92a6e55512c801ef617a668eeca",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "ATD.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:88a8cb8f1a69cb786b4c8b584ac41e0e459519805284807daf41373336fe5e2d",
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "research_id": "ATD-2026-03",
+      "subject_ticker": "ATD.TO",
+      "subject_type": "company",
+      "pdf_page": 66,
+      "printed_page": "64",
+      "section": "Facteurs de risque — Actes de guerre, terrorisme et événements géopolitiques",
+      "excerpt_original": "les instabilités politiques, conflits armés et sanctions imposées par des pays pourraient avoir une incidence sur l’économie en général ainsi que sur la chaîne d'approvisionnement et le prix du pétrole brut.",
+      "evidence_kind": "operational",
+      "operational_channel": "oil_geopolitics",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "ATD.TO",
+      "holding_ticker_original": "ATD",
+      "holding_weight_pct": 1.46,
+      "holding_weight_pct_original": "1.46",
+      "document_sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "context": {
+        "context_id": "ctx:sha256:a29b9412774267c2c9221c443df4fa0c1dffba596b54d79dbda3fcd7e1c50e4b",
+        "evidence_id": "ev:sha256:88a8cb8f1a69cb786b4c8b584ac41e0e459519805284807daf41373336fe5e2d",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "ATD.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:edb583f03d36c1bb133e43980eb5036dd1ad6ad6a1c1f5bb95c4bf3e90fa861a",
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "research_id": "ATD-2026-04",
+      "subject_ticker": "ATD.TO",
+      "subject_type": "company",
+      "pdf_page": 41,
+      "printed_page": "39",
+      "section": "Analyse des résultats — Ventes de carburant",
+      "excerpt_original": "Les volumes de carburant pour le transport routier par magasin comparable ont diminué de 2,1 % aux États-Unis et de 4,4 % en Europe et autres régions",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_price_demand",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "ATD.TO",
+      "holding_ticker_original": "ATD",
+      "holding_weight_pct": 1.46,
+      "holding_weight_pct_original": "1.46",
+      "document_sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "context": {
+        "context_id": "ctx:sha256:47877b086b8b9695e6106de78c140b9627d43caac5b2d68ab4950f976467201a",
+        "evidence_id": "ev:sha256:edb583f03d36c1bb133e43980eb5036dd1ad6ad6a1c1f5bb95c4bf3e90fa861a",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "ATD.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:631b33812368b73ab37673613b8966cb2784f4799216fa508ba8abe175a87552",
+      "document_id": "doc:sha256:e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "research_id": "ATD-2026-05",
+      "subject_ticker": "ATD.TO",
+      "subject_type": "company",
+      "pdf_page": 67,
+      "printed_page": "65",
+      "section": "Facteurs de risque — Modes de paiements électroniques",
+      "excerpt_original": "Nous sommes exposés à des fluctuations considérables des frais afférents aux modes de paiements électroniques résultant de variations importantes des prix de détail du carburant pour le transport routier",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_card_costs",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "ATD.TO",
+      "holding_ticker_original": "ATD",
+      "holding_weight_pct": 1.46,
+      "holding_weight_pct_original": "1.46",
+      "document_sha256": "e5707264468a705945d2b7e078373ca12fedbbe51213e566f11c82a95f970e2b",
+      "context": {
+        "context_id": "ctx:sha256:66e85ecbc595b35c6b22f0fd0cc8a607707d7fd1c1ababa9bda593136de60b02",
+        "evidence_id": "ev:sha256:631b33812368b73ab37673613b8966cb2784f4799216fa508ba8abe175a87552",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "ATD.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:b88ffd01e3433d460ab6add3c86772d93884b4211631322a350f5fbbe0ab3fd7"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:8a9fa50575c56d52ba6f9aa0d05755c0a1a2ef8f7db2a4185ccbe1506301fd58",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-01",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 52,
+      "printed_page": "22",
+      "section": "Petroleum and chemicals",
+      "excerpt_original": "Revenues (millions)",
+      "evidence_kind": "operational",
+      "operational_channel": "petroleum_chemicals_revenue",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:31c89bbfcbf748bdd91fdeb9f79c233bb5abb92644cc682b9e24060dfef65ea0",
+        "evidence_id": "ev:sha256:8a9fa50575c56d52ba6f9aa0d05755c0a1a2ef8f7db2a4185ccbe1506301fd58",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:fbb88eeb7ffc201c6c6aeb02c387a031b6b2870054375af2a1333aa426d14749",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-02",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 52,
+      "printed_page": "22",
+      "section": "Petroleum and chemicals",
+      "excerpt_original": "The petroleum and chemicals commodity group comprises a wide range of commodities, including chemicals and plastics, refined petroleum products, natural gas liquids, crude oil and sulfur.",
+      "evidence_kind": "operational",
+      "operational_channel": "oil_related_cargo",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:d237ac5e8d22bb3bb8811ae2c66ce9e161e29ec8a6997195b16fe2ff5d1eb8fd",
+        "evidence_id": "ev:sha256:fbb88eeb7ffc201c6c6aeb02c387a031b6b2870054375af2a1333aa426d14749",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:041a3132f15ad4179e501de2b6827b46a18909d0f9763f030dd4283dbb851b87",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-03",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 58,
+      "printed_page": "28",
+      "section": "Fuel",
+      "excerpt_original": "Fuel expense decreased by $274 million, or 13%, in 2025 when compared to 2024.",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_cost",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:974fe7ccc95e9264b206e83694b3769c95dc342173e57d50b95e1c2bbd3c8cdf",
+        "evidence_id": "ev:sha256:041a3132f15ad4179e501de2b6827b46a18909d0f9763f030dd4283dbb851b87",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:b5b4c1cfc8784cd0b9eb327a2ca519d57dad623c9efc3a1a8987bbd3f2ea61a3",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-04",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 79,
+      "printed_page": "49",
+      "section": "Commodity price risk",
+      "excerpt_original": "The Company is exposed to commodity price risk related to purchases of fuel and the potential reduction in Net income due to increases in the price of diesel.",
+      "evidence_kind": "operational",
+      "operational_channel": "diesel_price_risk",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:e424f2098f3272864b338c4cd32799b8c2df95161d49cfd024607eb4f05deaf4",
+        "evidence_id": "ev:sha256:b5b4c1cfc8784cd0b9eb327a2ca519d57dad623c9efc3a1a8987bbd3f2ea61a3",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:032b6f5dc4d0f3d2ce6374ad68292c70ebcdc0920e163e58062f3bdd24cfd6fd",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-05",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 79,
+      "printed_page": "49",
+      "section": "Commodity price risk",
+      "excerpt_original": "The surcharge applied to customers is determined in the second calendar month prior to the month in which it is applied, and is generally calculated using the average monthly price of On-Highway Diesel.",
+      "evidence_kind": "operational",
+      "operational_channel": "fuel_surcharge_lag",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:c3e8c62e2002e1941fb402c6c3a58ee89ba2b143421d81c7e08f505e502241e9",
+        "evidence_id": "ev:sha256:032b6f5dc4d0f3d2ce6374ad68292c70ebcdc0920e163e58062f3bdd24cfd6fd",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:cf6188acc8be75a691c439279735ed05357b1ec38e3bab9921d528e7ec07f1d8",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-06",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 79,
+      "printed_page": "49",
+      "section": "Commodity price risk",
+      "excerpt_original": "While the Company's fuel surcharge program provides effective coverage, residual exposure remains given that fuel price risk cannot be completely managed due to timing and given the volatility in the market.",
+      "evidence_kind": "operational",
+      "operational_channel": "residual_diesel_exposure",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:5de7a715d1a3d5e01eac6f2dc23a2a2080676a6a2b0ed416cecbd01c5d8ff4c6",
+        "evidence_id": "ev:sha256:cf6188acc8be75a691c439279735ed05357b1ec38e3bab9921d528e7ec07f1d8",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    },
+    {
+      "evidence_id": "ev:sha256:ab9cae264fa8fa0459a76def43def09a2e5a4340847aa7dd456b9a93ef7cca6d",
+      "document_id": "doc:sha256:d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "research_id": "CN-2025-07",
+      "subject_ticker": "CNR.TO",
+      "subject_type": "company",
+      "pdf_page": 52,
+      "printed_page": "22",
+      "section": "Petroleum and chemicals",
+      "excerpt_original": "The primary markets for these commodities are within North America, and as such, the performance of this commodity group is closely correlated with the North American economy as well as oil and gas production, petroleum refining activity, pipeline capacities and related petrochemical commodity prices.",
+      "evidence_kind": "operational",
+      "operational_channel": "oil_industry_demand",
+      "stock_return_direction": "unknown",
+      "interpretation": "",
+      "quote_verified_claim": true,
+      "quote_verification": {
+        "status": "reported_verified",
+        "method": "research_register_assertion",
+        "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+        "checked_at": null,
+        "verified_by": null
+      },
+      "ticker": "CNR.TO",
+      "holding_ticker_original": "CNR",
+      "holding_weight_pct": 2.39,
+      "holding_weight_pct_original": "2.39",
+      "document_sha256": "d24931ef2f25540de9cfd950cfcd2f97978e2454486a8a1001e354fc6ad2146c",
+      "context": {
+        "context_id": "ctx:sha256:4448f2ed730d13a70f07d4568f5ed61707fe32abe4ff56b3dc11fbb16af17aa4",
+        "evidence_id": "ev:sha256:ab9cae264fa8fa0459a76def43def09a2e5a4340847aa7dd456b9a93ef7cca6d",
+        "investigation_ticker": "XIU.TO",
+        "association_type": "holding",
+        "subject_ticker": "CNR.TO",
+        "holdings_as_of": "2026-11-12",
+        "holdings_source_id": "holdings:sha256:9caae3aa6b3aa4ad4faf2b37c9f96fd604f2a10c8cb60831f388ad0a28947527",
+        "holding_row_id": "holding:sha256:4aa2aa924de9e4070fabbceb00cea0e9cceabb711a69b61c46c2689e37203641"
+      },
+      "verification": {
+        "holding_membership": "verified_in_local_snapshot",
+        "document_bytes": "verified",
+        "official_provenance": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "issuer": {
+          "status": "reported_verified",
+          "method": "historical_acquisition_receipt",
+          "source_artifact_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "quote": {
+          "status": "reported_verified",
+          "method": "research_register_assertion",
+          "source_artifact_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+          "checked_at": null,
+          "verified_by": null
+        },
+        "page_reference": "reported_in_research_register_not_reextracted",
+        "interpretation": "not_validated_by_resolver"
+      }
+    }
+  ],
+  "statistical_relationships": {
+    "status": "not_computed",
+    "benchmark": "Brent",
+    "beta": null,
+    "contributions": [],
+    "reason": "Operational statements do not establish statistical sensitivity or stock-return direction."
+  },
+  "limitations": [
+    "Local source checks do not verify current S3 or online availability.",
+    "Reported quote/provenance checks are preserved, not promoted to independent verification.",
+    "CN-2025-01 is a table heading requiring context; ATD footnotes and all interpretations need review.",
+    "No evidence is published or reassigned directly to XIU."
+  ],
+  "inputs": {
+    "holdings_file": "/Users/leahemidj/Downloads/xiu_holdings.csv",
+    "register_file": "/Users/leahemidj/Downloads/RIPPLE_Official_Research_Register_2026-11-15.xlsx",
+    "register_sha256": "d12abd3a0da045977ec78f232b986721992c87f884c703fd86a6245b14287214",
+    "acquisition_manifest_sha256": "34424d2c8de5974731c3f72b070f9996070a825e60a953a50981869e23f65e52"
+  }
+}

@@ -1,0 +1,433 @@
+{
+  "batch": "oil_batch_2025",
+  "generated_at": "2026-11-15T13:56:23+00:00",
+  "catalog_kind": "research_only",
+  "document": {
+    "document_id": "doc:sha256:452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+    "sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+    "sha256_matches_receipt": true,
+    "issuer": "Canadian Pacific Kansas City Limited",
+    "title": "CPKC 2025 Annual Report",
+    "ticker": "CP.TO",
+    "fiscal_year_end": "2025-12-31",
+    "language": "en",
+    "pdf_pages": 142,
+    "local_file": "runs/20261115T131702Z_d4fbb4fa/CPKC_2025_EN_452856be75e5.pdf",
+    "official_url": "https://s21.q4cdn.com/736796105/files/doc_financials/2025/ar/v2/CPKC-Annual-Report-2025-Final-Web.pdf",
+    "landing_url": "https://investor.cpkcr.com/financials/default.aspx?section=annual",
+    "retrieved_at": "2026-11-15T13:17:17.695431+00:00",
+    "regulatory_alternative_url": "https://www.sec.gov/Archives/edgar/data/16875/000001687526000008/cp-20251231.htm",
+    "provenance_status": "pending_issuer_to_cdn_link",
+    "provenance_note": "PROVENANCE PENDING. The PDF was retrieved from s21.q4cdn.com (an investor-relations CDN), not from a CPKC domain. The acquisition review (metadata_review.json, status provenance_manual_review) requires confirming and archiving the exact hyperlink from investor.cpkcr.com to this CDN URL. Until then, treat the issuer-to-file link as unestablished. Content is internally consistent with a CPKC Form 10-K. A regulatory alternative is listed on the receipt (SEC EDGAR cp-20251231.htm) but was not downloaded or compared.",
+    "url_verified_in_this_batch": false
+  },
+  "candidates": [
+    {
+      "research_id": "CPKC-2025-01",
+      "evidence_id": "ev:sha256:2284099ca682a75aaf3efb463fd3cf39942819077ce1bfa9090de445453071f6",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 23,
+      "printed_page": "32",
+      "section": "Form 10-K Part I, Item 1. Business — Fuel Cost Adjustment Program",
+      "form": "narrative",
+      "operational_channel": "fuel_surcharge_pass_through",
+      "company_disclosed_text": "The short-term volatility in fuel prices may adversely or positively impact revenues. The Company employs a fuel cost adjustment program designed to respond to fluctuations in fuel prices and help reduce volatility to changing fuel prices.",
+      "our_interpretation": "Two-way revenue effect stated by the company: fuel-price volatility can raise or lower revenues; the surcharge program is the mechanism, not a guarantee of full pass-through.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Fuel Cost Adjustment Program"
+      ],
+      "context_before": "…Port of Lázaro Cárdenas is primarily destined for Mexico. The Company works closely with the Port of Montréal, a major year-round East Coast gateway to Europe, to serve markets primarily in Canada and the U.S. Midwest. The Company's access to the Port of Saint John provides the fastest rail service between the East Coast and Canadian and U.S. markets for imports from and exports to Asia, Europe, and South America. Fuel Cost Adjustment Program",
+      "context_after": "Fuel surcharge revenues are earned on individual shipments and are based primarily on the price of On-Highway Diesel in Canada and the U.S. and the public fuel price for Petróleos Mexicanos (\"PEMEX\") TAR Irapuato in Mexico. As such, fuel surcharge revenues are a function of freight volumes and fuel prices. Fuel surcharge revenues accounted for approximately 10% of the Company's Freight revenues in 2025. The Company is also subject to carbon…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Fuel Cost Adjustment Program": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "32"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-02",
+      "evidence_id": "ev:sha256:4a6dce3896261591c28de410693dde2ec013a71b2d1e793e7d1fd58806a26124",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 23,
+      "printed_page": "32",
+      "section": "Form 10-K Part I, Item 1. Business — Fuel Cost Adjustment Program",
+      "form": "narrative",
+      "operational_channel": "fuel_surcharge_pass_through",
+      "company_disclosed_text": "Fuel surcharge revenues are earned on individual shipments and are based primarily on the price of On-Highway Diesel in Canada and the U.S. and the public fuel price for Petróleos Mexicanos (\"PEMEX\") TAR Irapuato in Mexico. As such, fuel surcharge revenues are a function of freight volumes and fuel prices.",
+      "our_interpretation": "Surcharges are indexed to diesel (and PEMEX fuel in Mexico), not to crude directly. Any link to Brent runs crude -> refined diesel -> surcharge, with refining margins and lags in between.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Fuel Cost Adjustment Program"
+      ],
+      "context_before": "…to the Port of Saint John provides the fastest rail service between the East Coast and Canadian and U.S. markets for imports from and exports to Asia, Europe, and South America. Fuel Cost Adjustment Program The short-term volatility in fuel prices may adversely or positively impact revenues. The Company employs a fuel cost adjustment program designed to respond to fluctuations in fuel prices and help reduce volatility to changing fuel prices.",
+      "context_after": "Fuel surcharge revenues accounted for approximately 10% of the Company's Freight revenues in 2025. The Company is also subject to carbon taxation systems and levies in some jurisdictions in which it operates, the costs of which are passed on to the shipper. As such, fuel surcharge revenue includes recoveries of carbon taxes and levies.",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Fuel Cost Adjustment Program": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "32"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-03",
+      "evidence_id": "ev:sha256:c2c1853e9f62104efb9d274601a3feaa2650da55858f65653dc37a7484e6c16e",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 23,
+      "printed_page": "32",
+      "section": "Form 10-K Part I, Item 1. Business — Fuel Cost Adjustment Program",
+      "form": "narrative",
+      "operational_channel": "fuel_surcharge_materiality",
+      "company_disclosed_text": "Fuel surcharge revenues accounted for approximately 10% of the Company's Freight revenues in 2025.",
+      "our_interpretation": "Materiality: about a tenth of freight revenue moves with fuel prices through the surcharge.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Fuel Cost Adjustment Program"
+      ],
+      "context_before": "…a fuel cost adjustment program designed to respond to fluctuations in fuel prices and help reduce volatility to changing fuel prices. Fuel surcharge revenues are earned on individual shipments and are based primarily on the price of On-Highway Diesel in Canada and the U.S. and the public fuel price for Petróleos Mexicanos (\"PEMEX\") TAR Irapuato in Mexico. As such, fuel surcharge revenues are a function of freight volumes and fuel prices.",
+      "context_after": "The Company is also subject to carbon taxation systems and levies in some jurisdictions in which it operates, the costs of which are passed on to the shipper. As such, fuel surcharge revenue includes recoveries of carbon taxes and levies.",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Fuel Cost Adjustment Program": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "32"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-04",
+      "evidence_id": "ev:sha256:af9ec4ebcb1332a3dd18842bf61fdc813c92271d0b524e527a7ab98e36066dff",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 30,
+      "printed_page": "39",
+      "section": "Form 10-K Part I, Item 1A. Risk Factors — The Company is affected by fluctuating fuel prices",
+      "form": "narrative",
+      "operational_channel": "fuel_cost",
+      "company_disclosed_text": "The Company is affected by fluctuating fuel prices. Fuel expense constitutes a significant portion of the Company’s operating costs. Fuel prices can be subject to dramatic fluctuations and significant price increases could have a material adverse effect on the Company's results of operations.",
+      "our_interpretation": "Cost channel stated as a risk factor: higher fuel prices are an adverse risk to results.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [],
+      "context_before": "…also involved in the transportation of hazardous materials, which could result in the Company's equipment or infrastructure being direct targets or indirect casualties of terrorist attacks. Acts of terrorism, or other similar events, any government response thereto, and war or risk of war could cause significant business interruption to the Company and may adversely affect the Company’s results of operations, financial condition and liquidity.",
+      "context_after": "The Company currently employs a fuel cost adjustment program to help reduce volatility in changing fuel prices, but the Company cannot be certain that it will always be able to fully mitigate rising or elevated fuel prices through this program. Factors affecting fuel prices include worldwide oil demand, international geopolitics, weather, refinery capacity, supplier and upstream outages, unplanned infrastructure failures, environmental and…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {},
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "39"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-05",
+      "evidence_id": "ev:sha256:ac7839f264f2046ed94eb4b842ca9b6121e9bfb6cddd42a936beb563e1d485cf",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 30,
+      "printed_page": "39",
+      "section": "Form 10-K Part I, Item 1A. Risk Factors — The Company is affected by fluctuating fuel prices",
+      "form": "narrative",
+      "operational_channel": "fuel_surcharge_limits",
+      "company_disclosed_text": "The Company currently employs a fuel cost adjustment program to help reduce volatility in changing fuel prices, but the Company cannot be certain that it will always be able to fully mitigate rising or elevated fuel prices through this program. Factors affecting fuel prices include worldwide oil demand, international geopolitics, weather, refinery capacity, supplier and upstream outages, unplanned infrastructure failures, environmental and sustainability policies, and labour and political instability.",
+      "our_interpretation": "Pass-through is incomplete by the company's own account, and fuel prices depend on refinery capacity and other factors besides crude. This is why a CP.TO oil beta could be near zero or unstable.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "The Company is affected by fluctuating fuel prices."
+      ],
+      "context_before": "…cause significant business interruption to the Company and may adversely affect the Company’s results of operations, financial condition and liquidity. The Company is affected by fluctuating fuel prices. Fuel expense constitutes a significant portion of the Company’s operating costs. Fuel prices can be subject to dramatic fluctuations and significant price increases could have a material adverse effect on the Company's results of operations.",
+      "context_after": "The Company relies on technology and technological improvements to operate its business. Although the Company devotes significant resources to protect its technology systems and proprietary data, there can be no assurance that the systems and processes we have designed to prevent or limit the effects of cyber incidents or attacks will be sufficient in averting such incidents or attacks. (Please see \"Item 1C. Cybersecurity\" for further…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "The Company is affected by fluctuating fuel prices.": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "39"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-06",
+      "evidence_id": "ev:sha256:e24d06b3259441a84488956cbd2c2a4f39d719d10556f021d9be444d16559129",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 55,
+      "printed_page": "64",
+      "section": "Form 10-K Part II, Item 7. Management's Discussion and Analysis — Operating Expenses — Fuel",
+      "form": "narrative",
+      "operational_channel": "fuel_cost",
+      "company_disclosed_text": "Fuel expense consists primarily of fuel used by locomotives and includes provincial, state, and federal fuel taxes. The decrease in Fuel expense was primarily due to the impact of lower fuel price of $159 million, which includes lower carbon tax expense due to the elimination of the Canadian federal carbon tax program effective April 1, 2025.",
+      "our_interpretation": "The $159 million cost saving mixes the commodity effect with the end of the Canadian federal carbon tax, so it overstates a pure fuel-price effect.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": "Canadian dollars: Form 10-K p. 26 (PDF 17) states 'All references to currency amounts included in this Annual Report on Form 10-K are in Canadian dollars unless specifically noted otherwise.' Fuel expense was $1,731 million in 2025 (Operating Expenses table, PDF 54).",
+      "anchors": [],
+      "context_before": "CPKC 2025 ANNUAL REPORT / 64 Fuel",
+      "context_after": "This decrease was partially offset by an increase in workload, as measured by GTMs and the unfavourable impact of the change in FX rates of $16 million. Materials Materials expense includes the cost of materials used for the maintenance of track, locomotives, freight cars, and buildings, as well as software sustainment. The increase in Materials expense was primarily due to: • higher locomotive material costs primarily due to a new parts…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {},
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "64"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-07",
+      "evidence_id": "ev:sha256:fa299aae822fbc2a14493c2e8f882ff2a7bc1d0e327816f1a24548e4e632865c",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 57,
+      "printed_page": "66",
+      "section": "Form 10-K Part II, Item 7. Management's Discussion and Analysis — Impact of Fuel Price on Earnings",
+      "form": "narrative",
+      "operational_channel": "fuel_price_net_impact",
+      "company_disclosed_text": "In 2025, the unfavourable impact of fuel prices on \"Operating income\" was $46 million. Lower fuel prices, which includes lower carbon levy surcharge revenue due to the elimination of the Canadian federal carbon tax program effective April 1, 2025, and the unfavourable impact of the timing of recoveries under the Company's fuel cost adjustment program, resulted in a decrease in \"Total revenues\" of $205 million from 2024. Lower fuel prices resulted in a decrease in Total operating expenses of $159 million from 2024.",
+      "our_interpretation": "The key nuance: in 2025, LOWER fuel prices were net UNFAVOURABLE to operating income (-$46M) because surcharge revenue fell faster than fuel cost ($205M vs $159M), partly from recovery timing and the carbon-levy change. Cheaper oil is not automatically good for this railway in a given year.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": "Canadian dollars (Form 10-K p. 26 currency statement).",
+      "anchors": [
+        "Impact of Fuel Price on Earnings",
+        "As fuel prices fluctuate, there will be an impact on earnings due to the timing of recoveries from the Company's fuel cost adjustment program"
+      ],
+      "context_before": "…earnings due to the timing of recoveries from the Company's fuel cost adjustment program, as discussed further in Part I Item 1. Business, Operations, Fuel Cost Adjustment Program and Item 1A. Risk Factors, \"The Company is affected by fluctuating fuel prices\". The impact of fuel price on earnings includes the impacts of carbon taxes, levies, and obligations under cap-and-trade programs recovered and paid, on revenues and expenses, respectively.",
+      "context_after": "Impact of Share Price on Earnings and Stock-Based Compensation Fluctuations in the Common Share price affect the Company's Operating expense because stock-based compensation liabilities are measured at fair value. The Company's Common Shares are listed on the Toronto Stock Exchange (\"TSX\") and the New York Stock Exchange (\"NYSE\") with ticker symbol \"CP\". In 2025, the change in the Company's Common Share price resulted in a stock-based…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Impact of Fuel Price on Earnings": true,
+          "As fuel prices fluctuate, there will be an impact on earnings due to the timing of recoveries from the Company's fuel cost adjustment program": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "66"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    },
+    {
+      "research_id": "CPKC-2025-08",
+      "evidence_id": "ev:sha256:fad89ebb834d594f0c9e2daaa3cf177b59b3110e5aa90dcae9a4fab4879c4341",
+      "subject_ticker": "CP.TO",
+      "subject_type": "company",
+      "pdf_page": 21,
+      "printed_page": "30",
+      "section": "Form 10-K Part I, Item 1. Business — Energy, Chemicals and Plastics",
+      "form": "narrative",
+      "operational_channel": "energy_freight_mix",
+      "company_disclosed_text": "The Company’s Energy, chemicals and plastics business represented approximately 43% of merchandise revenues and 20% of total Freight revenues in 2025. The Company moves energy products consisting of commodities such as fuel oil, liquefied petroleum gas (\"L.P.G.\"), gasoline, and other refined energy products.",
+      "our_interpretation": "Volume channel: about a fifth of freight revenue is energy, chemicals and plastics, mostly refined products and LPG. Whether those volumes rise or fall with oil prices is not stated; the 2025 segment discussion (PDF 53) cites lower crude, diluent and fuel-oil volumes offset by LPG.",
+      "stock_return_direction": "unknown",
+      "table": null,
+      "unit_basis": null,
+      "anchors": [
+        "Energy, Chemicals and Plastics"
+      ],
+      "context_before": "…business represented approximately 12% of merchandise revenues and 5% of total Freight revenues in 2025. Forest products traffic primarily includes pulp and paper as well as lumber and panel products from key production areas in the U.S. Gulf Coast, B.C., the U.S. Southeast, Ontario, and Alberta to destinations throughout North America including the U.S. Midwest, eastern U.S., Mexico, and the U.S. Gulf Coast. Energy, Chemicals and Plastics",
+      "context_after": "The majority of the Company’s energy traffic originates in the Alberta Industrial Heartland (Canada's largest hydrocarbon processing region), the U.S. Gulf Coast, Mexico, and Saskatchewan. The Company accesses key destinations and export markets in Mexico, the U.S. Midwest, western Canada, the U.S. Gulf Coast, and the U.S. Pacific Northwest. The Company is a main transportation provider of refined fuels from the U.S. Gulf Coast into Mexico. The…",
+      "verification": {
+        "extractor": "macOS PDFKit via source_documents/pdf_metadata.js",
+        "byte_exact_match": false,
+        "whitespace_normalized_match": true,
+        "match_method": "whitespace_normalized",
+        "occurrences_on_page": 1,
+        "anchors_found": {
+          "Energy, Chemicals and Plastics": true
+        },
+        "printed_page_check": {
+          "ok": true,
+          "footer_markers": [
+            "30"
+          ],
+          "footer_match": true,
+          "offset_rule": "printed = pdf_page +9",
+          "offset_match": true,
+          "two_page_spread": false
+        },
+        "second_extractor_pypdf": true,
+        "passed": true
+      },
+      "quote_verification": {
+        "status": "verified",
+        "method": "PDFKit text layer: excerpt occurs once on the stated PDF page (whitespace_normalized); anchors and printed page checked",
+        "source_artifact_sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+        "checked_at": "2026-11-15T13:56:23+00:00",
+        "verified_by": "research session: automated PDFKit text-layer match + manual visual check of table columns"
+      }
+    }
+  ],
+  "hypotheses_not_documented": [
+    {
+      "hypothesis": "Higher oil prices hurt CPKC through fuel costs.",
+      "status": "Partly documented as a risk factor, but the surcharge offsets most of the cost with lags, and 2025 shows the opposite sign for falling prices (-$46M operating income).",
+      "statistical_test_needed": "CP.TO is not in the data contract universe; add it, then estimate its Brent beta, up/down asymmetry and lagged effects. A diesel crack-spread control may be needed."
+    }
+  ],
+  "limitations": [
+    "Quotes were matched against the PDF text layer; table columns were additionally checked visually.",
+    "Interpretations are the research team's, not the issuer's; no stock-return direction is inferred.",
+    "No URL was re-fetched; no AWS, S3 or production pipeline was used."
+  ],
+  "source_csv_sha256": "3d40b844cbc8500b92d7d46028c47969f40f606d362f70082a42b4197bf13125"
+}

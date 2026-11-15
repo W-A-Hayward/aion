@@ -75,11 +75,12 @@ def fake_body():
     return {
         "answer": "Oil beta is 0.2.",
         "toolCalls": [
-            {"function": "get_portfolio_exposure", "parameters": {"persona": "robert"}, "response": "ok"}
+            {"name": "get_portfolio_exposure", "input": {"persona": "robert"}, "output": "ok"}
         ],
         "citations": [
-            {"source": "s3://b/doc.pdf", "excerpt": "Duration is 14.63 years"},
-            {"source": "s3://b/other.pdf", "excerpt": "other"},
+            {"text": "Duration is 14.63 years", "source_url": "https://example.com/tlt.pdf", "section": "Fund facts",
+             "ticker": "TLT", "channel": "rates"},
+            {"text": "other", "source_url": None, "section": None, "ticker": "XOM", "channel": "direct"},
         ],
         "extra": {"beta": 0.25},
     }
@@ -152,11 +153,11 @@ def test_guardrail_absent_by_default(setup):
 def test_floats_become_decimal(setup):
     make, item, s3 = setup
     body = fake_body()
-    body["toolCalls"][0]["parameters"] = {"beta": 0.25}
+    body["toolCalls"][0]["input"] = {"beta": 0.25}
     make(FakeAgent(body))
     app.lambda_handler(event(), None)
-    assert item["toolCalls"][0]["parameters"]["beta"] == app.Decimal("0.25")
-    assert json.loads(s3.puts[0]["Body"])["response"]["toolCalls"][0]["parameters"]["beta"] == 0.25
+    assert item["toolCalls"][0]["input"]["beta"] == app.Decimal("0.25")
+    assert json.loads(s3.puts[0]["Body"])["response"]["toolCalls"][0]["input"]["beta"] == 0.25
 
 
 def test_plain_text_body(setup):
@@ -171,8 +172,8 @@ def test_limits_and_truncation(setup):
     make, item, s3 = setup
     body = {
         "answer": "a" * 200_000,
-        "toolCalls": [{"function": "f%d" % i} for i in range(30)],
-        "citations": [{"source": "s3://b/%d" % i, "excerpt": "t"} for i in range(30)],
+        "toolCalls": [{"name": "f%d" % i, "input": {}, "output": ""} for i in range(30)],
+        "citations": [{"text": "t", "source_url": "https://example.com/%d" % i} for i in range(30)],
     }
     make(FakeAgent(body))
     app.lambda_handler(event(), None)
@@ -224,3 +225,31 @@ def test_log_has_no_question(setup, capsys):
     line = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert line["jobId"] == "j1" and line["status"] == "DONE" and "durationMs" in line
     assert "Q?" not in json.dumps(line)
+
+
+def test_agent_session_is_owner_scoped(setup):
+    make, item, s3 = setup
+    item["agentSessionId"] = "0123456789abcdef-sess"
+    agent = FakeAgent(fake_body())
+    make(agent)
+    app.lambda_handler(event(), None)
+    assert agent.calls[0]["runtimeSessionId"] == app.session_id_for("0123456789abcdef-sess")
+    assert agent.calls[0]["runtimeSessionId"].startswith("cascade-0123456789abcdef-sess")
+
+
+def test_claim_allows_reclaiming_stale_running_job(setup, monkeypatch):
+    make, item, s3 = setup
+    seen = {}
+
+    class Recording(FakeTable):
+        def update_item(self, Key, UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues, **kw):
+            if "ConditionExpression" in kw:
+                seen.update(kw, values=ExpressionAttributeValues)
+            return super().update_item(Key, UpdateExpression, ExpressionAttributeNames, ExpressionAttributeValues, **kw)
+
+    monkeypatch.setattr(app.time, "time", lambda: 10_000)
+    make(FakeAgent(fake_body()), Recording(item))
+    app.lambda_handler(event(), None)
+    assert "#s = :running AND startedAtEpoch < :stale" in seen["ConditionExpression"]
+    assert seen["values"][":stale"] == 10_000 - app.STALE_RUNNING_SECONDS
+    assert seen["values"][":now"] == 10_000

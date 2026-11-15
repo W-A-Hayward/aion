@@ -1,0 +1,70 @@
+{
+  "reviewed_at": "2026-11-15T14:39:22.205059+00:00",
+  "mode": "local_research_not_published",
+  "documents": [
+    {
+      "ticker": "RY.TO",
+      "sha256": "a0e79381aea04b357ced6ed112c524ef102516631f62fe8860e2e6d0fbcfaecc",
+      "candidates": 6,
+      "csv_sha256": "01d04aaef6f37d7ef35e6bdcc1438d932874e8b680debc60659cd63811be1ad1",
+      "printed_page_mapping": {
+        "79": "77",
+        "130": "128",
+        "131": "129",
+        "132": "130",
+        "133": "131",
+        "185": "183"
+      },
+      "visually_reviewed_pdf_pages": [
+        79,
+        130,
+        131,
+        132,
+        133,
+        185
+      ],
+      "source_provenance_status": "official_issuer_url_in_acquisition_receipt"
+    },
+    {
+      "ticker": "CNQ.TO",
+      "sha256": "497adbc4c8be70021f2974cfec6876fe058f3ea2dc384196f3c424f450e7dfe8",
+      "candidates": 7,
+      "csv_sha256": "1f287c2c2ad754a4e9c210f82087a55c631b94bb68babbde1cfb15c2eaca1bc5",
+      "printed_page_mapping": {
+        "21": "20",
+        "26": "25",
+        "27": "26",
+        "50": "49",
+        "54": "53"
+      },
+      "visually_reviewed_pdf_pages": [
+        21,
+        26,
+        27,
+        54
+      ],
+      "source_provenance_status": "official_issuer_url_in_acquisition_receipt"
+    },
+    {
+      "ticker": "CP.TO",
+      "sha256": "452856be75e538134f6f4f96eea4743d67d1c14eac8df4fec312adaa3bca911f",
+      "candidates": 7,
+      "csv_sha256": "ba6f8400f82378a7ea09c4a7979c176817ee0feaef04931fcaa6fe8c6816803f",
+      "printed_page_mapping": {
+        "21": "30",
+        "23": "32",
+        "24": "33",
+        "32": "41",
+        "53": "62",
+        "54": "63",
+        "55": "64"
+      },
+      "visually_reviewed_pdf_pages": [
+        53,
+        54,
+        55
+      ],
+      "source_provenance_status": "pending_issuer_to_cdn"
+    }
+  ]
+}
