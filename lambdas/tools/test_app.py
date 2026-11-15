@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import sys
 
@@ -152,7 +153,17 @@ def test_explain_channel_macro_fallback_and_size():
 def test_scenario_and_portfolio_and_alternative():
     _, b = call("run_scenario", persona="robert", oil_shock_pct="30%")
     assert b["scenario"][0]["impact_pct"] == -5
-    assert b["holding_impacts"][0]["impact_pct"] == -6
+    h = b["holding_impacts"][0]
+    k = math.log(1.3)
+    f = lambda beta: 100 * (math.exp(beta * k) - 1)
+    assert h["impact_pct"] == pytest.approx(f(-0.2), abs=1e-3)
+    assert h["lo_pct"] == pytest.approx(f(-0.3), abs=1e-3)
+    assert h["hi_pct"] == pytest.approx(f(-0.1), abs=1e-3)
+    assert h["lo_pct"] <= h["impact_pct"] <= h["hi_pct"]
+    assert h["contribution_pct"] == pytest.approx(0.3 * f(-0.2), abs=1e-3)
+    assert b["note"] == ("holding contributions need not sum exactly to the portfolio impact, "
+                         "which is measured on the portfolio itself")
+    assert "log" in b["units"] and "linear" not in b["units"]
     _, b = call("get_portfolio_exposure", persona="Robert")
     assert b["portfolio_beta"]["beta"] == 0.2 and b["holdings"][0]["ticker"] == "TLT"
     _, b = call("compare_alternative", persona="robert", holding="tlt", alternative="zst")

@@ -4,6 +4,7 @@ Read-only Athena SELECTs from fixed templates. Every value interpolated into SQL
 taken from the allow-lists below, never the raw user text.
 """
 import json
+import math
 import os
 import re
 import time
@@ -254,16 +255,23 @@ def run_scenario(persona, shock):
         "SELECT ticker, weight, beta, lo, hi, contribution FROM portfolio_exposure "
         "WHERE persona = " + p + " ORDER BY weight DESC, ticker LIMIT 20"
     )
+    log_shock = math.log(1 + shock / 100.0)
+
+    def impact(beta):
+        return 100 * (math.exp(beta * log_shock) - 1)
+
     impacts = []
     for e in exposure:
         try:
+            lo, hi = sorted((impact(e["lo"]), impact(e["hi"])))
+            point = impact(e["beta"])
             impacts.append({
                 "ticker": e["ticker"],
                 "weight": e["weight"],
-                "impact_pct": e["beta"] * shock,
-                "lo_pct": min(e["lo"] * shock, e["hi"] * shock),
-                "hi_pct": max(e["lo"] * shock, e["hi"] * shock),
-                "contribution_pct": e["contribution"] * shock,
+                "impact_pct": point,
+                "lo_pct": lo,
+                "hi_pct": hi,
+                "contribution_pct": e["weight"] * point,
             })
         except (TypeError, KeyError):
             continue
@@ -272,8 +280,12 @@ def run_scenario(persona, shock):
         "oil_shock_pct": shock,
         "scenario": scen,
         "holding_impacts": impacts,
-        "units": "impact_pct: estimated % change in value for a Brent move of oil_shock_pct %, = beta x shock "
-                 "(linear, weekly beta, CAD); lo_pct/hi_pct: 95% range; contribution_pct: weight x impact",
+        "note": "holding contributions need not sum exactly to the portfolio impact, "
+                "which is measured on the portfolio itself",
+        "units": "impact_pct: estimated % change in value for a Brent move of oil_shock_pct %, "
+                 "= 100 x (exp(beta x ln(1 + shock/100)) - 1) (log formula, weekly beta, CAD); "
+                 "lo_pct/hi_pct: 95% range from the beta range, ordered low to high; "
+                 "contribution_pct: weight x impact_pct",
     }
 
 
