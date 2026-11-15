@@ -78,6 +78,43 @@ Processed tables: Parquet, one folder per table: processed/<table>/part-0.parque
   evidence: evidence_id, ticker, doc_type, channel, direction, source_url, section, excerpt, s3_key
   confidence: ticker, channel, label, reason_code, reason_text
   edges: from_node, to_node, edge_type, beta, lo, hi, evidence_id
+  weekly_returns: week, subject_or_ticker, ret_cad, brent_ret
+                 (long format; the weekly series used by the five tables below, one row per ticker or subject
+                 and week; ret_cad is a log return, brent_ret the Brent log return of the same week)
+  risk_share: subject, subject_type, factor, beta, lo, hi, p, r2, n_weeks
+                 (subject_type persona | alternative; factor oil | rates | stocks, each a SEPARATE single-factor
+                 HAC(4) regression of the subject's weekly return: oil = Brent log return, rates = weekly change
+                 of BD.CDN.10YR.DQ.YLD in pp, stocks = XIU.TO ret_cad. r2 = share of the subject's weekly
+                 variance explained by that factor alone. The three r2 values overlap (the factors move
+                 together) and do NOT add up.)
+  stress_history: subject, subject_type, window_weeks, direction, threshold_pct, n_episodes, avg_oil_move_pct,
+                 avg_return_pct, worst_return_pct, worst_end_date, per_100k_avg, per_100k_worst,
+                 episode_end_dates, regimes
+                 (window_weeks 1 | 4 | 13; direction oil_up | oil_down. Window 1: top 10% of weeks by Brent log
+                 return (bottom 10% for oil_down), plus threshold_pct 5 and 20. Windows 4 and 13: rolling sums
+                 of log returns, largest Brent windows picked greedily and NON-OVERLAPPING, up to 10 (4 weeks)
+                 and 5 (13 weeks) episodes, threshold_pct null. Returns are simple returns in percent;
+                 per_100k_* = return_pct * 1000. episode_end_dates and regimes are comma lists (regimes =
+                 distinct calendar years of the episode end dates). Descriptive only ("realized returns in past
+                 large oil moves"): no p-values or confidence intervals, episodes are not independent.)
+  stress_contributions: persona, ticker, weight, window_weeks, direction, avg_return_pct, contribution_pct,
+                 share_of_loss
+                 (personas only, window 1 uses the 10% threshold; contribution_pct = weight * avg_return_pct;
+                 share_of_loss = contribution / sum of the persona's contributions. The sum equals the
+                 persona's avg_return_pct in stress_history for window 1 and is within 0.5 pp for 4 and 13 weeks.)
+  materiality: subject, subject_type, verdict, verdict_at_5, verdict_at_15, oil_r2, oil_p, stress13_avg_pct,
+                 normal_swing13_pct, n_episodes_13, regimes, reason_text
+                 (oil_r2, oil_p = the subject's oil row in risk_share; stress13_avg_pct, n_episodes_13, regimes =
+                 the oil_up 13-week row in stress_history; normal_swing13_pct = standard deviation, in percent,
+                 of the subject's NON-OVERLAPPING 13-week simple returns (consecutive blocks from the first week).)
+Subjects (risk tables): the 3 personas (subject_type persona) and each alternative (subject_type alternative,
+  subject "<persona>:<holding>-><alternative>", e.g. "robert:TLT->ZST.TO", weights after the swap).
+  Weekly subject return = log(1 + sum(weight * (exp(ret_cad) - 1))).
+Materiality rule (constants at the top of compute/stats.py, fixed before looking at results; OIL_R2_MATERIAL = 0.10):
+  "not linked"           if oil_p >= 0.05;
+  "material"             if oil_r2 >= OIL_R2_MATERIAL OR |stress13_avg_pct| > normal_swing13_pct;
+  "measurable but minor" otherwise.
+  verdict_at_5 / verdict_at_15 apply the same rule with OIL_R2_MATERIAL = 0.05 / 0.15.
 channel values: direct | rates | currency | company-specific | none
 label rules: green = p_simple<0.05 AND p_ex2022<0.05 with the same sign AND (share_explained>=0.5 OR an evidence row
              with the same direction); yellow = p_simple<0.05 but the rest fails; grey = p_simple>=0.05.
