@@ -23,6 +23,12 @@ from statsmodels.stats.multitest import multipletests
 # Constants (from docs/data_contract.md)
 # ---------------------------------------------------------------------------
 
+# Materiality rule (fixed before looking at results; see docs/data_contract.md).
+OIL_R2_MATERIAL = 0.10      # oil r2 at or above this is "material"
+OIL_R2_LOW = 0.05           # threshold used for verdict_at_5
+OIL_R2_HIGH = 0.15          # threshold used for verdict_at_15
+OIL_P_NOT_LINKED = 0.05     # oil_p at or above this is "not linked"
+
 # The 14 MVP tickers. Personas and alternatives only use these.
 CORE_TICKERS = [
     "XIU.TO", "ENB.TO", "XOM", "TLT", "XBB.TO", "ZST.TO", "QQQ",
@@ -769,6 +775,8 @@ def summary_markdown(tables: dict[str, pd.DataFrame], data: WeeklyData | None = 
         lines.append("| (none) | | | | |")
     if data is not None:
         lines += fx_diagnostic_lines(fx_diagnostic(data))
+    if "risk_share" in tables:
+        lines += risk_summary_lines(tables)
     return "\n".join(lines) + "\n"
 
 
@@ -793,3 +801,396 @@ def write_outputs(tables: dict[str, pd.DataFrame], bucket: str | None = None, s3
                   ContentType="text/markdown")
     keys.append(key)
     return keys
+
+
+# ---------------------------------------------------------------------------
+# Step 12: risk share, stress history, contributions and materiality
+# ---------------------------------------------------------------------------
+
+STRESS_WINDOWS = (1, 4, 13)
+STRESS_DIRECTIONS = ("oil_up", "oil_down")
+STRESS_THRESHOLD_PCT = 10                 # window 1 default: top / bottom 10% of weeks
+STRESS_EXTRA_THRESHOLDS_PCT = (5, 20)     # window 1 only
+MAX_EPISODES = {4: 10, 13: 5}             # non-overlapping episodes for longer windows
+NORMAL_SWING_WINDOW = 13
+RATES_SERIES = "ca10y"                    # BD.CDN.10YR.DQ.YLD, weekly change in pp
+STOCKS_TICKER = "XIU.TO"
+FACTORS = ("oil", "rates", "stocks")
+
+WEEKLY_RETURNS_COLUMNS = ["week", "subject_or_ticker", "ret_cad", "brent_ret"]
+RISK_SHARE_COLUMNS = ["subject", "subject_type", "factor", "beta", "lo", "hi", "p", "r2", "n_weeks"]
+STRESS_HISTORY_COLUMNS = [
+    "subject", "subject_type", "window_weeks", "direction", "threshold_pct", "n_episodes",
+    "avg_oil_move_pct", "avg_return_pct", "worst_return_pct", "worst_end_date",
+    "per_100k_avg", "per_100k_worst", "episode_end_dates", "regimes",
+]
+STRESS_CONTRIBUTION_COLUMNS = [
+    "persona", "ticker", "weight", "window_weeks", "direction",
+    "avg_return_pct", "contribution_pct", "share_of_loss",
+]
+MATERIALITY_COLUMNS = [
+    "subject", "subject_type", "verdict", "verdict_at_5", "verdict_at_15", "oil_r2", "oil_p",
+    "stress13_avg_pct", "normal_swing13_pct", "n_episodes_13", "regimes", "reason_text",
+]
+
+
+@dataclass
+class Subject:
+    """A portfolio analysed as one unit: a persona or an alternative (after the swap)."""
+
+    name: str
+    subject_type: str          # "persona" | "alternative"
+    weights: dict
+    ret: pd.Series             # weekly portfolio log return (CAD)
+
+
+def portfolio_log_return(ret_cad: pd.DataFrame, weights: dict) -> pd.Series:
+    """log(1 + sum(weight * (exp(ret_cad) - 1))); NaN in a week when any holding has no return."""
+    w = pd.Series(weights, dtype=float)
+    simple = np.exp(ret_cad[list(w.index)]) - 1.0
+    wsum = (simple * w).sum(axis=1, min_count=len(w))
+    return np.log1p(wsum.where(wsum > -1))
+
+
+def subject_weights() -> dict[str, tuple[str, dict]]:
+    """name -> (subject_type, weights): the personas, then every alternative after its swap.
+
+    Alternative names look like "robert:TLT->ZST.TO".
+    """
+    out: dict[str, tuple[str, dict]] = {p: ("persona", dict(h)) for p, h in PERSONAS.items()}
+    for persona, holding, alt, shift in ALTERNATIVES:
+        after = dict(PERSONAS[persona])
+        moved = after[holding] if shift is None else shift
+        after[holding] = after[holding] - moved
+        if after[holding] <= 1e-12:
+            del after[holding]
+        after[alt] = after.get(alt, 0.0) + moved
+        out[f"{persona}:{holding}->{alt}"] = ("alternative", after)
+    return out
+
+
+def build_subjects(data: WeeklyData) -> list[Subject]:
+    """Weekly return series of every subject. A subject with a skipped ticker is left out (warning)."""
+    subjects = []
+    for name, (kind, weights) in subject_weights().items():
+        missing = [t for t in weights if t not in data.ret_cad.columns]
+        if missing:
+            print(f"WARNING: no risk tables for {name}: no returns for {missing}")
+            continue
+        subjects.append(Subject(name, kind, weights, portfolio_log_return(data.ret_cad, weights)))
+    return subjects
+
+
+def weekly_returns_table(data: WeeklyData, subjects: list[Subject]) -> pd.DataFrame:
+    """The weekly series used everywhere: week, subject_or_ticker, ret_cad, brent_ret (long format).
+
+    Ticker rows come from data.ret_cad, subject rows are the portfolio log returns.
+    Weeks with no return are left out.
+    """
+    series = {t: data.ret_cad[t] for t in data.ret_cad.columns}
+    series.update({s.name: s.ret for s in subjects})
+    parts = []
+    for name, s in series.items():
+        s = s.dropna()
+        parts.append(pd.DataFrame({
+            "week": [d.date() for d in s.index],
+            "subject_or_ticker": name,
+            "ret_cad": s.to_numpy(dtype=float),
+            "brent_ret": data.brent.reindex(s.index).to_numpy(dtype=float),
+        }))
+    return pd.concat(parts, ignore_index=True)[WEEKLY_RETURNS_COLUMNS]
+
+
+def factor_series(data: WeeklyData) -> dict[str, pd.Series]:
+    """The three single factors: oil (Brent log return), rates (weekly change of the CA 10y yield, pp),
+    stocks (XIU.TO weekly CAD log return)."""
+    return {"oil": data.brent, "rates": data.dy[RATES_SERIES], "stocks": data.ret_cad[STOCKS_TICKER]}
+
+
+def risk_share(data: WeeklyData, subjects: list[Subject]) -> pd.DataFrame:
+    """Single-factor HAC(4) regressions of each subject's weekly return on oil, rates and stocks.
+
+    r2 is the share of the subject's weekly variance explained by that factor alone. The three
+    r2 values of one subject overlap (oil, rates and stocks move together) and do not add up.
+    """
+    factors = factor_series(data)
+    rows = []
+    for s in subjects:
+        for factor in FACTORS:
+            r = regress(s.ret, factors[factor])
+            rows.append({"subject": s.name, "subject_type": s.subject_type, "factor": factor,
+                         "beta": r["beta"], "lo": r["lo"], "hi": r["hi"], "p": r["p"],
+                         "r2": r["r2"], "n_weeks": r["n"]})
+    df = pd.DataFrame(rows, columns=RISK_SHARE_COLUMNS)
+    return df.astype({"n_weeks": "Int64"})
+
+
+# -- episodes ---------------------------------------------------------------
+
+def window_sums(log_ret: pd.Series, window: int) -> pd.Series:
+    """Rolling sum of `window` consecutive weekly log returns, labelled by the last week.
+
+    Windows that are not made of consecutive Fridays (a missing week) are NaN.
+    """
+    if window == 1:
+        return log_ret.copy()
+    sums = log_ret.rolling(window).sum()
+    idx = pd.Series(log_ret.index, index=log_ret.index)
+    span = idx - idx.shift(window - 1)
+    return sums.where(span == pd.Timedelta(days=7 * (window - 1)))
+
+
+def pick_nonoverlapping(sums: pd.Series, window: int, max_n: int, largest: bool = True) -> list:
+    """Greedy, non-overlapping selection of windows.
+
+    `sums` holds one value per window end (position = week position in the weekly series).
+    Candidates are visited from the largest (or smallest) value, ties by earlier date. A
+    window is kept when its weeks do not overlap an already kept one. Returns up to `max_n`
+    end labels in date order.
+    """
+    pos = pd.Series(np.arange(len(sums)), index=sums.index)
+    valid = sums.dropna()
+    order = valid.sort_values(ascending=not largest, kind="mergesort").index
+    chosen: list = []
+    for label in order:
+        p = pos[label]
+        if all(abs(p - pos[c]) >= window for c in chosen):
+            chosen.append(label)
+            if len(chosen) == max_n:
+                break
+    return sorted(chosen)
+
+
+def select_episodes(brent: pd.Series, window: int, direction: str,
+                    threshold_pct: float | None = None) -> list:
+    """End weeks of the large oil moves.
+
+    Window 1: the top (oil_up) or bottom (oil_down) `threshold_pct` percent of weeks by Brent log
+    return (count rounded up). Windows 4 and 13: the largest (or most negative) rolling Brent
+    sums, greedy and non-overlapping, up to MAX_EPISODES.
+    """
+    if direction not in STRESS_DIRECTIONS:
+        raise ValueError(f"unknown direction: {direction}")
+    largest = direction == "oil_up"
+    brent = brent.dropna()
+    if window == 1:
+        k = max(1, int(np.ceil(len(brent) * float(threshold_pct) / 100.0)))
+        order = brent.sort_values(ascending=not largest, kind="mergesort").index[:k]
+        return sorted(order)
+    return pick_nonoverlapping(window_sums(brent, window), window, MAX_EPISODES[window], largest)
+
+
+def _simple_pct(log_sum) -> np.ndarray:
+    return 100.0 * (np.exp(np.asarray(log_sum, dtype=float)) - 1.0)
+
+
+def _years(ends: list) -> str:
+    return ",".join(str(y) for y in sorted({pd.Timestamp(e).year for e in ends}))
+
+
+def stress_history(subjects: list[Subject], brent: pd.Series) -> pd.DataFrame:
+    """Realized returns of each subject in past large oil moves (descriptive only).
+
+    Episodes are chosen from Brent on the weeks where both the subject and Brent have a return.
+    Returns are simple returns in percent (compounded weekly portfolio returns). No p-values or
+    confidence intervals: overlapping and clustered episodes are not independent observations.
+    """
+    rows = []
+    for s in subjects:
+        panel = pd.concat([s.ret.rename("s"), brent.rename("b")], axis=1).dropna()
+        if panel.empty:
+            continue
+        specs = [(1, STRESS_THRESHOLD_PCT)] + [(1, t) for t in STRESS_EXTRA_THRESHOLDS_PCT]
+        specs += [(4, None), (13, None)]
+        for window, thr in specs:
+            s_sum = window_sums(panel["s"], window)
+            b_sum = window_sums(panel["b"], window)
+            for direction in STRESS_DIRECTIONS:
+                ends = select_episodes(panel["b"], window, direction, thr)
+                if not ends:
+                    continue
+                ret = _simple_pct(s_sum.loc[ends])
+                oil = _simple_pct(b_sum.loc[ends])
+                worst = int(np.argmin(ret))
+                rows.append({
+                    "subject": s.name, "subject_type": s.subject_type,
+                    "window_weeks": window, "direction": direction,
+                    "threshold_pct": float(thr) if thr is not None else np.nan,
+                    "n_episodes": len(ends),
+                    "avg_oil_move_pct": float(oil.mean()),
+                    "avg_return_pct": float(ret.mean()),
+                    "worst_return_pct": float(ret[worst]),
+                    "worst_end_date": pd.Timestamp(ends[worst]).date(),
+                    "per_100k_avg": float(ret.mean()) * 1000.0,
+                    "per_100k_worst": float(ret[worst]) * 1000.0,
+                    "episode_end_dates": ",".join(pd.Timestamp(e).date().isoformat() for e in ends),
+                    "regimes": _years(ends),
+                })
+    df = pd.DataFrame(rows, columns=STRESS_HISTORY_COLUMNS)
+    return df.astype({"window_weeks": "Int64", "n_episodes": "Int64"})
+
+
+def stress_contributions(data: WeeklyData, subjects: list[Subject]) -> pd.DataFrame:
+    """Per-holding contribution to each persona's average return in the same oil episodes.
+
+    Personas only; window 1 uses the 10% threshold. avg_return_pct is the ticker's own average
+    simple return over the persona's episodes, contribution_pct = weight * avg_return_pct and
+    share_of_loss = contribution / sum of the persona's contributions. The sum of contributions
+    equals the portfolio average exactly for window 1 and within a small gap for 4 and 13 weeks
+    (the portfolio return compounds weekly rebalanced returns, the tickers buy-and-hold).
+    """
+    rows = []
+    for s in subjects:
+        if s.subject_type != "persona":
+            continue
+        tickers = list(s.weights)
+        panel = pd.concat([s.ret.rename("s"), data.brent.rename("b"), data.ret_cad[tickers]],
+                          axis=1).dropna()
+        for window in STRESS_WINDOWS:
+            thr = STRESS_THRESHOLD_PCT if window == 1 else None
+            for direction in STRESS_DIRECTIONS:
+                ends = select_episodes(panel["b"], window, direction, thr)
+                if not ends:
+                    continue
+                avg = {t: float(_simple_pct(window_sums(panel[t], window).loc[ends]).mean())
+                       for t in tickers}
+                contrib = {t: s.weights[t] * avg[t] for t in tickers}
+                total = sum(contrib.values())
+                for t in tickers:
+                    rows.append({
+                        "persona": s.name, "ticker": t, "weight": s.weights[t],
+                        "window_weeks": window, "direction": direction,
+                        "avg_return_pct": avg[t], "contribution_pct": contrib[t],
+                        "share_of_loss": contrib[t] / total if abs(total) > 1e-9 else np.nan,
+                    })
+    df = pd.DataFrame(rows, columns=STRESS_CONTRIBUTION_COLUMNS)
+    return df.astype({"window_weeks": "Int64"})
+
+
+def normal_swing(log_ret: pd.Series, window: int = NORMAL_SWING_WINDOW) -> float:
+    """Standard deviation (percent) of NON-OVERLAPPING `window`-week simple returns.
+
+    Consecutive blocks of `window` weeks from the first week; an incomplete last block or a
+    block with a missing week is dropped. NaN with fewer than 2 blocks.
+    """
+    s = log_ret.dropna()
+    blocks = []
+    for i in range(0, len(s) - window + 1, window):
+        chunk = s.iloc[i:i + window]
+        if chunk.index[-1] - chunk.index[0] == pd.Timedelta(days=7 * (window - 1)):
+            blocks.append(float(_simple_pct(chunk.sum())))
+    return float(np.std(blocks, ddof=1)) if len(blocks) >= 2 else np.nan
+
+
+# -- materiality ------------------------------------------------------------
+
+def materiality_verdict(oil_r2: float, oil_p: float, stress13_avg_pct: float,
+                        normal_swing13_pct: float, r2_material: float = OIL_R2_MATERIAL) -> str:
+    """The materiality rule.
+
+    "not linked" if oil_p >= OIL_P_NOT_LINKED; "material" if oil_r2 >= r2_material or
+    |stress13_avg_pct| > normal_swing13_pct; "measurable but minor" otherwise.
+    A missing stress or swing value never makes a subject material by itself.
+    """
+    if pd.isna(oil_p) or pd.isna(oil_r2):
+        raise ValueError("oil_p and oil_r2 are required for a verdict")
+    if oil_p >= OIL_P_NOT_LINKED:
+        return "not linked"
+    stress_big = (pd.notna(stress13_avg_pct) and pd.notna(normal_swing13_pct)
+                  and abs(stress13_avg_pct) > normal_swing13_pct)
+    if oil_r2 >= r2_material or stress_big:
+        return "material"
+    return "measurable but minor"
+
+
+def _reason_text(oil_r2, oil_p, avg, swing, n_ep, regimes) -> str:
+    text = f"Oil explains {oil_r2 * 100:.1f}% of weekly moves"
+    if oil_p >= OIL_P_NOT_LINKED:
+        text += f" (not statistically distinguishable from zero, p = {oil_p:.2f})"
+    if pd.isna(avg) or pd.isna(swing) or not n_ep:
+        return text + "; there is not enough history for 13-week oil rises."
+    years = f" ({regimes.replace(',', ', ')})" if regimes else ""
+    size = abs(avg) - swing
+    cmp_ = "more than" if size > 0 else ("the same as" if size == 0 else "less than")
+    return (f"{text}; in the {int(n_ep)} largest 13-week oil rises{years} the portfolio averaged "
+            f"{avg:.1f}%, {cmp_} its normal 13-week swing of {swing:.1f}%.")
+
+
+def materiality(risk: pd.DataFrame, stress: pd.DataFrame, subjects: list[Subject]) -> pd.DataFrame:
+    """One verdict per subject (plus the verdict at the 5% and 15% oil r2 thresholds)."""
+    oil = risk[risk["factor"] == "oil"].set_index("subject")
+    s13 = stress[(stress["window_weeks"] == 13) & (stress["direction"] == "oil_up")].set_index("subject")
+    rows = []
+    for s in subjects:
+        if s.name not in oil.index:
+            continue
+        r2, p = float(oil.loc[s.name, "r2"]), float(oil.loc[s.name, "p"])
+        if s.name in s13.index:
+            avg = float(s13.loc[s.name, "avg_return_pct"])
+            n_ep = int(s13.loc[s.name, "n_episodes"])
+            regimes = str(s13.loc[s.name, "regimes"])
+        else:
+            avg, n_ep, regimes = np.nan, 0, ""
+        swing = normal_swing(s.ret)
+        rows.append({
+            "subject": s.name, "subject_type": s.subject_type,
+            "verdict": materiality_verdict(r2, p, avg, swing, OIL_R2_MATERIAL),
+            "verdict_at_5": materiality_verdict(r2, p, avg, swing, OIL_R2_LOW),
+            "verdict_at_15": materiality_verdict(r2, p, avg, swing, OIL_R2_HIGH),
+            "oil_r2": r2, "oil_p": p, "stress13_avg_pct": avg, "normal_swing13_pct": swing,
+            "n_episodes_13": n_ep, "regimes": regimes,
+            "reason_text": _reason_text(r2, p, avg, swing, n_ep, regimes),
+        })
+    df = pd.DataFrame(rows, columns=MATERIALITY_COLUMNS)
+    return df.astype({"n_episodes_13": "Int64"})
+
+
+def build_risk_tables(data: WeeklyData) -> dict[str, pd.DataFrame]:
+    """weekly_returns, risk_share, stress_history, stress_contributions and materiality."""
+    subjects = build_subjects(data)
+    risk = risk_share(data, subjects)
+    stress = stress_history(subjects, data.brent)
+    return {
+        "weekly_returns": weekly_returns_table(data, subjects),
+        "risk_share": risk,
+        "stress_history": stress,
+        "stress_contributions": stress_contributions(data, subjects),
+        "materiality": materiality(risk, stress, subjects),
+    }
+
+
+def risk_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
+    """summary.md section for the risk tables. Raises AssertionError when a persona has no rows
+    in risk_share, stress_history, stress_contributions or materiality."""
+    for name, col in (("risk_share", "subject"), ("stress_history", "subject"),
+                      ("stress_contributions", "persona"), ("materiality", "subject")):
+        have = set(tables[name][col])
+        missing = sorted(set(PERSONAS) - have)
+        if missing:
+            raise AssertionError(f"personas without rows in {name}: {missing}")
+    risk, stress, mat = tables["risk_share"], tables["stress_history"], tables["materiality"]
+    r2 = risk.pivot(index="subject", columns="factor", values="r2")
+    st = stress[(stress["direction"] == "oil_up")
+                & (stress["window_weeks"].isin([1, 13]))
+                & (stress["threshold_pct"].isna() | (stress["threshold_pct"] == STRESS_THRESHOLD_PCT))]
+    st = st.set_index(["subject", "window_weeks"])
+
+    def per100k(subject, w):
+        if (subject, w) not in st.index:
+            return "n/a"
+        r = st.loc[(subject, w)]
+        return f"{r['per_100k_avg']:,.0f} (worst {r['per_100k_worst']:,.0f})"
+
+    lines = ["", "## Oil vs rates vs stocks, large oil rises and materiality", "",
+             "r2 is the share of the subject's weekly variance explained by that factor alone. The three "
+             "r2 values overlap (oil, rates and stocks move together) and do not add up.",
+             "Stress figures are realized returns in past large oil rises, in dollars per $100k "
+             "(window 1: top 10% of weeks; window 13: 5 non-overlapping 13-week rises). Descriptive only.", "",
+             "| subject | oil r2 | rates r2 | stocks r2 | oil_up 1w per $100k | oil_up 13w per $100k "
+             "| verdict | at 5% | at 15% |", "|---|---|---|---|---|---|---|---|---|"]
+    for _, m in mat.iterrows():
+        sub = m["subject"]
+        lines.append(f"| {sub} | {r2.loc[sub, 'oil']:.3f} | {r2.loc[sub, 'rates']:.3f} "
+                     f"| {r2.loc[sub, 'stocks']:.3f} | {per100k(sub, 1)} | {per100k(sub, 13)} "
+                     f"| {m['verdict']} | {m['verdict_at_5']} | {m['verdict_at_15']} |")
+    return lines
