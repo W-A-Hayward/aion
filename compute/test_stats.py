@@ -223,7 +223,7 @@ def test_links_chain_and_duration():
     sens = stats.sensitivities(data)
     lk = stats.links(data)
     assert list(lk.columns) == ["link_id", "from_node", "to_node", "beta", "lo", "hi", "p", "unit"]
-    assert len(lk) == 10
+    assert len(lk) == 11
     ids = lk.set_index("link_id")
     assert abs(ids.loc["oil>us10y", "beta"] - 0.5) < 0.1
     assert abs(ids.loc["us10y>TLT", "beta"] + 4.0) < 0.1
@@ -403,10 +403,31 @@ def test_new_links_and_chains_for_xlb_xrb():
     data = make_data(tickers=tickers)
     sens = stats.sensitivities(data)
     lk = stats.links(data)
-    assert {"ca10y>XLB.TO", "ca10y>XRB.TO"} <= set(lk["link_id"])
+    assert {"ca10y>XLB.TO", "ca10y>XRB.TO"} <= set(lk["link_id"])   # XRB link kept for information
     ch = stats.chain_reconciliation(lk, sens).set_index("ticker")
     assert ch.loc["XLB.TO", "chain"] == "oil>ca10y>XLB.TO"
-    assert ch.loc["XRB.TO", "chain"] == "oil>ca10y>XRB.TO"
+    assert "XRB.TO" not in ch.index                                  # no chain for real return bonds
+
+
+def test_zst_uses_canada_2y_for_link_chain_and_duration():
+    data = make_data()
+    data.dy["ca2y"] = 0.25 * data.brent + data.dy["ca2y"]
+    data.ret_cad["ZST.TO"] = -0.3 * data.dy["ca2y"] + _rng().normal(0, 0.001, N_WEEKS)
+    sens = stats.sensitivities(data)
+    lk = stats.links(data)
+    ids = lk.set_index("link_id")
+    assert "ca10y>ZST.TO" not in ids.index
+    assert abs(ids.loc["oil>ca2y", "beta"] - 0.25) < 0.1
+    assert abs(ids.loc["ca2y>ZST.TO", "beta"] + 0.3) < 0.1
+    ch = stats.chain_reconciliation(lk, sens).set_index("ticker")
+    assert ch.loc["ZST.TO", "chain"] == "oil>ca2y>ZST.TO"
+    assert ch.loc["ZST.TO", "beta_chain"] == pytest.approx(
+        ids.loc["oil>ca2y", "beta"] * ids.loc["ca2y>ZST.TO", "beta"])
+    dur = stats.duration_check(lk, sens).set_index("ticker")
+    assert dur.loc["ZST.TO", "yield_move_per_10pct_oil_bp"] == pytest.approx(
+        ids.loc["oil>ca2y", "beta"] * np.log(1.10) * 100)
+    assert dur.loc["XBB.TO", "yield_move_per_10pct_oil_bp"] == pytest.approx(
+        ids.loc["oil>ca10y", "beta"] * np.log(1.10) * 100)
 
 
 def test_short_history_ticker_is_skipped_with_warning(capsys):
@@ -425,7 +446,7 @@ def test_short_history_ticker_is_skipped_with_warning(capsys):
     # downstream steps still run with the ticker missing
     sens = stats.sensitivities(d)
     assert "XSP.TO" not in set(sens["ticker"])
-    assert len(stats.links(d)) == 10
+    assert len(stats.links(d)) == 11
 
 
 # ---------------------------------------------------------------------------
@@ -469,6 +490,42 @@ def test_portfolio_beta_is_weighted_sum_of_known_betas():
     assert r["lo"] < r["beta"] < r["hi"]
     assert r["p"] < 0.05
     assert r["n_weeks"] == N_WEEKS
+
+
+def test_portfolio_return_aggregates_simple_returns_then_logs():
+    data = make_data()
+    data.ret_cad["XOM"] = 0.0 * data.brent
+    data.ret_cad["TLT"] = 0.0 * data.brent
+    data.ret_cad.loc[WEEKS[10], "XOM"] = 0.5        # simple +64.87%
+    data.ret_cad.loc[WEEKS[10], "TLT"] = -0.5       # simple -39.35%
+    holdings = pd.DataFrame({"persona": ["demo", "demo"], "ticker": ["XOM", "TLT"], "weight": [0.5, 0.5]})
+    seen = {}
+    orig = stats.regress
+    stats.regress = lambda y, x: seen.setdefault("y", y) is not None and orig(y, x)
+    try:
+        stats.portfolio_beta(data, holdings)
+    finally:
+        stats.regress = orig
+    expected = np.log(1 + 0.5 * (np.exp(0.5) - 1) + 0.5 * (np.exp(-0.5) - 1))
+    assert seen["y"].loc[WEEKS[10]] == pytest.approx(expected)
+    assert expected != pytest.approx(0.5 * 0.5 + 0.5 * -0.5)   # differs from the log-weighted sum
+
+
+def test_fx_diagnostic_and_summary_warning(capsys):
+    data = make_data()
+    noise = np.random.default_rng(3).normal(0, 0.002, N_WEEKS)
+    data.ret_cad["VFV.TO"] = data.ret_cad["XSP.TO"] + 1.0 * data.usdcad + noise
+    d = stats.fx_diagnostic(data)
+    assert abs(d["beta"] - 1.0) < 0.1 and d["lo"] < d["beta"] < d["hi"] and d["ok"]
+    sens = stats.sensitivities(data)
+    tables = {"sensitivities": sens, "portfolio_beta": stats.portfolio_beta(data, stats.persona_holdings())}
+    md = stats.summary_markdown(tables, data)
+    assert "usdcad" in md and "range" in md and "WARNING" not in md
+
+    data.ret_cad["VFV.TO"] = data.ret_cad["XSP.TO"] + 3.0 * data.usdcad + noise
+    assert not stats.fx_diagnostic(data)["ok"]
+    md = stats.summary_markdown(tables, data)
+    assert "WARNING" in md and "WARNING" in capsys.readouterr().out
 
 
 def test_portfolio_beta_for_all_demo_personas():

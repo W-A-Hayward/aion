@@ -40,7 +40,11 @@ All asset returns: weekly log returns of adj_close, also converted to CAD with F
 Sample: 2021-11-19 to latest. Out-of-sample: estimate on weeks <= 2024-12-31, test on weeks >= 2025-01-01.
 Regressions: OLS with Newey-West (HAC, 4 lags) standard errors; 95% ranges = beta +/- 1.96*se.
 
-Durations (effective, years), from issuer documents in raw/manual_docs/:
+summary.md also reports a diagnostic: beta of (VFV.TO - XSP.TO) weekly log return on the weekly log change of
+usdcad with its 95% range; expected near +1, a warning is printed (and written) if outside 0.5..1.5.
+
+Durations (effective, years), from issuer documents in raw/manual_docs/ (yield link: TLT oil>us10y, XBB.TO oil>ca10y,
+ZST.TO oil>ca2y):
   TLT 14.63 (fact sheet, 2026-09-30); XBB.TO 6.72 (product page, 2026-10-23); ZST.TO 0.40 (fact sheet, 2026-10-30)
 
 Personas (persona_holdings, weights sum to 1):
@@ -58,14 +62,16 @@ Processed tables: Parquet, one folder per table: processed/<table>/part-0.parque
                  all tickers, p_simple itself is unchanged; universe = core | extra)
   rolling: ticker, week, beta_52w, universe
   links: link_id, from_node, to_node, beta, lo, hi, p, unit   (e.g. oil>us10y, us10y>TLT, oil>usdcad, oil>breakeven,
-                 ca10y>XLB.TO, ca10y>XRB.TO)
+                 oil>ca2y, ca2y>ZST.TO, ca10y>XLB.TO, ca10y>XRB.TO; ca10y>XRB.TO is information only, no chain)
   chain_reconciliation: ticker, chain, beta_direct, beta_chain, share_explained
-                 (chains for TLT, XBB.TO, ZST.TO, VFV.TO, QQQ, SHOP.TO, XLB.TO oil>ca10y>XLB.TO, XRB.TO oil>ca10y>XRB.TO)
+                 (chains for TLT, XBB.TO, ZST.TO (oil>ca2y>ZST.TO, Canada 2y), VFV.TO, QQQ, SHOP.TO,
+                 XLB.TO oil>ca10y>XLB.TO; no chain for XRB.TO: nominal yields do not price real return bonds)
   duration_check: ticker, duration_years, yield_move_per_10pct_oil_bp, implied_move_pct, measured_move_pct
   persona_holdings: persona, ticker, weight
   portfolio_exposure: persona, ticker, weight, beta, lo, hi, contribution   (per-holding contributions)
   portfolio_beta: persona, beta, lo, hi, p, r2, n_weeks   (one row per persona; weekly portfolio return
-                 = sum(weight * ret_cad), regressed on Brent with the same HAC(4) OLS)
+                 = log(1 + sum(weight * (exp(ret_cad) - 1))): weighted simple returns
+                 summed, then logged; regressed on Brent with the same HAC(4) OLS)
   scenarios: subject, subject_type (persona|ticker), shock_pct, impact_pct, lo_pct, hi_pct
                  (persona rows use the portfolio_beta beta and range)
   alternatives: persona, holding, alternative, beta_holding, beta_alternative, impact30_before_pct, impact30_after_pct
@@ -75,6 +81,7 @@ Processed tables: Parquet, one folder per table: processed/<table>/part-0.parque
 channel values: direct | rates | currency | company-specific | none
 label rules: green = p_simple<0.05 AND p_ex2022<0.05 with the same sign AND (share_explained>=0.5 OR an evidence row
              with the same direction); yellow = p_simple<0.05 but the rest fails; grey = p_simple>=0.05.
+             For universe = extra, green/yellow also require q_simple<0.10, otherwise grey.
 
 AWS names: region us-east-1; Glue database cascade; Athena workgroup cascade; DynamoDB table cascade-jobs
 (key jobId, TTL expiresAt); SQS agent-jobs + agent-jobs-dlq; Lambdas cascade-tools|submit|worker|status;

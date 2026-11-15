@@ -109,15 +109,17 @@ SENSITIVITY_COLUMNS = [
 LINK_SPECS = [
     ("oil>us10y", "oil", "us10y", "brent", "dy:us10y", "pp per 1.0 log"),
     ("oil>ca10y", "oil", "ca10y", "brent", "dy:ca10y", "pp per 1.0 log"),
+    ("oil>ca2y", "oil", "ca2y", "brent", "dy:ca2y", "pp per 1.0 log"),
     ("oil>usdcad", "oil", "usdcad", "brent", "fx", "log per 1.0 log"),
     ("oil>breakeven", "oil", "breakeven", "brent", "dy:breakeven", "pp per 1.0 log"),
     ("us10y>TLT", "us10y", "TLT", "dy:us10y", "ret:TLT", "log per pp"),
     ("ca10y>XBB.TO", "ca10y", "XBB.TO", "dy:ca10y", "ret:XBB.TO", "log per pp"),
-    ("ca10y>ZST.TO", "ca10y", "ZST.TO", "dy:ca10y", "ret:ZST.TO", "log per pp"),
+    ("ca2y>ZST.TO", "ca2y", "ZST.TO", "dy:ca2y", "ret:ZST.TO", "log per pp"),
     ("usdcad>VFV.TO", "usdcad", "VFV.TO", "fx", "ret:VFV.TO", "log per 1.0 log"),
     ("us10y>QQQ", "us10y", "QQQ", "dy:us10y", "ret:QQQ", "log per pp"),
     ("us10y>SHOP.TO", "us10y", "SHOP.TO", "dy:us10y", "ret:SHOP.TO", "log per pp"),
     ("ca10y>XLB.TO", "ca10y", "XLB.TO", "dy:ca10y", "ret:XLB.TO", "log per pp"),
+    # Information only: nominal yields do not price real return bonds, so there is no chain.
     ("ca10y>XRB.TO", "ca10y", "XRB.TO", "dy:ca10y", "ret:XRB.TO", "log per pp"),
 ]
 
@@ -125,16 +127,15 @@ LINK_SPECS = [
 CHAINS = {
     "TLT": ("oil>us10y>TLT", ["oil>us10y", "us10y>TLT"]),
     "XBB.TO": ("oil>ca10y>XBB.TO", ["oil>ca10y", "ca10y>XBB.TO"]),
-    "ZST.TO": ("oil>ca10y>ZST.TO", ["oil>ca10y", "ca10y>ZST.TO"]),
+    "ZST.TO": ("oil>ca2y>ZST.TO", ["oil>ca2y", "ca2y>ZST.TO"]),
     "VFV.TO": ("oil>usdcad>VFV.TO", ["oil>usdcad", "usdcad>VFV.TO"]),
     "QQQ": ("oil>us10y>QQQ", ["oil>us10y", "us10y>QQQ"]),
     "SHOP.TO": ("oil>us10y>SHOP.TO", ["oil>us10y", "us10y>SHOP.TO"]),
     "XLB.TO": ("oil>ca10y>XLB.TO", ["oil>ca10y", "ca10y>XLB.TO"]),
-    "XRB.TO": ("oil>ca10y>XRB.TO", ["oil>ca10y", "ca10y>XRB.TO"]),
 }
 
 # ticker -> link id that gives the yield move for an oil move
-DURATION_YIELD_LINK = {"TLT": "oil>us10y", "XBB.TO": "oil>ca10y", "ZST.TO": "oil>ca10y"}
+DURATION_YIELD_LINK = {"TLT": "oil>us10y", "XBB.TO": "oil>ca10y", "ZST.TO": "oil>ca2y"}
 
 
 # ---------------------------------------------------------------------------
@@ -614,8 +615,8 @@ PORTFOLIO_BETA_COLUMNS = ["persona", "beta", "lo", "hi", "p", "r2", "n_weeks"]
 def portfolio_beta(data: WeeklyData, holdings: pd.DataFrame) -> pd.DataFrame:
     """Oil beta of each persona's portfolio, from the portfolio's own weekly return.
 
-    The weekly portfolio return is sum(weight * ret_cad) over the persona's holdings
-    (a week is used only if every holding has a return). It is regressed on Brent with
+    The weekly portfolio return is log(1 + sum(weight * (exp(ret_cad) - 1))) over the
+    persona's holdings (a week is used only if every holding has a return). It is regressed on Brent with
     the same HAC(4) OLS as the tickers. Returns persona, beta, lo, hi, p, r2, n_weeks.
     A persona holding a ticker that was skipped (too little history) is left out and
     a warning is printed.
@@ -627,7 +628,10 @@ def portfolio_beta(data: WeeklyData, holdings: pd.DataFrame) -> pd.DataFrame:
             print(f"WARNING: no portfolio_beta for {persona}: no returns for {missing}")
             continue
         w = h.set_index("ticker")["weight"]
-        port = (data.ret_cad[w.index] * w).sum(axis=1, min_count=len(w))
+        # Aggregate weighted SIMPLE returns, then go back to a log return.
+        simple = np.exp(data.ret_cad[w.index]) - 1.0
+        wsum = (simple * w).sum(axis=1, min_count=len(w))
+        port = np.log1p(wsum.where(wsum > -1))
         r = regress(port, data.brent)
         rows.append({"persona": persona, "beta": r["beta"], "lo": r["lo"], "hi": r["hi"],
                      "p": r["p"], "r2": r["r2"], "n_weeks": r["n"]})
@@ -705,7 +709,41 @@ def alternatives(holdings: pd.DataFrame, sens: pd.DataFrame) -> pd.DataFrame:
 # Step 11: write to S3
 # ---------------------------------------------------------------------------
 
-def summary_markdown(tables: dict[str, pd.DataFrame]) -> str:
+FX_DIAG_RANGE = (0.5, 1.5)
+
+
+def fx_diagnostic(data: WeeklyData) -> dict:
+    """Beta of (VFV.TO - XSP.TO) weekly log return on the weekly log change of usdcad.
+
+    VFV.TO holds US stocks unhedged and XSP.TO is CAD-hedged, so the difference should
+    move about one-for-one with usdcad. Returns beta, lo, hi, n and ok (beta in 0.5..1.5).
+    """
+    if "VFV.TO" not in data.ret_cad.columns or "XSP.TO" not in data.ret_cad.columns:
+        return {"beta": np.nan, "lo": np.nan, "hi": np.nan, "n": 0, "ok": False}
+    diff = data.ret_cad["VFV.TO"] - data.ret_cad["XSP.TO"]
+    r = regress(diff, data.usdcad)
+    ok = bool(pd.notna(r["beta"]) and FX_DIAG_RANGE[0] <= r["beta"] <= FX_DIAG_RANGE[1])
+    return {"beta": r["beta"], "lo": r["lo"], "hi": r["hi"], "n": r["n"], "ok": ok}
+
+
+def fx_diagnostic_lines(diag: dict) -> list[str]:
+    """summary.md lines for the usdcad diagnostic, with a warning when outside 0.5..1.5."""
+    lines = ["", "## Diagnostic: (VFV.TO - XSP.TO) weekly log return on weekly log change of usdcad", ""]
+    if pd.isna(diag["beta"]):
+        msg = "WARNING: diagnostic not available (VFV.TO or XSP.TO missing, or too few weeks); expected near +1."
+        print(msg)
+        return lines + [msg]
+    lines.append(f"beta {diag['beta']:.4f}, range {diag['lo']:.4f} to {diag['hi']:.4f}, "
+                 f"{diag['n']} weeks (expected near +1)")
+    if not diag["ok"]:
+        msg = (f"WARNING: usdcad diagnostic beta {diag['beta']:.4f} is outside "
+               f"{FX_DIAG_RANGE[0]}..{FX_DIAG_RANGE[1]}.")
+        print(msg)
+        lines += ["", msg]
+    return lines
+
+
+def summary_markdown(tables: dict[str, pd.DataFrame], data: WeeklyData | None = None) -> str:
     """Build summary.md text: row counts, portfolio betas, and the strongest oil-sensitive tickers.
 
     The last table lists the 10 tickers with the largest |beta_simple| among those with
@@ -729,10 +767,13 @@ def summary_markdown(tables: dict[str, pd.DataFrame]) -> str:
                      f"| {r['p_ex2022']:.4f} | {r['oos_hit_rate']:.2f} |")
     if top.empty:
         lines.append("| (none) | | | | |")
+    if data is not None:
+        lines += fx_diagnostic_lines(fx_diagnostic(data))
     return "\n".join(lines) + "\n"
 
 
-def write_outputs(tables: dict[str, pd.DataFrame], bucket: str | None = None, s3=None) -> list[str]:
+def write_outputs(tables: dict[str, pd.DataFrame], bucket: str | None = None, s3=None,
+                  data: WeeklyData | None = None) -> list[str]:
     """Write each table to s3://bucket/processed/<table>/part-0.parquet and a summary.md.
 
     Existing objects are overwritten. The summary goes to
@@ -748,7 +789,7 @@ def write_outputs(tables: dict[str, pd.DataFrame], bucket: str | None = None, s3
         s3.put_object(Bucket=bucket, Key=key, Body=buf.getvalue())
         keys.append(key)
     key = "processed/_summary/summary.md"
-    s3.put_object(Bucket=bucket, Key=key, Body=summary_markdown(tables).encode("utf-8"),
+    s3.put_object(Bucket=bucket, Key=key, Body=summary_markdown(tables, data).encode("utf-8"),
                   ContentType="text/markdown")
     keys.append(key)
     return keys

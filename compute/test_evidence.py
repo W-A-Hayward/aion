@@ -210,6 +210,27 @@ def test_label_rules():
     assert ev.label_row(sens_row("A", 0.5, np.nan), 0.9, {"positive"})[:2] == ("grey", "NOT_SIG")
 
 
+def test_extra_universe_needs_q_below_010():
+    def extra(q, universe="extra", **kw):
+        r = sens_row("E", 0.5, 0.01, **kw)
+        r.update({"universe": universe, "q_simple": q})
+        return r
+
+    assert ev.label_row(extra(0.05), 0.9, set())[:2] == ("green", "SIG_STABLE_EXPLAINED")
+    assert ev.label_row(extra(0.05, p_ex=0.2), 0.9, set())[:2] == ("yellow", "SIG_UNSTABLE")
+    assert ev.label_row(extra(0.10), 0.9, {"positive"})[:2] == ("grey", "NOT_SIG")
+    assert ev.label_row(extra(0.30, p_ex=0.2), 0.9, {"positive"})[:2] == ("grey", "NOT_SIG")
+    assert ev.label_row(extra(np.nan), 0.9, {"positive"})[0] == "grey"
+    assert ev.label_row(extra(0.5), 0.9, {"positive"})[2].endswith(".")
+    # core tickers ignore q_simple
+    assert ev.label_row(extra(0.5, universe="core"), 0.9, set())[0] == "green"
+    # build_confidence passes universe and q_simple through
+    sens = pd.DataFrame([{**extra(0.5), "ticker": "E"}])
+    out = ev.build_confidence(sens, pd.DataFrame(columns=["ticker", "share_explained", "chain"]),
+                              pd.DataFrame(columns=["ticker", "direction"]))
+    assert out.loc[0, "label"] == "grey"
+
+
 def test_label_text_has_numbers():
     text = ev.label_row(sens_row("TLT", -0.4, 0.001), 0.64, set(), "rates")[2]
     assert "64%" in text and text.endswith(".")

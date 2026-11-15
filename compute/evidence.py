@@ -43,6 +43,8 @@ MAIN_CHANNEL = {
     "XLB.TO": "rates", "XRB.TO": "rates", "AGG": "rates",
 }
 
+EXTRA_MAX_Q = 0.10   # extra-universe tickers need q_simple below this for green/yellow
+
 CHANNELS = ("direct", "rates", "currency", "company-specific", "none")
 DIRECTIONS = ("positive", "negative", "mixed")
 
@@ -611,8 +613,15 @@ def label_row(sens: dict, share: float | None, evidence_directions: set[str],
              (share_explained>=0.5 OR an evidence row with the same direction as beta_simple)
     yellow = p_simple<0.05 but the rest fails
     grey   = p_simple>=0.05 (or missing)
+    For universe = "extra" tickers, green and yellow also require q_simple < 0.10; otherwise grey.
     """
     beta, p = sens.get("beta_simple"), sens.get("p_simple")
+    if sens.get("universe") == "extra" and pd.notna(p) and p < 0.05:
+        q = sens.get("q_simple")
+        if pd.isna(q) or q >= EXTRA_MAX_Q:
+            qtxt = "missing" if pd.isna(q) else f"{q:.2f}"
+            return "grey", "NOT_SIG", (f"No reliable link to oil: p = {p:.3f} but the adjusted value "
+                                       f"across all tickers is q = {qtxt}, not below {EXTRA_MAX_Q:.2f}.")
     if pd.isna(p) or p >= 0.05:
         if pd.isna(p):
             return "grey", "NOT_SIG", "Not enough weekly data to measure a link to oil."
