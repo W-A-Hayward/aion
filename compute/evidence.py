@@ -82,14 +82,14 @@ EDGE_COLUMNS = ["from_node", "to_node", "edge_type", "beta", "lo", "hi", "eviden
 SYSTEM_PROMPT = (
     "You read one passage from an investor document about a ticker and decide whether it "
     "describes how oil prices (or oil-linked energy prices, interest rates or the Canadian "
-    "dollar) affect that ticker. Answer by calling the record_evidence tool exactly once. "
+    "dollar) affect that ticker. Always answer by calling record_evidence exactly once. "
     '"direction" is the effect of HIGHER oil prices on the ticker. '
     '"channel": direct = oil revenue or costs; rates = through interest rates or yields; '
     "currency = through the Canadian dollar or exchange rate; company-specific = a named "
     "business exposure to fuel or energy prices; none = not about oil. "
     "The excerpt must be copied character for character from the passage. "
     'If the passage is not relevant, set relevant to false, channel to "none", direction to '
-    '"mixed" and excerpt and section to empty strings.'
+    '"mixed" and excerpt and section to empty strings. Never answer in plain text.'
 )
 
 EVIDENCE_TOOL_NAME = "record_evidence"
@@ -114,7 +114,7 @@ TOOL_CONFIG = {
             }},
         }
     }],
-    "toolChoice": {"tool": {"name": EVIDENCE_TOOL_NAME}},
+    "toolChoice": {"auto": {}},
 }
 
 
@@ -288,9 +288,28 @@ def is_verbatim(excerpt: str, passage: str) -> bool:
     return bool(e) and e in normalize_ws(passage)
 
 
+def parse_text_answer(text: str) -> dict | None:
+    """Fallback parser: strip ``` fences, keep the first "{" to the last "}", json.loads."""
+    text = re.sub(r"```[a-zA-Z]*", "", text or "")
+    i, j = text.find("{"), text.rfind("}")
+    if i < 0 or j <= i:
+        return None
+    try:
+        obj = json.loads(text[i:j + 1])
+    except ValueError:
+        return None
+    return obj if isinstance(obj, dict) else None
+
+
+PATHS = ("tool", "text", "failed")
+
+
 def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: str,
-                  usage: Usage) -> dict | None:
-    """One Converse call that forces the record_evidence tool. Returns the toolUse input, or None."""
+                  usage: Usage) -> tuple[dict | None, str]:
+    """One Converse call (toolChoice auto). Returns (answer, path), path in "tool", "text", "failed".
+
+    "tool" = the toolUse input; "text" = JSON parsed from a plain-text reply; "failed" = neither.
+    """
     user = f"Ticker: {ticker}\nDocument type: {doc_type}\n\nPassage:\n{passage}"
     resp = client.converse(
         modelId=model_id,
@@ -300,22 +319,35 @@ def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: st
         toolConfig=TOOL_CONFIG,
     )
     usage.add(resp)
-    for block in resp.get("output", {}).get("message", {}).get("content", []):
+    blocks = resp.get("output", {}).get("message", {}).get("content", [])
+    for block in blocks:
         tool = block.get("toolUse")
         if tool and tool.get("name") == EVIDENCE_TOOL_NAME and isinstance(tool.get("input"), dict):
-            return tool["input"]
-    return None
+            return tool["input"], "tool"
+    text = "".join(b.get("text", "") for b in blocks if isinstance(b.get("text"), str))
+    obj = parse_text_answer(text)
+    if obj is not None:
+        return obj, "text"
+    return None, "failed"
 
 
 def classify_passage(client, model_id: str, ticker: str, doc_type: str, passage: str,
-                     usage: Usage) -> dict | None:
-    """Ask the model about one passage. No tool result: retry once, then return None."""
+                     usage: Usage, counts: dict | None = None) -> dict | None:
+    """Ask the model about one passage. No usable answer: retry once, then return None.
+
+    `counts` (keys "tool", "text", "failed") gets one increment per passage for the path
+    of its final attempt.
+    """
+    path = "failed"
     for _ in range(2):
-        obj = converse_once(client, model_id, ticker, doc_type, passage, usage)
+        obj, path = converse_once(client, model_id, ticker, doc_type, passage, usage)
         if obj is not None:
-            return obj
-    log.warning("Skipping passage for %s: no record_evidence result twice", ticker)
-    return None
+            break
+    if counts is not None:
+        counts[path] = counts.get(path, 0) + 1
+    if obj is None:
+        log.warning("Skipping passage for %s: no tool result or parsable text twice", ticker)
+    return obj
 
 
 def validate_answer(obj: dict, passage: str) -> dict | None:
@@ -419,13 +451,15 @@ def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage) ->
     """Run the model over one document. Returns the cache payload with the kept rows."""
     key = DOCS_PREFIX + m.file
     payload = {"file": m.file, "ticker": m.ticker, "doc_type": m.doc_type,
-               "source_url": m.source_url, "sent": 0, "skipped": 0, "candidates": []}
+               "source_url": m.source_url, "sent": 0, "skipped": 0,
+               "paths": {k: 0 for k in PATHS}, "candidates": []}
     data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
     pages = extract_pages(m.file, data)
     kept = prefilter(passages_for_pages(pages))
     payload["sent"] = len(kept)
     for p in kept:
-        obj = classify_passage(client, model_id, m.ticker, m.doc_type, p["text"], usage)
+        obj = classify_passage(client, model_id, m.ticker, m.doc_type, p["text"], usage,
+                                payload["paths"])
         if obj is None:
             payload["skipped"] += 1
             continue
@@ -462,13 +496,17 @@ def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
             write_cache(bucket, m, payload, s3)
         candidates += payload["candidates"]
         stats[m.file] = {"sent": payload["sent"], "skipped": payload["skipped"],
-                         "kept": len(payload["candidates"]), "cached": cached}
+                         "kept": len(payload["candidates"]), "cached": cached,
+                         "paths": payload.get("paths") or {k: 0 for k in PATHS}}
     return candidates, stats
 
 
 def log_skipped(stats: dict[str, dict]) -> None:
     for file, st in stats.items():
-        log.info("%s: %d passages sent, %d skipped (no tool result after retry), %d kept%s",
+        paths = st.get("paths", {})
+        print(f"{file}: tool={paths.get('tool', 0)} text_fallback={paths.get('text', 0)} "
+              f"failed={paths.get('failed', 0)}{' (from cache)' if st['cached'] else ''}")
+        log.info("%s: %d passages sent, %d skipped (no usable answer after retry), %d kept%s",
                  file, st["sent"], st["skipped"], st["kept"], " (from cache)" if st["cached"] else "")
 
 
