@@ -1,0 +1,77 @@
+{
+  "job_id": "b3a8d2f6-11c9-4e7a-8f40-6d95e0a7b813",
+  "stage": "done",
+  "stages": [
+    {"stage": "queued", "t": "2026-11-15T14:20:40Z"},
+    {"stage": "agent_started", "t": "2026-11-15T14:20:41Z"},
+    {"stage": "tool:get_portfolio_exposure", "t": "2026-11-15T14:20:43Z"},
+    {"stage": "tool:run_scenario", "t": "2026-11-15T14:20:46Z"},
+    {"stage": "guardrail", "t": "2026-11-15T14:20:49Z"},
+    {"stage": "done", "t": "2026-11-15T14:20:49Z"}
+  ],
+  "answer": {
+    "verdict": "UNKNOWN",
+    "headline": "Un lien avec le pétrole n'est pas démontré pour ton portefeuille.",
+    "text": "Sur 2021–2026, le pétrole explique 1,2 % des fluctuations hebdomadaires de ton portefeuille, contre 74,2 % pour les actions canadiennes. La sensibilité estimée est de 0,12 point par point de pétrole, avec une fourchette de -0,07 à 0,31 qui inclut zéro [1]. Dans une simulation où le Brent baisse de 15 %, l'effet estimé est de -1,8 %, avec une fourchette de -4,6 % à +1,1 % [2]. Les données ne permettent donc pas de dire que le pétrole est un risque important pour toi.",
+    "refusal": false,
+    "caveat": "2021–2026 · passé · simulation · pas un conseil"
+  },
+  "trace": [
+    {
+      "step": 1,
+      "tool": "get_portfolio_exposure",
+      "input_summary": "persona=amira",
+      "output_summary": "oil beta 0.12 (range -0.07 to 0.31, p=0.22), 261 weeks",
+      "tag": "measured",
+      "ms": 1850
+    },
+    {
+      "step": 2,
+      "tool": "run_scenario",
+      "input_summary": "persona=amira, oil_shock_pct=-15",
+      "output_summary": "estimated impact -1.8% (range -4.6% to +1.1%)",
+      "tag": "simulated",
+      "ms": 2230
+    }
+  ],
+  "data": {
+    "risk_share": {"rates": 0.041, "stocks": 0.742, "oil": 0.012},
+    "shields": [],
+    "cushion": [],
+    "betas": [
+      {"subject": "amira", "beta": 0.12, "lo": -0.07, "hi": 0.31, "p": 0.22, "n_weeks": 261}
+    ],
+    "twin_series": [],
+    "stock_bond_series": [],
+    "scenario": {
+      "subject": "amira",
+      "subject_type": "persona",
+      "shock_pct": -15,
+      "impact_pct": -1.8,
+      "lo_pct": -4.6,
+      "hi_pct": 1.1
+    }
+  },
+  "citations": [
+    {
+      "n": 1,
+      "evidence_id": "bis-2023-12-oil-equity-01",
+      "excerpt": "(exemple) Le lien entre le prix du pétrole et les actions varie selon les périodes et les secteurs.",
+      "publisher": "BIS",
+      "date": "2023-12",
+      "doc_type": "research",
+      "trust": "Central bank",
+      "url": "https://www.bis.org/"
+    },
+    {
+      "n": 2,
+      "evidence_id": "cascade-method-scenarios",
+      "excerpt": "(exemple) Les scénarios appliquent la sensibilité estimée à un choc de pétrole donné, avec sa fourchette à 95 %.",
+      "publisher": "cascade",
+      "date": "2026-11",
+      "doc_type": "method",
+      "trust": "Own calculation",
+      "url": "https://example.invalid/method"
+    }
+  ]
+}
