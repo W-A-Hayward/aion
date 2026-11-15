@@ -1,0 +1,25 @@
+{
+  "messageVersion": "1.0",
+  "agent": {
+    "name": "cascade-agent",
+    "id": "TESTAGENT",
+    "alias": "TSTALIASID",
+    "version": "DRAFT"
+  },
+  "actionGroup": "oil-tools",
+  "function": "test_shield",
+  "parameters": [
+    {
+      "name": "ticker",
+      "type": "string",
+      "value": "GLD"
+    },
+    {
+      "name": "persona",
+      "type": "string",
+      "value": "robert"
+    }
+  ],
+  "sessionAttributes": {},
+  "promptSessionAttributes": {}
+}

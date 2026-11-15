@@ -1,0 +1,30 @@
+{
+  "messageVersion": "1.0",
+  "agent": {
+    "name": "cascade-agent",
+    "id": "TESTAGENT",
+    "alias": "TSTALIASID",
+    "version": "DRAFT"
+  },
+  "actionGroup": "oil-tools",
+  "function": "run_scenario",
+  "parameters": [
+    {
+      "name": "persona",
+      "type": "string",
+      "value": "robert"
+    },
+    {
+      "name": "shock_type",
+      "type": "string",
+      "value": "rates"
+    },
+    {
+      "name": "rates_shock_bp",
+      "type": "string",
+      "value": "100"
+    }
+  ],
+  "sessionAttributes": {},
+  "promptSessionAttributes": {}
+}

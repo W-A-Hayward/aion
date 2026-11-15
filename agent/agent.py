@@ -233,15 +233,64 @@ def explain_channel(ticker: str) -> dict:
 
 
 @tool
-def run_scenario(persona: str, oil_shock_pct: str) -> dict:
-    """Call when the user asks "what if oil moves X%". Returns the estimated impact with 95% range for the
-    persona's portfolio and for each holding. Only the four listed shocks are supported.
+def run_scenario(persona: str, oil_shock_pct: str = None, shock_type: str = "oil",
+                 rates_shock_bp: str = None) -> dict:
+    """Call when the user asks "what if oil moves X%" (shock_type oil) or "what if interest rates rise or
+    fall X bp" (shock_type rates). Oil: returns the estimated impact with 95% range for the persona's
+    portfolio and for each holding; only the four listed oil shocks are supported. Rates: moves the US 10y
+    and Canada 10y yields (and the Canada 2y for ZST.TO) by the same number of basis points through the
+    measured yield links; returns per-holding % impact, dollars per $100,000, the total, the links used
+    with their 95% ranges, and the holdings that have no measured rates link (not_linked, left out of the
+    total).
 
     Args:
         persona: Persona name. Allowed values: robert, amira, mateo.
-        oil_shock_pct: Brent oil move in percent. Allowed values: -30, -15, 15, 30.
+        oil_shock_pct: Brent oil move in percent, for shock_type oil. Allowed values: -30, -15, 15, 30.
+        shock_type: Allowed values: oil (default), rates.
+        rates_shock_bp: Yield move in basis points, for shock_type rates, for example 100 or -50. A non-zero
+            whole number between -300 and 300.
     """
-    return _call_tools_lambda("run_scenario", persona=persona, oil_shock_pct=oil_shock_pct)
+    params = {"persona": persona}
+    if shock_type and str(shock_type).strip().lower() != "oil":
+        params["shock_type"] = shock_type
+        params["rates_shock_bp"] = rates_shock_bp
+    else:
+        params["oil_shock_pct"] = oil_shock_pct
+    return _call_tools_lambda("run_scenario", **{k: v for k, v in params.items() if v is not None})
+
+
+@tool
+def get_portfolio_facts(persona: str) -> dict:
+    """Call for questions about how the portfolio behaved in bad times, not just about oil: crash history
+    (max drawdown with peak, trough and recovery dates, worst year, worst 13 weeks, and what oil, yields and
+    stocks did meanwhile), what drives the risk (oil, rates, stocks r2), whether the bond side protected in
+    the worst stock weeks, the persona's crash profile, which external shields (usdcad, GLD, ZST.TO, XBB.TO,
+    AGG, TLT_usd) worked, the shield matrix by crash type with threshold-robustness flags, the best
+    cushions for a stock-side crash, per-holding oil and rates betas with 95% ranges, monthly drawdown of
+    the persona and its hedged twin, the stock-bond correlation by CPI regime and over time, and research
+    evidence on currency and stock-bond with publisher, date, trust tier and source. 2021-2026 only; past
+    behaviour; descriptive.
+
+    Args:
+        persona: Persona name. Allowed values: robert, amira, mateo.
+    """
+    return _call_tools_lambda("get_portfolio_facts", persona=persona)
+
+
+@tool
+def test_shield(ticker: str, persona: str) -> dict:
+    """Call when the user asks whether a given asset would have cushioned the persona's worst weeks. Returns
+    that ticker's average return, weeks up, weeks, binomial p-value and label (WORKING, BROKEN, NEUTRAL,
+    HIDDEN, REMOVED) in the persona's worst 10% portfolio weeks, plus the ticker's results by crash type
+    (stock_crash, rate_shock, other) at three threshold sets when available. Unknown tickers return
+    "not in universe". 2021-2026 only; past behaviour; descriptive.
+
+    Args:
+        ticker: Ticker symbol from the universe (for example GLD, AGG, ZST.TO, XBB.TO, SPY, XIU.TO) or the
+            shield names usdcad and TLT_usd.
+        persona: Persona name. Allowed values: robert, amira, mateo.
+    """
+    return _call_tools_lambda("test_shield", ticker=ticker, persona=persona)
 
 
 @tool
@@ -317,7 +366,7 @@ def search_evidence(query: str, ticker: str = None) -> list:
 
 TOOLS = [
     get_portfolio_exposure, get_asset_sensitivity, explain_channel,
-    run_scenario, compare_alternative, get_validation, search_evidence,
+    run_scenario, compare_alternative, get_validation, get_portfolio_facts, test_shield, search_evidence,
 ]
 
 
