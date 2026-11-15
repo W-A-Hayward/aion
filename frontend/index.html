@@ -2,10 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>cascade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#faf9f6">
+  <meta name="description" content="Cascade: an agent that explains where your portfolio's oil exposure comes from.">
+  <title>Cascade</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f1d1a'/%3E%3Cpath d='M16 6s-7 9-7 14a7 7 0 0 0 14 0c0-5-7-14-7-14z' fill='%23e98a2c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./chat.css">
+  <script type="module" src="./chat.js"></script>
 </head>
 <body>
-  <h1>cascade</h1>
-  <p>Placeholder. Simulation only, not advice.</p>
+  <a class="skip-link" href="#composer-input">Skip to message box</a>
+  <div class="app" id="app" data-sidebar="open">
+    <aside class="sidebar" id="sidebar" aria-label="Conversations">
+      <div class="sb-top">
+        <span class="brand"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1S2 13.5 2 20.5a10 10 0 0 0 20 0C22 13.5 12 1 12 1z"/></svg>Cascade</span>
+        <button type="button" class="icon-btn" id="sb-close" aria-label="Close sidebar" title="Close sidebar">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><path d="M7.5 3.5v13"/></svg>
+        </button>
+      </div>
+      <button type="button" class="sb-new" id="new-chat">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>New chat
+      </button>
+      <p class="sb-label" id="chat-list-label">Recent</p>
+      <nav class="chat-list" id="chat-list" aria-labelledby="chat-list-label"></nav>
+      <div class="sb-foot">
+        <p id="agent-status" class="agent-status"></p>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim" hidden></div>
+
+    <div class="main">
+      <header class="topbar">
+        <button type="button" class="icon-btn" id="sb-open" aria-label="Open sidebar" title="Open sidebar" aria-controls="sidebar" aria-expanded="true">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><path d="M7.5 3.5v13"/></svg>
+        </button>
+        <button type="button" class="icon-btn" id="new-chat-top" aria-label="New chat" title="New chat">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 4.5H5a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 5 16.5h9a1.5 1.5 0 0 0 1.5-1.5V8.5"/><path d="M14.5 3.5l2 2-6 6H8.5v-2z"/></svg>
+        </button>
+        <div class="mode">
+          <button type="button" class="mode-btn" id="mode-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="mode-menu">
+            <span id="mode-label">Cascade</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+          </button>
+          <div class="menu mode-menu" id="mode-menu" role="menu" hidden>
+            <button type="button" role="menuitemradio" data-mode="agent" aria-checked="false"><b>Agent</b><span id="agent-option-note">Investigates with tools on the backend</span></button>
+            <button type="button" role="menuitemradio" data-mode="offline" aria-checked="true"><b>Offline</b><span>Answers from saved data on this device · no AI</span></button>
+          </div>
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="profile">
+          <button type="button" class="avatar" id="profile-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" aria-label="Profile">?</button>
+          <div class="menu profile-menu" id="profile-menu" role="menu" hidden>
+            <div class="pm-head"><b id="pm-name"></b><span id="pm-portfolio"></span></div>
+            <button type="button" role="menuitem" data-open="profile">Profile</button>
+            <button type="button" role="menuitem" data-open="portfolio">Portfolio</button>
+            <hr>
+            <button type="button" role="menuitem" id="sign-out">Sign out</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="thread" id="thread" aria-live="polite" tabindex="-1"></main>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <div class="composer-box">
+          <label class="sr-only" for="composer-input">Message Cascade</label>
+          <textarea id="composer-input" rows="1" maxlength="900" placeholder="Ask about your oil exposure…" required></textarea>
+          <button type="submit" class="send" id="send" aria-label="Send" title="Send">
+            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4M5 9l5-5 5 5"/></svg>
+          </button>
+          <button type="button" class="send stop" id="stop" aria-label="Stop" title="Stop" hidden>
+            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="8" height="8" rx="1.5"/></svg>
+          </button>
+        </div>
+        <p class="composer-note">Historical relationships from weekly data, not forecasts or investment advice.</p>
+      </form>
+    </div>
+  </div>
+
+  <dialog class="sheet" id="signup" aria-labelledby="signup-title"></dialog>
+  <dialog class="sheet" id="settings" aria-labelledby="settings-title"></dialog>
 </body>
 </html>
