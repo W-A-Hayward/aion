@@ -12,13 +12,12 @@ and processed/edges.
 
 from __future__ import annotations
 
-import html
+import hashlib
 import io
 import json
 import logging
 import os
 import re
-from html.parser import HTMLParser
 
 import numpy as np
 import pandas as pd
@@ -243,40 +242,17 @@ def normalize_ws(text: str) -> str:
     return re.sub(r"\s+", " ", text or "").strip()
 
 
-class _TextExtractor(HTMLParser):
-    """Strip tags with the standard library. Skips script, style and head-only noise."""
-
-    _SKIP = {"script", "style", "noscript", "template"}
-    _BLOCK = {"p", "div", "br", "li", "ul", "ol", "tr", "td", "th", "table", "section",
-              "article", "h1", "h2", "h3", "h4", "h5", "h6", "header", "footer"}
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.parts: list[str] = []
-        self._skip_depth = 0
-
-    def handle_starttag(self, tag, attrs):
-        if tag in self._SKIP:
-            self._skip_depth += 1
-        elif tag in self._BLOCK:
-            self.parts.append(" ")
-
-    def handle_endtag(self, tag):
-        if tag in self._SKIP and self._skip_depth:
-            self._skip_depth -= 1
-        elif tag in self._BLOCK:
-            self.parts.append(" ")
-
-    def handle_data(self, data):
-        if not self._skip_depth:
-            self.parts.append(data)
+HTML_DROP_TAGS = ("script", "style", "noscript", "template", "nav", "header", "footer")
 
 
 def html_to_text(raw_html: str) -> str:
-    parser = _TextExtractor()
-    parser.feed(raw_html)
-    parser.close()
-    return html.unescape("".join(parser.parts))
+    """Visible text of an HTML page: script, style, nav, header and footer elements are removed."""
+    from bs4 import BeautifulSoup
+
+    soup = BeautifulSoup(raw_html, "html.parser")
+    for tag in soup(HTML_DROP_TAGS):
+        tag.decompose()
+    return soup.get_text(" ")
 
 
 def extract_pages(filename: str, data: bytes) -> list[tuple[int | None, str]]:
@@ -600,17 +576,28 @@ def load_document_text(bucket: str, key: str, s3=None) -> str:
 # Steps 1-5 together, with a per-document cache so a run can resume
 # ---------------------------------------------------------------------------
 
-def _cache_key(file: str) -> str:
-    return f"{CACHE_PREFIX}{file}.json"
+SUPPORTED_SUFFIXES = (".pdf", ".html", ".htm")
 
 
-def read_cache(bucket: str, m, s3) -> dict | None:
-    """Cached result for one manifest row, or None if absent or made for different manifest values."""
+def content_hash(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _cache_key(file: str, digest: str) -> str:
+    """Cache object of one document: file name + content hash (a changed file gets a new key)."""
+    return f"{CACHE_PREFIX}{file}.{digest[:16]}.json"
+
+
+def read_cache(bucket: str, m, s3, digest: str) -> dict | None:
+    """Cached result for this file name and content, or None if absent.
+
+    The cache is found by file name + content hash only. If the manifest row's ticker, doc_type,
+    source_url or topic differ from the cached run, the document is processed again.
+    """
     try:
-        body = s3.get_object(Bucket=bucket, Key=_cache_key(m.file))["Body"].read()
+        body = s3.get_object(Bucket=bucket, Key=_cache_key(m.file, digest))["Body"].read()
     except Exception as exc:
-        code = getattr(exc, "response", {}).get("Error", {}).get("Code")
-        if code in ("NoSuchKey", "404", "NotFound"):
+        if _s3_code(exc) in ("NoSuchKey", "404", "NotFound"):
             return None
         raise
     payload = json.loads(body)
@@ -622,15 +609,21 @@ def read_cache(bucket: str, m, s3) -> dict | None:
     return payload
 
 
-def write_cache(bucket: str, m, payload: dict, s3) -> None:
-    s3.put_object(Bucket=bucket, Key=_cache_key(m.file), ContentType="application/json",
-                  Body=json.dumps(payload).encode("utf-8"))
+def write_cache(bucket: str, m, payload: dict, s3, digest: str) -> None:
+    s3.put_object(Bucket=bucket, Key=_cache_key(m.file, digest), ContentType="application/json",
+                  Body=json.dumps({**payload, "sha256": digest}).encode("utf-8"))
 
 
-def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage) -> dict:
+def _s3_code(exc: Exception) -> str | None:
+    return getattr(exc, "response", {}).get("Error", {}).get("Code")
+
+
+def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage,
+                     data: bytes | None = None) -> dict:
     """Run the model over one document. Returns the cache payload with the kept rows."""
     key = DOCS_PREFIX + m.file
-    data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+    if data is None:
+        data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
     pages = extract_pages(m.file, data)
     all_passages = passages_for_pages(pages)
     topic = m.topic or (infer_topic(all_passages) if m.doc_type.lower() == "research" else TOPIC_OIL)
@@ -655,30 +648,58 @@ def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage) ->
     return payload
 
 
+def _print_status(file: str, doc_type: str, status: str, excerpts) -> None:
+    print(f"{file} | {doc_type} | {status} | excerpts found: {excerpts}")
+
+
 def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
-                    only_cached: bool = False) -> tuple[list[dict], dict[str, dict]]:
+                    only_cached: bool = False, verbose: bool = True) -> tuple[list[dict], dict[str, dict]]:
     """Candidates from every manifest document. Cached documents are not sent to the model again.
 
+    A document is cached by file name + content hash. Pass 1 reads every document, prints one line per
+    manifest row for the rows that need no extraction (cached, missing in S3, unsupported type) and
+    collects the rest; pass 2 extracts them and prints their line ("processed") when each is done.
     With only_cached=True nothing is processed; documents with no cache are skipped.
     Returns (candidates, per-document stats {file: {"sent", "skipped", "kept", "cached"}}).
     """
     manifest = _read_manifest(bucket, s3)
-    candidates, stats = [], {}
-    for m in manifest.itertuples(index=False):
+    say = _print_status if verbose and not only_cached else (lambda *a: None)
+    results: dict[int, tuple] = {}     # row index -> (m, payload, cached)
+    todo = []                          # (row index, m, data, digest)
+    for i, m in enumerate(manifest.itertuples(index=False)):
         if not m.file or not m.source_url:
             log.warning("Skipping manifest row %r: file and source_url are required", m.file)
             continue
-        payload = read_cache(bucket, m, s3)
-        cached = payload is not None
-        if payload is None:
-            if only_cached:
+        if not m.file.lower().endswith(SUPPORTED_SUFFIXES):
+            say(m.file, m.doc_type, "unsupported type", 0)
+            continue
+        try:
+            data = s3.get_object(Bucket=bucket, Key=DOCS_PREFIX + m.file)["Body"].read()
+        except Exception as exc:
+            if _s3_code(exc) in ("NoSuchKey", "404", "NotFound"):
+                say(m.file, m.doc_type, "missing in S3", 0)
                 continue
-            try:
-                payload = process_document(m, bucket, model_id, s3, client, usage)
-            except Exception as exc:  # one unreadable file must not stop the run
-                log.warning("Skipping %s: %s", DOCS_PREFIX + m.file, exc)
-                continue
-            write_cache(bucket, m, payload, s3)
+            raise
+        digest = content_hash(data)
+        payload = read_cache(bucket, m, s3, digest)
+        if payload is not None:
+            say(m.file, m.doc_type, "cached", len(payload["candidates"]))
+            results[i] = (m, payload, True)
+        elif not only_cached:
+            todo.append((i, m, data, digest))
+    for i, m, data, digest in todo:
+        try:
+            payload = process_document(m, bucket, model_id, s3, client, usage, data)
+        except Exception as exc:  # one unreadable file must not stop the run
+            log.warning("Skipping %s: %s", DOCS_PREFIX + m.file, exc)
+            say(m.file, m.doc_type, f"unreadable ({exc})", 0)
+            continue
+        write_cache(bucket, m, payload, s3, digest)
+        say(m.file, m.doc_type, "processed", len(payload["candidates"]))
+        results[i] = (m, payload, False)
+    candidates, stats = [], {}
+    for i in sorted(results):
+        m, payload, cached = results[i]
         publisher = m.publisher or derive_publisher(m.source_url)
         date = m.date or NOT_STATED
         # provenance comes from the manifest (the source of truth), not from the cache
