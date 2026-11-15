@@ -12,7 +12,7 @@ All raw files are CSV. Raw inputs under raw/ (written by ingest/fetch_to_s3.py):
                                    series used: BD.CDN.10YR.DQ.YLD (CA 10y), BD.CDN.2YR.DQ.YLD (CA 2y),
                                    DGS10 (US 10y), DGS2 (US 2y); values in percent
   raw/prices/snapshot=YYYY-MM-DD/prices_daily_extra.csv  same columns as prices_daily.csv,
-                                   tickers VFV.TO XSP.TO XESG.TO, currency CAD
+                                   tickers VFV.TO XSP.TO XESG.TO XRB.TO XLB.TO XEG.TO, currency CAD
   raw/fred/snapshot=YYYY-MM-DD/DCOILBRENTEU.csv, T10YIE.csv
                                    FRED CSV: two columns, first is the date (header "observation_date"
                                    or "DATE"), second is the value (header = series id); "." or empty = missing
@@ -24,8 +24,16 @@ Snapshot folders: always use the latest snapshot=YYYY-MM-DD.
 
 MVP tickers (14): XIU.TO ENB.TO XOM TLT XBB.TO ZST.TO QQQ SHOP.TO SPY VFV.TO XSP.TO XESG.TO ATD.TO RY.TO
   (11 from prices_daily.csv; VFV.TO XSP.TO XESG.TO from prices_daily_extra.csv)
-Market control: SPY for US tickers; XIU.TO for .TO stock tickers; none for ETFs that are a market
-  (XIU.TO, XESG.TO, SPY, VFV.TO, XSP.TO).
+  Personas and alternatives only use these core tickers (universe = "core").
+Extra tickers (21, universe = "extra"):
+  CNQ.TO CNR.TO FTS.TO TD.TO MFC.TO CSU.TO NVDA AAPL MSFT GOOGL AMZN TSLA JPM JNJ PG GLD AGG ESGV
+    (18 from prices_daily.csv)
+  XRB.TO XLB.TO XEG.TO (from prices_daily_extra.csv)
+Universe = core + extra = 35 tickers. BTC-USD and ETH-USD are in prices_daily.csv but are never used.
+A ticker with fewer than 150 weekly returns is skipped with a printed warning.
+Market control: SPY for US stocks; XIU.TO for .TO stocks; none (simple values copied, market_ticker = "none")
+  for ETFs that are not single stocks: XIU.TO, XESG.TO, SPY, VFV.TO, XSP.TO, GLD, AGG, ESGV, XRB.TO, XLB.TO, XEG.TO.
+  Bond ETFs XBB.TO, ZST.TO and TLT keep the market control (XIU.TO for the .TO funds, SPY for TLT).
 Oil factor: weekly log return of Brent (USD). Weeks end Friday (W-FRI), last available close.
 All asset returns: weekly log returns of adj_close, also converted to CAD with FX
   (USD tickers: ret_cad = ret_local + weekly log change of usdcad).
@@ -45,14 +53,21 @@ Alternatives: robert TLT->ZST.TO, robert XBB.TO->ZST.TO, mateo XIU.TO->XESG.TO, 
 Processed tables: Parquet, one folder per table: processed/<table>/part-0.parquet
   sensitivities: ticker, beta_simple, lo_simple, hi_simple, p_simple, beta_mkt, lo_mkt, hi_mkt, p_mkt,
                  market_ticker, r2_incremental, exxon_equiv, beta_ex2022, lo_ex2022, hi_ex2022, p_ex2022,
-                 beta_up, beta_down, oos_hit_rate, oos_n, n_weeks
-  rolling: ticker, week, beta_52w
-  links: link_id, from_node, to_node, beta, lo, hi, p, unit   (e.g. oil>us10y, us10y>TLT, oil>usdcad, oil>breakeven)
+                 beta_up, beta_down, oos_hit_rate, oos_n, n_weeks, q_simple, universe
+                 (one row per ticker in the universe; q_simple = Benjamini-Hochberg adjusted p_simple across
+                 all tickers, p_simple itself is unchanged; universe = core | extra)
+  rolling: ticker, week, beta_52w, universe
+  links: link_id, from_node, to_node, beta, lo, hi, p, unit   (e.g. oil>us10y, us10y>TLT, oil>usdcad, oil>breakeven,
+                 ca10y>XLB.TO, ca10y>XRB.TO)
   chain_reconciliation: ticker, chain, beta_direct, beta_chain, share_explained
+                 (chains for TLT, XBB.TO, ZST.TO, VFV.TO, QQQ, SHOP.TO, XLB.TO oil>ca10y>XLB.TO, XRB.TO oil>ca10y>XRB.TO)
   duration_check: ticker, duration_years, yield_move_per_10pct_oil_bp, implied_move_pct, measured_move_pct
   persona_holdings: persona, ticker, weight
-  portfolio_exposure: persona, ticker, weight, beta, lo, hi, contribution
+  portfolio_exposure: persona, ticker, weight, beta, lo, hi, contribution   (per-holding contributions)
+  portfolio_beta: persona, beta, lo, hi, p, r2, n_weeks   (one row per persona; weekly portfolio return
+                 = sum(weight * ret_cad), regressed on Brent with the same HAC(4) OLS)
   scenarios: subject, subject_type (persona|ticker), shock_pct, impact_pct, lo_pct, hi_pct
+                 (persona rows use the portfolio_beta beta and range)
   alternatives: persona, holding, alternative, beta_holding, beta_alternative, impact30_before_pct, impact30_after_pct
   evidence: evidence_id, ticker, doc_type, channel, direction, source_url, section, excerpt, s3_key
   confidence: ticker, channel, label, reason_code, reason_text

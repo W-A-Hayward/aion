@@ -16,13 +16,17 @@ def _rng():
     return np.random.default_rng(42)
 
 
-def make_data(extra=None):
+US_TICKERS = ("XOM", "TLT", "QQQ", "SPY", "NVDA", "GLD", "AGG", "ESGV")
+
+
+def make_data(extra=None, tickers=None):
     """Synthetic WeeklyData: known betas for each ticker, small noise."""
+    tickers = tickers or stats.CORE_TICKERS
     rng = _rng()
     brent = pd.Series(rng.normal(0, 0.04, N_WEEKS), index=WEEKS, name="brent")
     market = pd.Series(0.3 * brent.to_numpy() + rng.normal(0, 0.02, N_WEEKS), index=WEEKS)
     ret = {}
-    for t in stats.MVP_TICKERS:
+    for t in tickers:
         ret[t] = pd.Series(rng.normal(0, 0.005, N_WEEKS), index=WEEKS)
     ret["XOM"] += 0.8 * brent
     ret["TLT"] += -0.1 * brent
@@ -31,7 +35,7 @@ def make_data(extra=None):
     ret["ENB.TO"] += 0.5 * brent + 1.0 * market
     for t, v in (extra or {}).items():
         ret[t] = v
-    ret_cad = pd.DataFrame(ret)[stats.MVP_TICKERS]
+    ret_cad = pd.DataFrame(ret)[tickers]
     dy = pd.DataFrame({
         "us10y": 0.5 * brent + rng.normal(0, 0.02, N_WEEKS),
         "us2y": rng.normal(0, 0.02, N_WEEKS),
@@ -39,8 +43,7 @@ def make_data(extra=None):
         "ca2y": rng.normal(0, 0.02, N_WEEKS),
         "breakeven": 0.2 * brent + rng.normal(0, 0.02, N_WEEKS),
     }, index=WEEKS)
-    currency = pd.Series({t: ("USD" if t in ("XOM", "TLT", "QQQ", "SPY") else "CAD")
-                          for t in stats.MVP_TICKERS})
+    currency = pd.Series({t: ("USD" if t in US_TICKERS else "CAD") for t in tickers})
     return stats.WeeklyData(ret_local=ret_cad.copy(), ret_cad=ret_cad, brent=brent,
                             usdcad=pd.Series(rng.normal(0, 0.01, N_WEEKS), index=WEEKS),
                             dy=dy, currency=currency)
@@ -88,12 +91,16 @@ def test_parse_fred_handles_dot_and_header_names():
     assert stats.parse_fred(df2).iloc[0] == 2.1
 
 
-def _raw_frames(brent_values):
+def _raw_frames(brent_values, tickers=None, short=None):
+    """Raw CSV-like frames. `short` maps ticker -> number of days of history to keep."""
+    tickers = tickers or stats.CORE_TICKERS
+    short = short or {}
     days = pd.bdate_range("2021-11-12", periods=len(brent_values))
     prices = []
-    for t in stats.MVP_TICKERS:
-        cur = "USD" if t in ("XOM", "TLT", "QQQ", "SPY") else "CAD"
-        prices.append(pd.DataFrame({"date": days, "ticker": t, "adj_close": 100.0 * 1.001 ** np.arange(len(days)),
+    for t in tickers:
+        cur = "USD" if t in US_TICKERS else "CAD"
+        d = days[: short.get(t, len(days))]
+        prices.append(pd.DataFrame({"date": d, "ticker": t, "adj_close": 100.0 * 1.001 ** np.arange(len(d)),
                                     "currency": cur}))
     prices = pd.concat(prices)
     starter = prices[~prices["ticker"].isin(["VFV.TO", "XSP.TO", "XESG.TO"])]
@@ -115,8 +122,8 @@ def test_build_weekly_conversion_and_missing_brent():
     for i in range(11, 16):
         brent[i] = "."  # Mon-Fri 2021-11-29..12-03 missing -> week of 12-03 has no Brent value
     raw = _raw_frames(brent)
-    d = stats.build_weekly(raw)
-    assert list(d.ret_cad.columns) == stats.MVP_TICKERS
+    d = stats.build_weekly(raw, min_returns=1)
+    assert list(d.ret_cad.columns) == stats.CORE_TICKERS
     # USD ticker = local return + usdcad change, CAD ticker = local return
     w = d.ret_cad.index[3]
     assert d.ret_cad.loc[w, "XOM"] == pytest.approx(d.ret_local.loc[w, "XOM"] + d.usdcad.loc[w])
@@ -204,7 +211,8 @@ def test_rolling_beta_constant_relationship():
     ry = r[r["ticker"] == "RY.TO"]
     assert len(ry) == N_WEEKS - stats.ROLLING_WINDOW + 1
     assert ry["beta_52w"].between(0.49, 0.51).all()
-    assert list(r.columns) == ["ticker", "week", "beta_52w"]
+    assert list(r.columns) == ["ticker", "week", "beta_52w", "universe"]
+    assert (r["universe"] == "core").all()
 
 
 def test_links_chain_and_duration():
@@ -240,7 +248,7 @@ def test_links_chain_and_duration():
 def test_chain_share_is_nan_for_zero_direct_beta():
     lk = pd.DataFrame({"link_id": [i for c in stats.CHAINS.values() for i in c[1]]}).drop_duplicates()
     lk["beta"] = 1.0
-    sens = pd.DataFrame({"ticker": stats.MVP_TICKERS, "beta_simple": 0.0})
+    sens = pd.DataFrame({"ticker": stats.CORE_TICKERS, "beta_simple": 0.0})
     out = stats.chain_reconciliation(lk, sens)
     assert out["share_explained"].isna().all()
 
@@ -259,28 +267,26 @@ def test_persona_holdings_weights_sum_to_one():
 
 
 def _sens_with_betas(betas):
-    return pd.DataFrame({"ticker": stats.MVP_TICKERS,
-                         "beta_simple": [betas.get(t, 0.0) for t in stats.MVP_TICKERS],
-                         "lo_simple": [betas.get(t, 0.0) - 0.1 for t in stats.MVP_TICKERS],
-                         "hi_simple": [betas.get(t, 0.0) + 0.1 for t in stats.MVP_TICKERS]})
+    return pd.DataFrame({"ticker": stats.CORE_TICKERS,
+                         "beta_simple": [betas.get(t, 0.0) for t in stats.CORE_TICKERS],
+                         "lo_simple": [betas.get(t, 0.0) - 0.1 for t in stats.CORE_TICKERS],
+                         "hi_simple": [betas.get(t, 0.0) + 0.1 for t in stats.CORE_TICKERS]})
 
 
-def test_portfolio_exposure_and_betas():
+def test_portfolio_exposure_per_holding():
     sens = _sens_with_betas({"TLT": -0.2, "XBB.TO": -0.1, "ENB.TO": 0.5, "RY.TO": 0.2})
     exp = stats.portfolio_exposure(stats.persona_holdings(), sens)
     assert list(exp.columns) == ["persona", "ticker", "weight", "beta", "lo", "hi", "contribution"]
     r = exp[exp["persona"] == "robert"]
     assert r["contribution"].sum() == pytest.approx(0.30 * -0.2 + 0.40 * -0.1 + 0.15 * 0.5 + 0.15 * 0.2)
-    pb = stats.portfolio_betas(exp).set_index("persona")
-    assert pb.loc["robert", "beta"] == pytest.approx(r["contribution"].sum())
-    assert pb.loc["robert", "lo"] == pytest.approx(pb.loc["robert", "beta"] - 0.1)
-    assert pb.loc["robert", "hi"] == pytest.approx(pb.loc["robert", "beta"] + 0.1)
+    assert (exp["lo"] < exp["beta"]).all() and (exp["hi"] > exp["beta"]).all()
 
 
 def test_scenarios_shape_and_ordering():
     sens = _sens_with_betas({"XOM": 1.0, "TLT": -0.5})
-    exp = stats.portfolio_exposure(stats.persona_holdings(), sens)
-    sc = stats.scenarios(sens, exp)
+    pbeta = pd.DataFrame({"persona": ["robert", "amira", "mateo"], "beta": [0.5, 1.0, -0.2],
+                          "lo": [0.4, 0.9, -0.3], "hi": [0.6, 1.1, -0.1]})
+    sc = stats.scenarios(sens, pbeta)
     assert list(sc.columns) == ["subject", "subject_type", "shock_pct", "impact_pct", "lo_pct", "hi_pct"]
     assert len(sc) == (3 + 14) * 4
     assert set(sc["subject_type"]) == {"persona", "ticker"}
@@ -289,6 +295,11 @@ def test_scenarios_shape_and_ordering():
     assert (sc["lo_pct"] <= sc["hi_pct"]).all()
     xom_m30 = sc[(sc["subject"] == "XOM") & (sc["shock_pct"] == -30)].iloc[0]
     assert xom_m30["lo_pct"] <= xom_m30["impact_pct"] <= xom_m30["hi_pct"]
+    amira30 = sc[(sc["subject"] == "amira") & (sc["shock_pct"] == 30)].iloc[0]
+    assert amira30["subject_type"] == "persona"
+    assert amira30["impact_pct"] == pytest.approx(30.0)   # persona beta 1.0 from portfolio_beta
+    assert amira30["lo_pct"] == pytest.approx(float(stats.shock_impact_pct(0.9, 30)))
+    assert amira30["hi_pct"] == pytest.approx(float(stats.shock_impact_pct(1.1, 30)))
 
 
 def test_alternatives_swap_math():
@@ -324,11 +335,14 @@ def test_write_outputs_keys_and_parquet_roundtrip():
     sens = stats.sensitivities(data)
     holdings = stats.persona_holdings()
     exp = stats.portfolio_exposure(holdings, sens)
-    tables = {"sensitivities": sens, "persona_holdings": holdings, "portfolio_exposure": exp}
+    pbeta = stats.portfolio_beta(data, holdings)
+    tables = {"sensitivities": sens, "persona_holdings": holdings, "portfolio_exposure": exp,
+              "portfolio_beta": pbeta}
     s3 = FakeS3()
     keys = stats.write_outputs(tables, "test-bucket", s3)
     assert keys == ["processed/sensitivities/part-0.parquet", "processed/persona_holdings/part-0.parquet",
-                    "processed/portfolio_exposure/part-0.parquet", "processed/_summary/summary.md"]
+                    "processed/portfolio_exposure/part-0.parquet", "processed/portfolio_beta/part-0.parquet",
+                    "processed/_summary/summary.md"]
     back = pd.read_parquet(io.BytesIO(s3.objects[("test-bucket", "processed/sensitivities/part-0.parquet")]))
     assert len(back) == 14
     md = s3.objects[("test-bucket", "processed/_summary/summary.md")].decode()
@@ -339,3 +353,157 @@ def test_write_outputs_keys_and_parquet_roundtrip():
 def test_rolling_week_is_date_for_parquet():
     r = stats.rolling_betas(make_data())
     assert not isinstance(r["week"].iloc[0], pd.Timestamp)
+
+
+# ---------------------------------------------------------------------------
+# Universe, market control, short history
+# ---------------------------------------------------------------------------
+
+def test_universe_definition():
+    assert len(stats.CORE_TICKERS) == 14
+    assert len(stats.EXTRA_TICKERS) == 21
+    assert stats.UNIVERSE == stats.CORE_TICKERS + stats.EXTRA_TICKERS
+    assert len(set(stats.UNIVERSE)) == 35
+    assert stats.EXTRA_TICKERS[-3:] == ["XRB.TO", "XLB.TO", "XEG.TO"]
+    assert not {"BTC-USD", "ETH-USD"} & set(stats.UNIVERSE)
+
+
+def test_market_control_for_new_tickers():
+    f = stats.market_ticker_for
+    for t in ["GLD", "AGG", "ESGV", "XRB.TO", "XLB.TO", "XEG.TO"]:
+        assert f(t, "USD" if t in ("GLD", "AGG", "ESGV") else "CAD") == "none"
+    assert f("NVDA", "USD") == "SPY"
+    assert f("JPM", "USD") == "SPY"
+    assert f("CNQ.TO", "CAD") == "XIU.TO"
+    assert f("TD.TO", "CAD") == "XIU.TO"
+
+
+def test_sensitivities_cover_universe_with_universe_column():
+    data = make_data(tickers=stats.UNIVERSE)
+    s = stats.sensitivities(data)
+    assert list(s.columns) == stats.SENSITIVITY_COLUMNS
+    assert len(s) == 35
+    assert (s["universe"] == "core").sum() == 14 and (s["universe"] == "extra").sum() == 21
+    s = s.set_index("ticker")
+    assert s.loc["GLD", "market_ticker"] == "none"
+    assert s.loc["GLD", "beta_mkt"] == s.loc["GLD", "beta_simple"]
+    assert s.loc["NVDA", "market_ticker"] == "SPY"
+    assert s.loc["CNQ.TO", "market_ticker"] == "XIU.TO"
+    assert s.loc["XEG.TO", "market_ticker"] == "none"
+
+
+def test_rolling_covers_universe():
+    r = stats.rolling_betas(make_data(tickers=stats.UNIVERSE))
+    assert r["ticker"].nunique() == 35
+    assert set(r.loc[r["ticker"] == "NVDA", "universe"]) == {"extra"}
+
+
+def test_new_links_and_chains_for_xlb_xrb():
+    tickers = stats.CORE_TICKERS + ["XRB.TO", "XLB.TO"]
+    data = make_data(tickers=tickers)
+    sens = stats.sensitivities(data)
+    lk = stats.links(data)
+    assert {"ca10y>XLB.TO", "ca10y>XRB.TO"} <= set(lk["link_id"])
+    ch = stats.chain_reconciliation(lk, sens).set_index("ticker")
+    assert ch.loc["XLB.TO", "chain"] == "oil>ca10y>XLB.TO"
+    assert ch.loc["XRB.TO", "chain"] == "oil>ca10y>XRB.TO"
+
+
+def test_short_history_ticker_is_skipped_with_warning(capsys):
+    n_days = 5 * 190                       # about 190 weeks of history
+    brent = [80.0 * 1.001 ** i for i in range(n_days)]
+    raw = _raw_frames(brent, tickers=stats.CORE_TICKERS, short={"XSP.TO": 5 * 60})
+    btc = raw["prices_extra"].iloc[:50].assign(ticker="BTC-USD")
+    raw["prices_extra"] = pd.concat([raw["prices_extra"], btc])
+    d = stats.build_weekly(raw)
+    out = capsys.readouterr().out
+    assert "XSP.TO" not in d.ret_cad.columns
+    assert "WARNING" in out and "XSP.TO" in out
+    assert "XRB.TO" in out                 # extras with no rows are skipped with a warning too
+    assert "RY.TO" in d.ret_cad.columns and "XOM" in d.ret_cad.columns
+    assert "BTC-USD" not in d.ret_cad.columns
+    # downstream steps still run with the ticker missing
+    sens = stats.sensitivities(d)
+    assert "XSP.TO" not in set(sens["ticker"])
+    assert len(stats.links(d)) == 10
+
+
+# ---------------------------------------------------------------------------
+# Multiple testing and portfolio beta
+# ---------------------------------------------------------------------------
+
+def test_bh_adjust_known_vector():
+    p = pd.Series([0.01, 0.04, 0.03, 0.005], index=list("abcd"))
+    q = stats.bh_adjust(p)
+    # sorted p: .005 .01 .03 .04 -> p*m/rank = .02 .02 .04 .04
+    assert q.to_dict() == pytest.approx({"a": 0.02, "b": 0.04, "c": 0.04, "d": 0.02})
+    assert (q >= p).all() and (q <= 1).all()
+
+
+def test_bh_adjust_keeps_nan_and_does_not_count_it():
+    p = pd.Series([0.01, np.nan, 0.04, 0.03, 0.005])
+    q = stats.bh_adjust(p)
+    assert np.isnan(q[1])
+    assert q.drop(1).tolist() == pytest.approx([0.02, 0.04, 0.04, 0.02])
+
+
+def test_q_simple_added_and_p_simple_unchanged():
+    data = make_data(tickers=stats.UNIVERSE)
+    s = stats.sensitivities(data)
+    assert s["q_simple"].tolist() == pytest.approx(stats.bh_adjust(s["p_simple"]).tolist())
+    assert (s["q_simple"] >= s["p_simple"] - 1e-12).all()
+    assert s["p_simple"].tolist() == [stats.regress(data.ret_cad[t], data.brent)["p"] for t in s["ticker"]]
+
+
+def test_portfolio_beta_is_weighted_sum_of_known_betas():
+    rng = np.random.default_rng(7)   # independent of the seed used for brent in make_data
+    data = make_data()
+    x = data.brent
+    data.ret_cad["XOM"] = 1.0 * x + rng.normal(0, 0.01, N_WEEKS)
+    data.ret_cad["TLT"] = -0.5 * x + rng.normal(0, 0.01, N_WEEKS)
+    holdings = pd.DataFrame({"persona": ["demo", "demo"], "ticker": ["XOM", "TLT"], "weight": [0.6, 0.4]})
+    pb = stats.portfolio_beta(data, holdings)
+    assert list(pb.columns) == ["persona", "beta", "lo", "hi", "p", "r2", "n_weeks"]
+    r = pb.iloc[0]
+    assert abs(r["beta"] - (0.6 * 1.0 + 0.4 * -0.5)) < 0.05
+    assert r["lo"] < r["beta"] < r["hi"]
+    assert r["p"] < 0.05
+    assert r["n_weeks"] == N_WEEKS
+
+
+def test_portfolio_beta_for_all_demo_personas():
+    data = make_data()
+    pb = stats.portfolio_beta(data, stats.persona_holdings())
+    assert sorted(pb["persona"]) == ["amira", "mateo", "robert"]
+    assert pb["beta"].notna().all()
+
+
+def test_portfolio_beta_skips_persona_with_missing_ticker(capsys):
+    data = make_data()
+    data.ret_cad = data.ret_cad.drop(columns=["QQQ"])
+    pb = stats.portfolio_beta(data, stats.persona_holdings())
+    assert sorted(pb["persona"]) == ["mateo", "robert"]
+    assert "WARNING" in capsys.readouterr().out
+
+
+# ---------------------------------------------------------------------------
+# summary.md
+# ---------------------------------------------------------------------------
+
+def test_summary_lists_top10_by_abs_beta_with_q_below_010():
+    n = 13
+    sens = pd.DataFrame({
+        "ticker": [f"T{i}" for i in range(n)],
+        "beta_simple": [float(i + 1) * (-1 if i % 2 else 1) for i in range(n)],
+        "lo_simple": 0.0, "hi_simple": 1.0,
+        "q_simple": 0.01, "p_ex2022": 0.02, "oos_hit_rate": 0.75,
+    })
+    sens.loc[n - 1, "q_simple"] = 0.5            # largest |beta| but not significant: excluded
+    pbeta = pd.DataFrame({"persona": ["robert"], "beta": [0.1], "lo": [0.0], "hi": [0.2]})
+    md = stats.summary_markdown({"sensitivities": sens, "portfolio_beta": pbeta})
+    section = md.split("## Top 10")[1]
+    rows = [l for l in section.splitlines() if l.startswith("| T")]
+    assert len(rows) == 10
+    assert rows[0].startswith("| T11 |")           # |beta| = 12 is the largest eligible
+    assert "T12" not in section
+    assert "| robert | 0.1000 | 0.0000 | 0.2000 |" in md
