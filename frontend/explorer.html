@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#fbf8f2">
+  <meta name="description" content="Weekly Brent oil sensitivities for 14 ETFs and stocks, shock scenarios, sample portfolios and the transmission paths behind them.">
+  <title>Cascade</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23111'/%3E%3Cpath d='M16 6s-7 9-7 14a7 7 0 0 0 14 0c0-5-7-14-7-14z' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./investigation-guide.css">
+  <link rel="stylesheet" href="./evidence-desk.css">
+  <link rel="stylesheet" href="./library.css">
+  <link rel="stylesheet" href="./theme.css">
+  <script type="module" src="./app.js"></script>
+  <script type="module" src="./investigation-guide.js"></script>
+  <script type="module" src="./evidence-desk.js"></script>
+  <script type="module" src="./library.js"></script>
+  <script type="module" src="./hero.js"></script>
+  <script type="module" src="./fuel-card.js"></script>
+  <script type="module" src="./quotes.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <div class="wrap topbar-row">
+      <a class="wordmark" href="./" aria-label="Cascade home">
+        <svg class="drop" viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1S2 13.5 2 20.5a10 10 0 0 0 20 0C22 13.5 12 1 12 1z"/></svg>
+        Cascade
+      </a>
+      <nav class="workspace-nav" aria-label="Application">
+        <button type="button" id="chat-open">Ask</button>
+        <button type="button" id="evidence-open">Evidence</button>
+        <button type="button" data-view="workspace" aria-pressed="true">Workspace</button>
+        <button type="button" data-view="research" aria-pressed="false">Research</button>
+      </nav>
+      <div class="topbar-tools">
+        <div class="seg" role="group" aria-label="Level of detail">
+          <button type="button" data-mode="beginner" aria-pressed="true">Beginner</button>
+          <button type="button" data-mode="expert" aria-pressed="false">Expert</button>
+        </div>
+        <button class="ghost-button" id="method-open" type="button">Method</button>
+        <button class="profile-avatar" id="profile-open" type="button" aria-label="Set up your profile">+</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero-copy">
+        <p class="hero-kicker"><span class="hero-dot" aria-hidden="true"></span>Brent crude · 261 weeks · returns in CAD</p>
+        <h1 id="hero-title">Oil moves.<br><em>Watch what moves with&nbsp;it.</em></h1>
+        <p class="hero-lede">Every wave starts at Brent. Each dot is a real ticker, bobbing by its measured oil beta, with its 95% range drawn through it. Pick one to open the research.</p>
+        <div class="hero-cta">
+          <button type="button" class="hero-primary" data-hero-jump="#ask">Ask about your exposure</button>
+          <button type="button" class="hero-secondary" data-hero-jump="#evidence-desk">Read the evidence →</button>
+        </div>
+      </div>
+      <div class="wrap">
+        <figure class="hero-chart">
+          <div id="hero-figure" class="hero-figure-host"></div>
+          <div id="hero-tip" class="hero-tip" role="status" hidden></div>
+          <figcaption><span class="hk pos"></span>rises with oil <span class="hk neg"></span>falls with oil <span class="hk ns"></span>range crosses zero · axis compressed near zero · saved notebook estimates, not forecasts</figcaption>
+        </figure>
+        <dl class="hero-stats">
+          <div><dt>Weeks of data</dt><dd data-count="261">261</dd></div>
+          <div><dt>Tickers measured</dt><dd data-count="14">14</dd></div>
+          <div><dt>Source passages</dt><dd data-count="35">35</dd></div>
+          <div><dt>Registered sources</dt><dd data-count="52">52</dd></div>
+        </dl>
+      </div>
+    </section>
+    <section class="quotes" aria-labelledby="quotes-title">
+      <div class="wrap quotes-head">
+        <p class="hero-kicker">35 passages · 5 annual reports</p>
+        <h2 id="quotes-title">Straight from the reports.<br><em>In the companies’ own words.</em></h2>
+        <p>Original wording, page numbers kept (table rows stay in the Evidence Desk). They describe how oil touches each business; none of them says which way the shares move. Pick a card to read it in context.</p>
+      </div>
+      <div class="quotes-stage" id="quotes-stage" aria-label="Passages from XIU constituents’ annual reports"></div>
+    </section>
+    <section class="fuel-band" aria-labelledby="fuel-title">
+      <div class="wrap fuel-head">
+        <p class="hero-kicker">Where oil meets the street</p>
+        <h2 id="fuel-title">Brent is a benchmark.<br><em>The pump is a bill.</em></h2>
+        <p>Businesses inside XIU meet oil as a price they pay or charge. Couche-Tard sells fuel. CN and CPKC run on diesel. Canada’s average price for regular gasoline peaked at <b data-fuel-peak>207.2¢</b> a litre in <b data-fuel-peak-month>Jun 2022</b>; the latest reading is <b data-fuel-latest>184.3¢ in Sep 2026</b>.</p>
+      </div>
+      <div class="fuel-stage"><div id="fuel-card"></div></div>
+      <div class="wrap fuel-foot">
+        <p class="fuel-source">Statistics Canada table 18-10-0001-01: monthly, self-serve, cents per litre, including taxes. Shown as context. It is not an input to any beta here.</p>
+        <div class="hero-cta">
+          <button type="button" class="hero-secondary" data-hero-jump="#evidence-desk">See what the companies disclose →</button>
+          <button type="button" class="hero-ghost" data-open-library>Open the source</button>
+        </div>
+      </div>
+    </section>
+    <div class="chat-entry">
+      <section class="wrap ask" id="ask" aria-labelledby="ask-title">
+        <div class="chat-heading"><div><span class="label">Start your investigation</span><h2 id="ask-title">Where does your oil exposure come from?</h2></div><span class="tag" id="chat-source-status">Local explanation · AI not connected</span></div>
+        <p class="investigation-purpose">An ETF holds businesses with different connections to oil. Follow the companies you own, measure their historical sensitivity, and open the documents behind each explanation.</p>
+        <form id="question-form" class="ask-form">
+          <label class="chat-ticker-label" for="chat-ticker">Investigate<select id="chat-ticker" aria-label="Ticker to investigate"></select></label>
+          <label class="chat-question-label" for="question">Your question<input id="question" name="question" maxlength="900" required placeholder="Where could XIU’s oil exposure come from?" autocomplete="off" aria-describedby="chat-context"></label>
+          <button class="primary-button" type="submit">Ask</button>
+          <button type="button" class="ghost-button" id="cancel-question" hidden>Stop waiting</button>
+        </form>
+        <div class="suggestions">
+          <button type="button" data-question="Where could this exposure come from?">Explain my exposure ↗</button>
+          <button type="button" data-question="How reliable is this relationship?">How reliable is this?</button>
+          <button type="button" data-question="What evidence explains this exposure?">Show me the evidence</button>
+          <button type="button" data-open-library>Explore all 52 sources ↗</button>
+        </div>
+        <p class="note" id="chat-context" role="status">XIU · Brent · returns in CAD · loading local statistics.</p>
+        <div class="chat-options">
+          <label class="chat-source-label">Answer source <select id="answer-source"><option value="local">Local explanation</option><option value="documents">Search local documents (exact phrase)</option><option value="agent">Backend agent</option></select></label>
+          <details class="chat-settings"><summary>Conversation settings</summary><div class="agent-controls">
+            <label>Backend sample portfolio<select id="agent-persona"><option value="robert">Robert</option><option value="amira">Amira</option><option value="mateo">Mateo</option></select></label>
+            <button type="button" class="ghost-button" id="new-conversation">New conversation</button>
+          </div><p class="note" id="agent-connection">Chat API unconfigured. Local explanations are available without an AI call.</p></details>
+        </div>
+        <div id="answer" class="answer" aria-live="polite"></div>
+        <details class="guide-collapse"><summary>New to oil-exposure research? Start with the three-question guide.</summary>
+        <section class="investigation-guide" id="investigation-guide" aria-labelledby="guide-title">
+          <header><div><span class="label">Understand the investigation</span><h2 id="guide-title">Three questions. Different kinds of evidence.</h2></div><span class="guide-source">Learning guide · no estimates</span></header>
+          <p class="guide-intro">A holding weight tells you what you own. A company report explains its business. A beta measures how its share price moved with oil. You need all three to investigate hidden exposure.</p>
+          <div class="guide-tabs" role="tablist" aria-label="Explore the investigation" hidden>
+            <button type="button" role="tab" id="guide-tab-holdings" data-guide-topic="holdings" aria-controls="guide-panel" aria-selected="false" tabindex="-1">1. What do I own?</button>
+            <button type="button" role="tab" id="guide-tab-mechanisms" data-guide-topic="mechanisms" aria-controls="guide-panel" aria-selected="true" tabindex="0">2. How could oil reach it?</button>
+            <button type="button" role="tab" id="guide-tab-reliability" data-guide-topic="reliability" aria-controls="guide-panel" aria-selected="false" tabindex="-1">3. How sure are we?</button>
+          </div>
+          <div id="guide-panel" class="guide-panel" role="tabpanel" aria-labelledby="guide-tab-mechanisms" tabindex="0">
+            <p>Start with dated holdings, inspect a company’s original report, then compare that business explanation with a historical estimate and its uncertainty. A sector label alone cannot answer the question.</p>
+          </div>
+          <p class="guide-availability">The Evidence Desk below opens a local XIU research file. Market statistics and backend evidence are separate sources. A missing estimate does not mean a business has no exposure.</p>
+        </section>
+        </details>
+      </section>
+    </div>
+    <section id="evidence-desk" class="wrap evidence-desk" aria-labelledby="ed-title" aria-busy="true">
+      <div class="ed-shell">
+        <header class="ed-masthead">
+          <div><span class="ed-eyebrow">RIPPLE AI / Evidence Desk / XIU</span>
+            <h2 id="ed-title" tabindex="-1">Oil exposure doesn’t stop at energy stocks.</h2>
+            <p>Follow the businesses inside XIU. Read what they disclose about fuel, selling prices and credit — then decide what still needs to be tested.</p></div>
+          <span class="ed-badge">Local research · not live</span>
+        </header>
+        <div class="ed-summary">
+          <div><strong id="ed-scope">Opening the research file…</strong><p>Holdings dated 12 Nov 2026 · a selected research set, not the entire fund.</p></div>
+          <div class="ed-weight"><b id="ed-weight">—</b><span>of XIU held in these companies.<br><strong>Not a share of oil risk explained.</strong></span></div>
+        </div>
+        <p class="ed-status" id="ed-status" role="status">Loading local documentary research…</p>
+        <button class="ghost-button" id="ed-retry" type="button" hidden>Retry local file</button>
+        <div class="ed-workbench" id="ed-workbench" hidden>
+          <aside class="ed-holdings" aria-label="Confirmed XIU constituents">
+            <header class="ed-column-head"><span class="ed-eyebrow">01 / Pick a business</span><h3>Inside XIU</h3></header>
+            <div id="ed-companies"></div>
+          </aside>
+          <section class="ed-passages-column" aria-labelledby="ed-company-title">
+            <header class="ed-column-head"><span class="ed-eyebrow">02 / Follow the evidence</span><h3 id="ed-company-title">Company passages</h3></header>
+            <label class="ed-search" for="ed-search">Search this company’s passages<input id="ed-search" type="search" placeholder="Try diesel, credit, Brent…" autocomplete="off"></label>
+            <p id="ed-results" class="ed-results" role="status"></p>
+            <div id="ed-passages"></div>
+          </section>
+          <article class="ed-reader" id="ed-reader" tabindex="-1" aria-label="Original passage and source details"></article>
+        </div>
+        <p id="ed-feedback" role="status"></p>
+        <p class="ed-footnote">This case file covers XIU only, independently of the selected market ticker and API source. Evidence stays attached to its original company. These are research candidates: documentary mechanisms do not establish causality, a Brent beta or a stock-return direction. No live AWS connection.</p>
+        <p class="ed-footnote"><button type="button" class="rl-library-entry" data-open-library>Beyond these 35 passages: open the complete source library →</button></p>
+      </div>
+    </section>
+    <section id="research-library" class="wrap research-library" aria-labelledby="rl-title" aria-busy="true">
+      <div class="rl-shell">
+        <header class="rl-header"><div><span class="ed-eyebrow">RIPPLE AI / Research Library</span><h2 id="rl-title" tabindex="-1">Follow the claim back to the source.</h2>
+          <p>Read the acquired reports. Inspect dated holdings, fuel prices and economic observations. See exactly what is available — and what still needs verification.</p><p id="rl-summary">52 registered sources · loading availability…</p></div>
+          <button type="button" class="ghost-button" id="rl-toggle" aria-expanded="false" aria-controls="rl-workspace">Open / close library</button></header>
+        <p id="rl-status" class="rl-status" role="status"></p><button type="button" id="rl-retry" hidden>Retry catalog</button>
+        <div id="rl-workspace" hidden>
+          <div class="rl-controls"><div class="rl-filters">
+            <label>Find a source<input id="rl-query" type="search" placeholder="Company, ticker, source title…"></label>
+            <label>Source group<select id="rl-group"><option value="">All source groups</option></select></label>
+            <label>Research availability<select id="rl-status-filter"><option value="">All availability</option><option value="usable">Usable for intended research</option><option value="context_only">Context only</option><option value="needs_attention">Needs attention</option></select></label>
+            <label>File format<select id="rl-format"><option value="">All file formats</option></select></label>
+            <button type="button" id="rl-clear">Clear filters</button>
+          </div><form id="rl-search-form" class="rl-text-search"><label>Search inside the filtered documents · exact phrase<input id="rl-text-query" type="search" required minlength="2" maxlength="200" placeholder="Try diesel, oil and gas, fuel surcharge…"></label><button type="submit" class="primary-button">Search source text</button><button type="button" class="ghost-button" id="rl-stop-search" hidden>Stop</button></form>
+            <p id="rl-search-progress" role="status"></p><div id="rl-search-results" aria-live="polite"></div>
+          </div>
+          <div class="rl-workbench"><aside class="rl-sidebar" aria-label="Official research register"><p id="rl-count" class="rl-count" role="status"></p><div id="rl-list"></div></aside><article id="rl-detail" class="rl-detail" tabindex="-1" aria-label="Selected source and local content"></article></div>
+        </div>
+      </div>
+    </section>
+    <section id="workspace-view" class="wrap workspace" aria-labelledby="workspace-title">
+      <div id="workspace-content"><p class="note" role="status">Loading your workspace…</p></div>
+    </section>
+
+    <div id="research-view" hidden>
+      <div class="source-strip" role="note" aria-label="Data source">
+        <div class="wrap source-row">
+          <span id="source-badge" class="source-badge"><i aria-hidden="true"></i>Local preview</span>
+          <span id="source-note" class="source-note">Saved notebook statistics. Ticker scenarios recomputed locally. No live AWS connection.</span>
+          <span class="source-meta">
+            <span>Sample <b id="coverage-value">Not available</b></span>
+            <span>Returns <b>CAD</b></span>
+            <span>Last verified <b id="verified-value">Not verified</b></span>
+          </span>
+          <label class="source-control">Data
+            <select id="source-select"><option value="preview">Local preview</option><option value="api">Backend API</option></select>
+          </label>
+        </div>
+      </div>
+
+      <div class="wrap lab" id="pick">
+        <aside class="field" aria-labelledby="field-title">
+          <div class="field-head">
+            <h2 id="field-title">Tickers</h2>
+            <label class="bench"><span class="sr-only">Oil benchmark</span>
+              <select id="benchmark-select" aria-describedby="benchmark-note"><option value="brent">vs Brent</option><option value="wti">vs WTI (no data)</option></select>
+            </label>
+          </div>
+          <div class="field-axis" aria-hidden="true"><span>falls with oil</span><span>rises</span></div>
+          <div id="field" class="field-rows" role="group" aria-label="Choose a ticker"></div>
+          <p id="benchmark-note" class="note">Oil beta with its 95% range. Grey means the range crosses zero.</p>
+        </aside>
+
+        <div class="lab-main">
+          <div class="research-actions"><span id="research-context">Your workspace / local preview research</span><div class="buttons"><button id="watch-current" type="button" class="ghost-button">☆ Watch</button><button id="save-research" type="button" class="primary-button">Save</button></div></div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+          <div id="headline"></div>
+
+          <div id="research" hidden>
+            <section class="section" id="shock-section" aria-labelledby="shock-title">
+              <header class="section-head"><h2 id="shock-title">Oil shock scenario</h2><p>Conditional statistical scenario using the historical beta. Not a price prediction.</p></header>
+              <div class="shock">
+                <div class="shock-dial seg" role="group" aria-label="Brent shock">
+                  <button type="button" data-shock="-30" aria-pressed="false">−30%</button>
+                  <button type="button" data-shock="-15" aria-pressed="false">−15%</button>
+                  <button type="button" data-shock="15" aria-pressed="false">+15%</button>
+                  <button type="button" data-shock="30" aria-pressed="true">+30%</button>
+                </div>
+                <div id="scenario-result" class="shock-result" aria-live="polite"></div>
+              </div>
+            </section>
+
+            <section class="section" id="evidence-section" aria-labelledby="evidence-title">
+              <header class="section-head"><h2 id="evidence-title">Statistical attribution & backend evidence</h2><p>The local Evidence Desk supplies company disclosures. Comparable constituent estimates are still needed to attribute XIU’s beta.</p></header>
+              <div class="under">
+                <div id="decomposition" class="under-col" aria-label="Attribution"></div>
+                <div class="under-col">
+                  <div class="col-head"><h3>Documents</h3><span class="tag" id="evidence-count">0 documents supplied</span></div>
+                  <div id="evidence"></div>
+                </div>
+              </div>
+            </section>
+
+            <section class="section" id="expert-section" aria-label="Model diagnostics" hidden></section>
+
+
+          </div>
+          <noscript><p class="status">Turn on JavaScript to load the data.</p></noscript>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <p><b>Notes.</b> Figures are historical associations from weekly data (19 Nov 2021 to 13 Nov 2026, 261 weeks, CAD returns), not forecasts or causal estimates. Scenarios assume the historical beta holds and leave out every other source of risk. Preview numbers come from saved outputs of <code>compute/run_stats.ipynb</code> and have not been independently verified. Portfolios are fictional. Nothing here is investment advice.</p>
+    </div>
+  </footer>
+
+  <div id="workspace-toast" class="workspace-toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="profile-dialog" class="workspace-dialog" aria-labelledby="profile-title"></dialog>
+  <dialog id="portfolio-dialog" class="workspace-dialog wide-dialog" aria-labelledby="portfolio-title"></dialog>
+  <dialog id="save-dialog" class="workspace-dialog" aria-labelledby="save-title"></dialog>
+
+  <dialog id="method-dialog" class="workspace-dialog" aria-labelledby="method-title">
+    <div class="dialog-head"><h2 id="method-title">Method</h2><button id="method-close" class="ghost-button" type="button" aria-label="Close method notes">Close</button></div>
+    <p>Weekly CAD log returns for each of the data contract’s 14 core tickers (nine ETFs, five stocks) are regressed on weekly Brent log returns (weeks end Friday, 19 Nov 2021 to 13 Nov 2026, 261 weeks). Ordinary least squares with a constant; Newey–West standard errors with four lags. USD tickers are converted to CAD with the weekly USD/CAD change.</p>
+    <h3>Why only these 14 tickers</h3>
+    <p>They are the MVP tickers in <code>docs/data_contract.md</code>: the only ones with saved results the sample portfolios can use. Anything else has no numbers here, so research, the watchlist and the portfolio builder only offer these.</p>
+    <h3>The 95% range</h3>
+    <p>Beta ± 1.96 standard errors. If it crosses zero, the sample doesn’t settle the direction. It’s a range for the coefficient, not for future returns.</p>
+    <h3>Documents and attribution</h3>
+    <p>The Evidence Desk reads an independent local research snapshot: five confirmed XIU holdings and their source passages. Its holdings weights describe composition, not contributions to oil beta. The market view below uses separate notebook or backend statistics.</p>
+    <h3>Shock scenarios</h3>
+    <p>Only −30%, −15%, +15% and +30% Brent shocks exist. Impact = 100 × (exp(β × ln(1 + shock/100)) − 1). The range transforms the coefficient bounds and ignores everything else that moves returns.</p>
+    <h3>Portfolios</h3>
+    <p>Robert, Amira and Mateo are fictional personas from the data contract. Their local saved results use the earlier weighted-log-return method and are labeled legacy previews. The current backend regresses log(1 + Σ(weight × (exp(asset log return) − 1))) on Brent. A custom portfolio shows only a weighted-beta proxy, not an exact portfolio beta or a confidence interval. Updated portfolio results require fresh backend outputs.</p>
+    <h3>What’s local</h3>
+    <p>Preview numbers are rounded outputs saved in <code>compute/run_stats.ipynb</code>. Ticker scenarios are recomputed from them with the formula above; persona scenarios, alternatives and the bond duration check are saved notebook outputs. Documentary research loads separately from <code>evidence-preview.json</code>, with its original verification limits. No rolling history is supplied, and nothing here checks the live state of AWS. Your profile and portfolios stay in this browser; there are no accounts.</p>
+    <p class="note">Sources: docs/data_contract.md, compute/stats.py, compute/evidence.py.</p>
+  </dialog>
+</body>
+</html>
