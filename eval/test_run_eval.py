@@ -31,10 +31,71 @@ def test_tolerance_is_0_1_after_rounding():
     assert not res["pass"] and res["flagged"] == [5.2]
 
 
-def test_sign_is_ignored():
+def test_sign_must_match_when_stated():
     calls = [call('{"impact_pct": -8.0}')]
     assert ev.check_numbers("a fall of 8%", calls)["pass"]
-    assert ev.check_numbers("a gain of +8%", calls)["pass"]
+    assert ev.check_numbers("it loses about 8%", calls)["pass"]
+    assert ev.check_numbers("an 8% drop", calls)["pass"]
+    assert ev.check_numbers("impact of -8%", calls)["pass"]
+    assert ev.check_numbers("impact of 8%", calls)["pass"]  # no sign or direction: cannot tell
+    for bad in ("a gain of +8%", "it gains 8%", "an 8% rise", "the portfolio rises 8%"):
+        res = ev.check_numbers(bad, calls)
+        assert not res["pass"] and res["sign_flagged"], bad
+
+
+def test_direction_is_per_clause():
+    calls = [call('{"shock_pct": -15, "impact_pct": 4.2}')]
+    assert ev.check_numbers("If oil falls 15%, the portfolio gains 4.2%.", calls)["pass"]
+    assert not ev.check_numbers("If oil falls 15%, the portfolio loses 4.2%.", calls)["pass"]
+
+
+def test_count_fields_do_not_vouch_for_a_percent():
+    res = ev.check_numbers("moves 260%", [call('{"n_weeks": 260, "oos_n": 80, "duration_years": 14.63}')])
+    assert not res["pass"] and res["flagged"] == [260.0]
+    assert not ev.check_numbers("about 80%", [call('{"oos_n": 80}')])["pass"]
+    assert ev.check_numbers("a 14.6% move", [call('{"x": 14.63}')])["pass"]
+
+
+def test_percent_inside_tool_text_counts():
+    calls = [call('{"reason_text": "Brent moves explain 41.5% of the yield change"}')]
+    assert ev.check_numbers("about 41.5%", calls)["pass"]
+
+
+def test_beta_numbers_are_checked():
+    calls = [call('{"beta_simple": -0.4231, "lo_simple": -0.9, "p_simple": 0.0312}')]
+    assert ev.check_numbers("The beta is -0.42.", calls)["pass"]
+    assert ev.check_numbers("beta of -0.4", calls)["pass"]
+    assert not ev.check_numbers("beta of 0.8", calls)["pass"]
+    wrong_sign = ev.check_numbers("The beta is 0.42.", calls)
+    assert not wrong_sign["pass"] and wrong_sign["sign_flagged"]
+    assert ev.check_numbers("a negative beta of 0.42", calls)["pass"]
+    assert ev.check_numbers("beta, with a 95% range", calls)["pass"]
+    assert ev.check_numbers("beta since 2021-11 is -0.42", calls)["pass"]
+
+
+def test_p_values_are_checked():
+    calls = [call('{"p_simple": 0.0312}')]
+    assert ev.check_numbers("p = 0.03", calls)["pass"]
+    assert not ev.check_numbers("p = 0.20", calls)["pass"]
+    assert ev.check_numbers("p < 0.001", calls)["pass"]
+
+
+def test_truncated_output_marks_unverifiable_instead_of_flagging():
+    cut = call('{"impact_pct": 5.0, "rows": [1, 2...[truncated]')
+    res = ev.check_numbers("It could lose 17%.", [cut])
+    assert res["pass"] and res["flagged"] == [] and res["unverifiable"] == ["17%"]
+    assert not ev.check_numbers("It could lose 17%.", [call('{"impact_pct": 5.0}')])["pass"]
+
+
+def test_apostrophe_variants_in_must_not():
+    assert not ev.check_must_not("I\u2019d sell now", ["I'd sell"])["pass"]
+    assert not ev.check_must_not("You might consider selling bonds", ["consider selling"])["pass"]
+
+
+def test_every_question_blocks_soft_advice_phrases():
+    for q in ev.load_questions():
+        mn = q["expect"]["must_not"]
+        assert "consider selling" in mn and "consider buying" in mn, q["id"]
 
 
 def test_fraction_in_tool_output_matches_percent():
@@ -87,6 +148,27 @@ def test_label_check():
     assert ev.check_labels([call(out, name="get_validation", ticker="RY.TO")], {"RY.TO": "grey"})["pass"]
     assert not ev.check_labels([call(out, name="get_validation", ticker="ENB.TO")], {"RY.TO": "grey"})["pass"]
     assert not ev.check_labels([call(out, name="get_validation", ticker="RY.TO")], {"RY.TO": "green"})["pass"]
+
+
+def test_label_ignores_units_text_in_real_tool_output():
+    out = json.dumps({"ticker": "RY.TO", "units": "label: green|yellow|grey",
+                      "validation": {"label": "yellow"}})
+    c = [call(out, name="get_validation", ticker="RY.TO")]
+    assert not ev.check_labels(c, {"RY.TO": "grey"})["pass"]
+    assert not ev.check_labels(c, {"RY.TO": "green"})["pass"]
+    assert ev.check_labels(c, {"RY.TO": "yellow"})["pass"]
+
+
+def test_p_value_does_not_vouch_for_a_percent():
+    assert not ev.check_numbers("loses 5%", [call('{"p_simple": 0.05}')])["pass"]
+    assert ev.check_numbers("hit rate 62%", [call('{"oos_hit_rate": 0.62}')])["pass"]
+
+
+def test_range_and_per_cent_forms():
+    assert ev.percent_numbers("between 5-10%") == [10.0, 5.0]
+    assert ev.percent_numbers("5 to 10%") == [10.0, 5.0]
+    assert ev.percent_numbers("about 7 per cent") == [7.0]
+    assert not ev.check_numbers("between 5-10%", [call('{"x": 10.0}')])["pass"]
 
 
 def test_parse_judge():
