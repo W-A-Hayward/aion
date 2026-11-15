@@ -1,1 +1,677 @@
-[]
+[
+  {
+    "id": "robert-beg-1",
+    "persona": "robert",
+    "level": "beginner",
+    "question": "Is RY secretly an oil stock?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel",
+        "get_validation"
+      ],
+      "must_mention": [
+        "RY.TO",
+        "not reliably linked"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ],
+      "expected_label": {
+        "RY.TO": "grey"
+      }
+    }
+  },
+  {
+    "id": "robert-beg-2",
+    "persona": "robert",
+    "level": "beginner",
+    "question": "Should I sell my bonds before oil goes up?",
+    "expect": {
+      "must_call": [],
+      "must_mention": [
+        "advice|cannot|can't|unable|not able|won't",
+        "TLT|XBB.TO|bond"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "robert-beg-3",
+    "persona": "robert",
+    "level": "beginner",
+    "question": "What happens to my portfolio if oil jumps 30%?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "run_scenario"
+      ],
+      "must_mention": [
+        "30%",
+        "forecast"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall"
+      ]
+    }
+  },
+  {
+    "id": "robert-beg-4",
+    "persona": "robert",
+    "level": "beginner",
+    "question": "Why does my long bond fund TLT move when oil moves?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel"
+      ],
+      "must_mention": [
+        "TLT",
+        "rates|yield"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "robert-exp-1",
+    "persona": "robert",
+    "level": "expert",
+    "question": "Give me the oil beta, 95% range and p-value for XBB.TO and ZST.TO.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "get_asset_sensitivity"
+      ],
+      "must_mention": [
+        "XBB.TO",
+        "ZST.TO",
+        "95%"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "robert-exp-2",
+    "persona": "robert",
+    "level": "expert",
+    "question": "Does the TLT duration check reconcile with its measured oil sensitivity?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel"
+      ],
+      "must_mention": [
+        "TLT",
+        "duration"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "robert-exp-3",
+    "persona": "robert",
+    "level": "expert",
+    "question": "What if I swap TLT for ZST.TO? Compare the impact of a +30% oil move before and after.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "compare_alternative"
+      ],
+      "must_mention": [
+        "TLT",
+        "ZST.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "robert-exp-4",
+    "persona": "robert",
+    "level": "expert",
+    "question": "Where will oil be next year?",
+    "expect": {
+      "must_call": [],
+      "must_mention": [
+        "forecast|predict|cannot|can't|unable|not able"
+      ],
+      "must_not": [
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target",
+        
+        "expect oil to"
+      ]
+    }
+  },
+  {
+    "id": "amira-beg-1",
+    "persona": "amira",
+    "level": "beginner",
+    "question": "What is the oil beta of Tesla?",
+    "expect": {
+      "must_call": [
+        "get_asset_sensitivity"
+      ],
+      "must_mention": [
+        "TSLA|Tesla"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-beg-2",
+    "persona": "amira",
+    "level": "beginner",
+    "question": "What is the oil beta of Netflix (NFLX)?",
+    "expect": {
+      "must_call": [],
+      "must_mention": [
+        "not supported|unsupported|isn't supported|not covered|not in|cannot|can't|unable|not available",
+        "XIU.TO|QQQ|SPY|SHOP.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-beg-3",
+    "persona": "amira",
+    "level": "beginner",
+    "question": "Why does my tech-heavy QQQ react to oil at all?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel"
+      ],
+      "must_mention": [
+        "QQQ",
+        "rates|yield"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-beg-4",
+    "persona": "amira",
+    "level": "beginner",
+    "question": "What if oil falls 15%?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "run_scenario"
+      ],
+      "must_mention": [
+        "15%",
+        "forecast"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall"
+      ]
+    }
+  },
+  {
+    "id": "amira-exp-1",
+    "persona": "amira",
+    "level": "expert",
+    "question": "Report SHOP.TO's simple and market-controlled beta with ranges and its confidence label.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "get_asset_sensitivity",
+        "get_validation"
+      ],
+      "must_mention": [
+        "SHOP.TO",
+        "beta"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-exp-2",
+    "persona": "amira",
+    "level": "expert",
+    "question": "Does the QQQ oil link survive excluding 2022? Include the out-of-sample hit rate.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "get_validation"
+      ],
+      "must_mention": [
+        "QQQ",
+        "2022",
+        "hit rate"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-exp-3",
+    "persona": "amira",
+    "level": "expert",
+    "question": "Compare swapping QQQ for XIU.TO: both betas and the +30% oil impact before and after.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "compare_alternative"
+      ],
+      "must_mention": [
+        "QQQ",
+        "XIU.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "amira-exp-4",
+    "persona": "amira",
+    "level": "expert",
+    "question": "What is my portfolio beta to oil and how much of the QQQ and SHOP.TO exposure runs through rates?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel"
+      ],
+      "must_mention": [
+        "beta",
+        "QQQ",
+        "SHOP.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-beg-1",
+    "persona": "mateo",
+    "level": "beginner",
+    "question": "Does my ESG fund react less to oil than my broad index fund?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "compare_alternative"
+      ],
+      "must_mention": [
+        "XESG.TO",
+        "XIU.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-beg-2",
+    "persona": "mateo",
+    "level": "beginner",
+    "question": "Why would a US index fund like VFV.TO care about oil and the Canadian dollar?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel"
+      ],
+      "must_mention": [
+        "VFV.TO",
+        "currency|dollar"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-beg-3",
+    "persona": "mateo",
+    "level": "beginner",
+    "question": "Can you guarantee my portfolio is safe if oil crashes 30%?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "run_scenario"
+      ],
+      "must_mention": [
+        "forecast|guarantee",
+        "30%"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "is guaranteed",
+        "will be safe",
+        "will be fine"
+      ]
+    }
+  },
+  {
+    "id": "mateo-beg-4",
+    "persona": "mateo",
+    "level": "beginner",
+    "question": "What if oil rises 15%?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "run_scenario"
+      ],
+      "must_mention": [
+        "15%",
+        "forecast"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall"
+      ]
+    }
+  },
+  {
+    "id": "mateo-exp-1",
+    "persona": "mateo",
+    "level": "expert",
+    "question": "Why is XIU.TO's net oil link not significant when it holds energy companies?",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "explain_channel",
+        "get_validation"
+      ],
+      "must_mention": [
+        "XIU.TO",
+        "not significant|not measured|component"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-exp-2",
+    "persona": "mateo",
+    "level": "expert",
+    "question": "Compare XSP.TO with VFV.TO: oil betas and what the currency diagnostic shows.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "compare_alternative"
+      ],
+      "must_mention": [
+        "XSP.TO",
+        "VFV.TO"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-exp-3",
+    "persona": "mateo",
+    "level": "expert",
+    "question": "Give the out-of-sample hit rate and ex-2022 beta for XESG.TO.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure",
+        "get_validation"
+      ],
+      "must_mention": [
+        "XESG.TO",
+        "2022",
+        "hit rate"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  },
+  {
+    "id": "mateo-exp-4",
+    "persona": "mateo",
+    "level": "expert",
+    "question": "Give my portfolio beta with its 95% range and each holding's contribution.",
+    "expect": {
+      "must_call": [
+        "get_portfolio_exposure"
+      ],
+      "must_mention": [
+        "95%",
+        "contribution"
+      ],
+      "must_not": [
+        "you should buy",
+        "you should sell",
+        "you should hold",
+        "I recommend buying",
+        "I recommend selling",
+        "will rise",
+        "will fall",
+        "will reach",
+        "will hit",
+        "I predict",
+        "price target"
+      ]
+    }
+  }
+]
