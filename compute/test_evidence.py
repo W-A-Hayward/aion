@@ -35,22 +35,34 @@ def test_validate_answer_rules():
     assert ev.validate_answer({**good, "excerpt": long}, long) is None
 
 
+def tool_reply(inp, name="record_evidence"):
+    return {"output": {"message": {"content": [{"toolUse": {"toolUseId": "t", "name": name, "input": inp}}]}},
+            "usage": {"inputTokens": 10, "outputTokens": 5}}
+
+
 def test_classify_retries_once_then_skips():
     class Client:
-        def __init__(self, texts):
-            self.texts, self.calls = list(texts), 0
+        def __init__(self, replies):
+            self.replies, self.calls = list(replies), 0
 
         def converse(self, **kw):
             self.calls += 1
             assert kw["inferenceConfig"] == {"maxTokens": 500}
-            return {"output": {"message": {"content": [{"text": self.texts.pop(0)}]}},
-                    "usage": {"inputTokens": 10, "outputTokens": 5}}
+            assert kw["toolConfig"]["toolChoice"] == {"tool": {"name": "record_evidence"}}
+            spec = kw["toolConfig"]["tools"][0]["toolSpec"]
+            assert spec["name"] == "record_evidence"
+            props = spec["inputSchema"]["json"]["properties"]
+            assert set(props) == {"relevant", "channel", "direction", "excerpt", "section"}
+            assert "enum" in props["channel"] and "enum" in props["direction"]
+            return self.replies.pop(0)
 
+    text_only = {"output": {"message": {"content": [{"text": "no tool"}]}},
+                 "usage": {"inputTokens": 10, "outputTokens": 5}}
     u = ev.Usage()
-    c = Client(["not json", '{"relevant": false}'])
+    c = Client([text_only, tool_reply({"relevant": False})])
     assert ev.classify_passage(c, "m", "XOM", "doc", "p", u) == {"relevant": False}
     assert c.calls == 2 and u.input_tokens == 20 and u.output_tokens == 10
-    c = Client(["bad", "worse"])
+    c = Client([text_only, tool_reply({"relevant": True}, name="other_tool")])
     assert ev.classify_passage(c, "m", "XOM", "doc", "p", u) is None
     assert c.calls == 2
 
@@ -96,18 +108,6 @@ def test_prefilter_late_high_score_beats_early_low_score():
     assert len(kept) == 25 and kept[-1]["page"] == 99
 
 
-# --- JSON fence stripping ---------------------------------------------------
-
-def test_fence_stripping_and_brace_slice():
-    assert ev.parse_model_json('```json\n{"relevant": false}\n```') == {"relevant": False}
-    assert ev.parse_model_json('```\n{"a": 1}\n```') == {"a": 1}
-    assert ev.parse_model_json('Here you go:\n{"a": {"b": 2}} Hope that helps') == {"a": {"b": 2}}
-    assert ev.parse_model_json('{"a": 1}') == {"a": 1}
-    assert ev.parse_model_json("no json here") is None
-    assert ev.parse_model_json("[1, 2]") is None
-    assert ev.extract_json_text('```json\n{"x": 1}\n```') == '{"x": 1}'
-
-
 # --- resumable cache --------------------------------------------------------
 
 class FakeS3:
@@ -136,8 +136,7 @@ class OilClient:
         self.calls += 1
         ans = {"relevant": True, "channel": "direct", "direction": "positive",
                "excerpt": "Higher oil prices lift revenue.", "section": "Outlook"}
-        return {"output": {"message": {"content": [{"text": json.dumps(ans)}]}},
-                "usage": {"inputTokens": 1, "outputTokens": 1}}
+        return tool_reply(ans)
 
 
 def test_resume_skips_cached_document():

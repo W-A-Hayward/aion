@@ -82,20 +82,40 @@ EDGE_COLUMNS = ["from_node", "to_node", "edge_type", "beta", "lo", "hi", "eviden
 SYSTEM_PROMPT = (
     "You read one passage from an investor document about a ticker and decide whether it "
     "describes how oil prices (or oil-linked energy prices, interest rates or the Canadian "
-    "dollar) affect that ticker. Answer with ONLY this JSON object and nothing else:\n"
-    '{"relevant": true or false, '
-    '"channel": "direct|rates|currency|company-specific|none", '
-    '"direction": "positive|negative|mixed", '
-    '"excerpt": "<verbatim sentence(s) copied exactly from the passage, max 40 words>", '
-    '"section": "<heading if visible, else empty string>"}\n'
+    "dollar) affect that ticker. Answer by calling the record_evidence tool exactly once. "
     '"direction" is the effect of HIGHER oil prices on the ticker. '
     '"channel": direct = oil revenue or costs; rates = through interest rates or yields; '
     "currency = through the Canadian dollar or exchange rate; company-specific = a named "
     "business exposure to fuel or energy prices; none = not about oil. "
     "The excerpt must be copied character for character from the passage. "
-    'If the passage is not relevant, return {"relevant": false, "channel": "none", '
-    '"direction": "mixed", "excerpt": "", "section": ""}.'
+    'If the passage is not relevant, set relevant to false, channel to "none", direction to '
+    '"mixed" and excerpt and section to empty strings.'
 )
+
+EVIDENCE_TOOL_NAME = "record_evidence"
+TOOL_CONFIG = {
+    "tools": [{
+        "toolSpec": {
+            "name": EVIDENCE_TOOL_NAME,
+            "description": "Record whether the passage links oil prices to the ticker.",
+            "inputSchema": {"json": {
+                "type": "object",
+                "properties": {
+                    "relevant": {"type": "boolean",
+                                 "description": "True if the passage says how oil prices affect the ticker."},
+                    "channel": {"type": "string", "enum": list(CHANNELS)},
+                    "direction": {"type": "string", "enum": list(DIRECTIONS),
+                                  "description": "Effect of HIGHER oil on the ticker."},
+                    "excerpt": {"type": "string",
+                                "description": "Verbatim sentence(s) from the passage, max 40 words."},
+                    "section": {"type": "string", "description": "Heading if visible, else empty."},
+                },
+                "required": ["relevant", "channel", "direction", "excerpt", "section"],
+            }},
+        }
+    }],
+    "toolChoice": {"tool": {"name": EVIDENCE_TOOL_NAME}},
+}
 
 
 # ---------------------------------------------------------------------------
@@ -268,46 +288,33 @@ def is_verbatim(excerpt: str, passage: str) -> bool:
     return bool(e) and e in normalize_ws(passage)
 
 
-def extract_json_text(text: str) -> str:
-    """Remove ```json / ``` fences, then keep only the text from the first "{" to the last "}"."""
-    t = re.sub(r"```(?:json)?", "", text or "", flags=re.IGNORECASE)
-    start, end = t.find("{"), t.rfind("}")
-    return t[start:end + 1] if start != -1 and end > start else t.strip()
-
-
-def parse_model_json(text: str) -> dict | None:
-    """json.loads of the model answer after extract_json_text. None if it is not a JSON object."""
-    try:
-        obj = json.loads(extract_json_text(text))
-    except (ValueError, TypeError):
-        return None
-    return obj if isinstance(obj, dict) else None
-
-
-def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: str, usage: Usage) -> str:
+def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: str,
+                  usage: Usage) -> dict | None:
+    """One Converse call that forces the record_evidence tool. Returns the toolUse input, or None."""
     user = f"Ticker: {ticker}\nDocument type: {doc_type}\n\nPassage:\n{passage}"
     resp = client.converse(
         modelId=model_id,
         system=[{"text": SYSTEM_PROMPT}],
         messages=[{"role": "user", "content": [{"text": user}]}],
         inferenceConfig={"maxTokens": MAX_TOKENS},
+        toolConfig=TOOL_CONFIG,
     )
     usage.add(resp)
-    blocks = resp["output"]["message"]["content"]
-    return "".join(b.get("text", "") for b in blocks)
+    for block in resp.get("output", {}).get("message", {}).get("content", []):
+        tool = block.get("toolUse")
+        if tool and tool.get("name") == EVIDENCE_TOOL_NAME and isinstance(tool.get("input"), dict):
+            return tool["input"]
+    return None
 
 
 def classify_passage(client, model_id: str, ticker: str, doc_type: str, passage: str,
                      usage: Usage) -> dict | None:
-    """Ask the model about one passage. Parse failure: retry once, then return None."""
+    """Ask the model about one passage. No tool result: retry once, then return None."""
     for _ in range(2):
-        try:
-            obj = parse_model_json(converse_once(client, model_id, ticker, doc_type, passage, usage))
-        except (KeyError, IndexError, TypeError):
-            obj = None
+        obj = converse_once(client, model_id, ticker, doc_type, passage, usage)
         if obj is not None:
             return obj
-    log.warning("Skipping passage for %s: model did not return valid JSON twice", ticker)
+    log.warning("Skipping passage for %s: no record_evidence result twice", ticker)
     return None
 
 
@@ -461,7 +468,7 @@ def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
 
 def log_skipped(stats: dict[str, dict]) -> None:
     for file, st in stats.items():
-        log.info("%s: %d passages sent, %d skipped (no valid JSON after retry), %d kept%s",
+        log.info("%s: %d passages sent, %d skipped (no tool result after retry), %d kept%s",
                  file, st["sent"], st["skipped"], st["kept"], " (from cache)" if st["cached"] else "")
 
 
