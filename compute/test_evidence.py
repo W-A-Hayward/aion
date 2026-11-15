@@ -86,6 +86,19 @@ def test_split_passages_overlap():
     assert parts[-1].endswith(text[-10:])
 
 
+def test_score_includes_stock_bond_keywords():
+    for text in ["Correlation rose", "equity funds", "equities fell", "stocks fell", "a stock",
+                 "to hedge risk", "a safe haven", "bond returns", "portfolio insurance"]:
+        assert ev.score_passage(text) == 1, text
+
+
+def test_research_doc_type_is_accepted():
+    # doc_type is passed through from the manifest without a whitelist.
+    assert ev.kb_metadata({"ticker": "SPY", "doc_type": "research", "channel": "none",
+                           "direction": "mixed", "source_url": "u",
+                           "section": ""})["metadataAttributes"]["doc_type"] == "research"
+
+
 def test_score_counts_distinct_keywords_double_for_oil_terms():
     assert ev.score_passage("nothing relevant") == 0
     assert ev.score_passage("oil oil oil") == 2                     # distinct: repeats do not add

@@ -67,6 +67,8 @@ KEYWORDS = [
     "oil", "crude", "Brent", "WTI", "fuel", "gasoline", "energy price", "commodity",
     "petroleum", "interest rate", "yield", "inflation", "Canadian dollar",
     "exchange rate", "currency", "duration",
+    "correlation", "equity", "equities", "stock",   # "stock" also matches "stocks" (prefix match)
+    "hedge", "safe haven", "bond returns", "portfolio insurance",
 ]
 # These keywords count double in the passage score.
 DOUBLE_KEYWORDS = {"oil", "crude", "Brent", "WTI", "fuel", "gasoline", "commodity"}
