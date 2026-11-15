@@ -36,11 +36,17 @@ function tickerBlock(row, tables, question, shock) {
   const t = shortTicker(row.ticker), info = TICKER_INFO[row.ticker];
   const lines = [`**${t}** (${info.name}) has a weekly Brent beta of **${number(row.beta_simple, 3, true)}**, 95% range ${interval(row.lo_simple, row.hi_simple)}, over ${number(row.n_weeks, 0)} weeks. Historically it ${direction(row)}.`];
   if (/reliab|confiden|stable|sure|uncertain|trust|signific/i.test(question)) {
-    lines.push(`p = ${probability(row.p_simple)}${finite(row.q_simple) ? `, q = ${probability(row.q_simple)} after multiple-testing correction` : ''}. Leaving out 2022, p = ${probability(row.p_ex2022)}. Out-of-sample direction hit rate: ${finite(row.oos_hit_rate) ? `${Math.round(row.oos_hit_rate * 100)}% of ${number(row.oos_n, 0)} windows` : 'not supplied'}.`);
+    const oos = finite(row.oos_hit_rate) && row.oos_n > 0
+      ? ` Out of sample: fitted on data up to 2024, the model called the direction right in ${Math.round(row.oos_hit_rate * row.oos_n)} of the ${number(row.oos_n, 0)} weeks with the biggest oil moves since 2025.`
+      : '';
+    lines.push(`p = ${probability(row.p_simple)}${finite(row.q_simple) ? `, q = ${probability(row.q_simple)} after correcting for testing 35 tickers at once` : ''}. Re-estimated without 2022, p = ${probability(row.p_ex2022)}.${oos}`);
   }
   const chain = tables.chain_reconciliation.find(c => c.ticker === row.ticker);
   if (chain && /why|how|where|come from|channel|path|explain/i.test(question)) {
-    lines.push(`One measured route: ${chain.chain}, which accounts for about ${Math.round(chain.share_explained * 100)}% of the direct beta. That is a statistical pathway, not a proven cause.`);
+    const share = chain.share_explained;
+    lines.push(finite(share) && share >= 0 && share <= 1.2
+      ? `One measured route: ${chain.chain}. Multiplying its links gives ${number(chain.beta_chain, 3, true)}, about ${Math.round(share * 100)}% of the direct beta (${number(chain.beta_direct, 3, true)}). That is a statistical pathway, not a proven cause.`
+      : `One tested route, ${chain.chain}, gives ${number(chain.beta_chain, 3, true)} against a direct beta of ${number(chain.beta_direct, 3, true)}. They don’t line up, so this route does not explain the direct beta.`);
   }
   const s = SHOCKS.includes(shock) ? shock : null;
   if (s !== null) lines.push(`If Brent moves ${s > 0 ? '+' : ''}${s}% in a week and the historical beta held, ${t} would move about **${pct(shockImpact(row.beta_simple, s))}** (range ${pct(shockImpact(row.lo_simple, s))} to ${pct(shockImpact(row.hi_simple, s))}).`);
