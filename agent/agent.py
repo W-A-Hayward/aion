@@ -1,11 +1,19 @@
 """cascade agent: Strands Agent on Amazon Bedrock AgentCore Runtime.
 
 Tools call the cascade-tools Lambda (action group "oil-tools") and the cascade-evidence knowledge base.
-Payload: {"question": str, "persona": str, "level": str}.
+Payload: {"persona": str, "question": str, "level": str, "experiment_id": str (optional)}.
+The level goes into the system prompt. experiment_id is accepted and ignored here: the worker uses it
+for its answer cache.
+Returns {"answer_text", "trace", "tool_results"}, plus the keys the worker, eval and smoke test already read
+(answer, toolCalls, citations, claims, usage, guardrail).
+  trace: one {step, tool, input_summary, output_summary, tag, ms} per tool call; tag is "measured" for the
+         Athena tools and "source" for the knowledge base.
+  tool_results: {tool name: [raw JSON result of each call, in call order]}.
 """
 import json
 import os
 import threading
+import time
 
 import boto3
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
@@ -36,6 +44,10 @@ _tool_calls = []
 _citations = []
 _claims = []
 _guardrail_traces = []
+_trace = []
+_tool_results = {}
+
+KB_TOOLS = ("search_evidence",)  # tag "source"; every other tool reads Athena through cascade-tools: "measured"
 
 
 # ----------------------------------------------------------------------------- helpers
@@ -68,9 +80,100 @@ def _truncate(value):
     return text if len(text) <= MAX_OUTPUT_CHARS else text[:MAX_OUTPUT_CHARS] + "...[truncated]"
 
 
-def _record_call(name, inputs, output):
+def _fmt(value, digits=2, signed=True):
+    value = _number(value)
+    if value is None:
+        return "n/a"
+    return ("%+." if signed else "%.") + str(digits) + "f" % value
+
+
+def _summarize_input(inputs):
+    if not isinstance(inputs, dict):
+        return ""
+    return ", ".join("%s=%s" % (k, v) for k, v in inputs.items() if v is not None)
+
+
+def _summarize_output(name, result):
+    """Key numbers of one tool result as a short string (never the model's text)."""
+    if isinstance(result, list):
+        if result and isinstance(result[0], dict) and result[0].get("error"):
+            return "error: %s" % result[0]["error"]
+        return "%d passages" % len(result)
+    if not isinstance(result, dict):
+        return "ok"
+    if result.get("error"):
+        return "error: %s" % result["error"]
+
+    def box(source, key):
+        value = source.get(key)
+        return value if isinstance(value, dict) else {}
+
+    parts = []
+    if name == "get_portfolio_facts":
+        prot = box(result, "protection")
+        if prot:
+            parts.append("bonds avg %s%% in %s worst weeks of %s" % (
+                _fmt(prot.get("avg_bond_return_pct")), prot.get("n_worst_weeks"), prot.get("stock_side")))
+        risk = box(result, "risk_share")
+        if risk:
+            parts.append("risk_share " + ", ".join(
+                "%s %s" % (k, _fmt(risk.get(k), 3, False)) for k in ("rates", "stocks", "oil") if k in risk))
+        facts = box(result, "facts")
+        if facts.get("max_drawdown_pct") is not None:
+            parts.append("max drawdown %s%%" % _fmt(facts.get("max_drawdown_pct")))
+    elif name == "test_shield":
+        row = box(result, "worst_weeks")
+        if row:
+            parts.append("%s %s: avg %s%% in %s worst weeks, %s up, p=%s" % (
+                result.get("ticker"), row.get("label"), _fmt(row.get("avg_pct_worst")), row.get("weeks"),
+                row.get("weeks_up"), _fmt(row.get("binom_p"), 3, False)))
+        else:
+            parts.append("%s: no row for this persona" % result.get("ticker"))
+    elif name == "run_scenario":
+        if result.get("shock_type") == "rates":
+            total = box(result, "total")
+            parts.append("rates %sbp: total %s%% (%s per $100k)" % (
+                result.get("rates_shock_bp"), _fmt(total.get("impact_pct")), _fmt(total.get("per_100k"), 0)))
+        else:
+            rows = [r for r in (result.get("scenario") or []) if isinstance(r, dict)]
+            if rows:
+                r = rows[0]
+                parts.append("oil %s%%: %s%% (95%% %s to %s)" % (
+                    result.get("oil_shock_pct"), _fmt(r.get("impact_pct")), _fmt(r.get("lo_pct")),
+                    _fmt(r.get("hi_pct"))))
+    elif name == "get_portfolio_exposure":
+        parts.append("portfolio beta %s" % _fmt(box(result, "portfolio_beta").get("beta")))
+    elif name == "get_asset_sensitivity":
+        parts.append("%s beta %s" % (result.get("ticker"), _fmt(box(result, "sensitivity").get("beta_simple"))))
+    elif name == "explain_channel":
+        parts.append("%s channel label %s" % (result.get("ticker"), box(result, "confidence").get("label")))
+    elif name == "get_validation":
+        v = box(result, "validation")
+        parts.append("%s label %s, ex-2022 beta %s" % (result.get("ticker"), v.get("label"),
+                                                      _fmt(v.get("beta_ex2022"))))
+    elif name == "compare_alternative":
+        c = box(result, "comparison")
+        parts.append("30%% oil impact %s%% before, %s%% after" % (
+            _fmt(c.get("impact30_before_pct")), _fmt(c.get("impact30_after_pct"))))
+    return "; ".join(parts) or "ok"
+
+
+def _record_call(name, inputs, output, ms=0):
+    try:
+        summary = _summarize_output(name, output)
+    except Exception:  # a summary must never break the run
+        summary = "ok"
     with _lock:
         _tool_calls.append({"name": name, "input": inputs, "output": _truncate(output)})
+        _tool_results.setdefault(name, []).append(output)
+        _trace.append({
+            "step": len(_trace) + 1,
+            "tool": name,
+            "input_summary": _summarize_input(inputs),
+            "output_summary": summary,
+            "tag": "source" if name in KB_TOOLS else "measured",
+            "ms": int(ms),
+        })
 
 
 def _record_citation(row):
@@ -171,6 +274,7 @@ def _call_tools_lambda(name, **params):
         "function": name,
         "parameters": [{"name": k, "type": "string", "value": str(v)} for k, v in params.items()],
     }
+    started = time.time()
     try:
         response = _lambda().invoke(
             FunctionName=TOOLS_FUNCTION,
@@ -184,7 +288,7 @@ def _call_tools_lambda(name, **params):
         result = json.loads(body)
     except Exception as e:  # return the failure to the model instead of crashing the run
         result = {"error": "tool call failed: %s" % type(e).__name__, "allowed": []}
-    _record_call(name, params, result)
+    _record_call(name, params, result, (time.time() - started) * 1000)
     _record_claims(name, params, result)
     return result
 
@@ -335,6 +439,7 @@ def search_evidence(query: str, ticker: str = None) -> list:
     if ticker:
         config["vectorSearchConfiguration"]["filter"] = {"equals": {"key": "ticker", "value": ticker}}
     inputs = {"query": query, "ticker": ticker}
+    started = time.time()
     try:
         response = _kb().retrieve(
             knowledgeBaseId=KB_ID,
@@ -343,7 +448,7 @@ def search_evidence(query: str, ticker: str = None) -> list:
         )
     except Exception as e:
         out = {"error": "search failed: %s" % type(e).__name__}
-        _record_call("search_evidence", inputs, out)
+        _record_call("search_evidence", inputs, out, (time.time() - started) * 1000)
         return [out]
     rows = []
     for r in response.get("retrievalResults", [])[:3]:
@@ -360,7 +465,7 @@ def search_evidence(query: str, ticker: str = None) -> list:
         }
         rows.append(row)
         _record_citation(row)
-    _record_call("search_evidence", inputs, rows)
+    _record_call("search_evidence", inputs, rows, (time.time() - started) * 1000)
     return rows
 
 
@@ -466,6 +571,8 @@ def invoke(payload):
         _citations.clear()
         _claims.clear()
         _guardrail_traces.clear()
+        _trace.clear()
+        _tool_results.clear()
     system_prompt = "%s\nPersona: %s\nLevel: %s" % (_get_instructions(), persona, level)
     agent = Agent(model=_build_model(), tools=TOOLS, system_prompt=system_prompt,
                   callback_handler=_on_stream_event)
@@ -475,7 +582,11 @@ def invoke(payload):
         citations = list(_citations)
         claims = list(_claims)
         traces = list(_guardrail_traces)
-    out = {"answer": str(result), "toolCalls": calls, "citations": citations, "claims": claims,
+        trace = [dict(t) for t in _trace]
+        tool_results = {k: list(v) for k, v in _tool_results.items()}
+    answer = str(result)
+    out = {"answer_text": answer, "trace": trace, "tool_results": tool_results,
+           "answer": answer, "toolCalls": calls, "citations": citations, "claims": claims,
            "usage": _usage(result)}
     records = []
     for trace in traces:

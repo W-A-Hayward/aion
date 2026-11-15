@@ -56,12 +56,51 @@ def call(i, token=TOKEN):
     return app.lambda_handler(event, None)
 
 
-def test_done():
+def test_done_legacy_answer_string_is_wrapped():
     r = call(JOB)
     assert r["statusCode"] == 200
     body = json.loads(r["body"])
-    assert body["status"] == "DONE" and body["answer"] == "hi" and body["durationMs"] == 1234
+    assert body["status"] == "DONE" and body["answer"]["text"] == "hi" and body["durationMs"] == 1234
+    assert body["stage"] == "done" and body["stages"] == [] and body["job_id"] == JOB
     assert "question" not in body and "sessionId" not in body and "traceKey" not in body
+
+
+def test_full_contract_object(monkeypatch):
+    answer = {"verdict": "MYTH", "headline": "h", "text": "t [1]", "refusal": False, "caveat": "c"}
+    stages = [{"stage": "queued", "t": "a"}, {"stage": "agent_started", "t": "b"},
+              {"stage": "tool:get_portfolio_facts", "t": "c"}, {"stage": "guardrail", "t": "d"},
+              {"stage": "done", "t": "e"}]
+    item = {"jobId": JOB, "status": "DONE", "ownerHash": OWNER_HASH, "answer": answer, "stages": stages,
+            "trace": [{"step": 1, "tool": "get_portfolio_facts", "tag": "measured", "ms": 5}],
+            "data": {"risk_share": {"rates": Decimal("0.707")}, "scenario": None},
+            "citations": [{"n": 1, "evidence_id": "e1"}], "toolCalls": [{"name": "x"}], "claims": [],
+            "traceKey": "traces/x.json", "ownerHashExtra": "no"}
+    monkeypatch.setattr(app, "_table", lambda: FakeTable({JOB: item}))
+    body = json.loads(call(JOB)["body"])
+    assert body["job_id"] == JOB and body["stage"] == "done" and body["stages"] == stages
+    assert body["answer"] == answer and body["citations"] == [{"n": 1, "evidence_id": "e1"}]
+    assert body["trace"][0]["tag"] == "measured"
+    assert body["data"]["risk_share"] == {"rates": 0.707}
+    assert set(body["data"]) == {"risk_share", "shields", "cushion", "betas", "twin_series",
+                                 "stock_bond_series", "scenario"}
+    assert body["toolCalls"] == [{"name": "x"}] and "traceKey" not in body and "ownerHash" not in body
+
+
+def test_running_job_has_empty_contract(monkeypatch):
+    item = {"jobId": JOB, "status": "RUNNING", "ownerHash": OWNER_HASH,
+            "stages": [{"stage": "queued", "t": "a"}, {"stage": "agent_started", "t": "b"}]}
+    monkeypatch.setattr(app, "_table", lambda: FakeTable({JOB: item}))
+    body = json.loads(call(JOB)["body"])
+    assert body["stage"] == "agent_started" and body["answer"] is None
+    assert body["trace"] == [] and body["citations"] == [] and body["data"]["shields"] == []
+
+
+def test_failed_job_reports_error(monkeypatch):
+    item = {"jobId": JOB, "status": "FAILED", "ownerHash": OWNER_HASH, "error": "boom",
+            "stages": [{"stage": "queued", "t": "a"}, {"stage": "failed", "t": "b"}]}
+    monkeypatch.setattr(app, "_table", lambda: FakeTable({JOB: item}))
+    body = json.loads(call(JOB)["body"])
+    assert body["stage"] == "failed" and body["error"] == "boom"
 
 
 def test_not_found():

@@ -16,6 +16,7 @@ SESSION_RE = re.compile(r"[A-Za-z0-9-]{1,100}")
 # Browser-held secret that owns the jobs it submits (see docs/infrastructure.md, "Access control").
 TOKEN_HEADER = "x-cascade-session"
 TOKEN_RE = re.compile(r"[A-Za-z0-9_-]{32,128}")
+EXPERIMENT_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
 TTL_SECONDS = 86400
 RATE_WINDOW_SECONDS = 60
 
@@ -136,7 +137,10 @@ def validate(data):
     sid = data.get("sessionId")
     if sid is not None and not (isinstance(sid, str) and SESSION_RE.fullmatch(sid)):
         return None, "sessionId must match [A-Za-z0-9-]{1,100}"
-    return {"question": q, "persona": persona, "level": level, "sessionId": sid}, None
+    exp = data.get("experiment_id")
+    if exp is not None and not (isinstance(exp, str) and EXPERIMENT_RE.fullmatch(exp)):
+        return None, "experiment_id must match [A-Za-z0-9_-]{1,64}"
+    return {"question": q, "persona": persona, "level": level, "sessionId": sid, "experiment_id": exp}, None
 
 
 def lambda_handler(event, context):
@@ -174,11 +178,15 @@ def lambda_handler(event, context):
         "agentSessionId": "%s-%s" % (owner[:16], session_id),
         "ownerHash": owner,
         "createdAt": now.isoformat(),
+        "stages": [{"stage": "queued", "t": now.strftime("%Y-%m-%dT%H:%M:%SZ")}],
         "expiresAt": int(time.time()) + TTL_SECONDS,
     }
+    if clean["experiment_id"]:
+        item["experimentId"] = clean["experiment_id"]
     _table().put_item(Item=item)
     try:
-        _sqs().send_message(QueueUrl=os.environ["QUEUE_URL"], MessageBody=json.dumps({"jobId": job_id}))
+        message = {"jobId": job_id, "level": clean["level"], "experiment_id": clean["experiment_id"]}
+        _sqs().send_message(QueueUrl=os.environ["QUEUE_URL"], MessageBody=json.dumps(message))
     except Exception as e:
         # The job row exists but nothing will process it: mark it failed instead of leaving PENDING.
         _table().update_item(

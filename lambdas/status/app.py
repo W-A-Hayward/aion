@@ -10,7 +10,11 @@ import boto3
 
 _clients = {}
 
-FIELDS = ("status", "answer", "toolCalls", "citations", "error", "durationMs")
+# Fields outside the contract that eval/ and the smoke test still read. answer and citations follow the contract.
+LEGACY_FIELDS = ("toolCalls", "claims", "error", "durationMs")
+LEGACY_STAGE = {"PENDING": "queued", "RUNNING": "agent_started", "DONE": "done", "FAILED": "failed"}
+EMPTY_DATA = {"risk_share": {}, "shields": [], "cushion": [], "betas": [], "twin_series": [],
+              "stock_bond_series": [], "scenario": None}
 TOKEN_HEADER = "x-cascade-session"
 TOKEN_RE = re.compile(r"[A-Za-z0-9_-]{32,128}")
 
@@ -83,8 +87,32 @@ def lambda_handler(event, context):
     # A job owned by someone else (or by no one) is reported exactly like a missing job.
     if not item or not isinstance(item.get("ownerHash"), str) or not hmac.compare_digest(item["ownerHash"], owner):
         return _resp(404, {"error": "job not found"})
-    body = {"jobId": item["jobId"]}
-    for f in FIELDS:
+    return _resp(200, contract_body(item))
+
+
+def contract_body(item):
+    """The GET /jobs/{id} object of docs/api_contract.md, plus the legacy fields clients already read."""
+    stages = [s for s in (item.get("stages") or []) if isinstance(s, dict)]
+    status = item.get("status")
+    stage = stages[-1].get("stage") if stages else LEGACY_STAGE.get(status, "queued")
+    answer = item.get("answer")
+    if isinstance(answer, str):  # a job finished before the contract object existed
+        answer = {"verdict": None, "headline": "", "text": answer, "refusal": False, "caveat": None}
+    data = dict(EMPTY_DATA)
+    if isinstance(item.get("data"), dict):
+        data.update(item["data"])
+    body = {
+        "job_id": item["jobId"],
+        "stage": stage,
+        "stages": stages,
+        "answer": answer if isinstance(answer, dict) else None,
+        "trace": item.get("trace") or [],
+        "data": data,
+        "citations": item.get("citations") or [],
+        "jobId": item["jobId"],
+        "status": status,
+    }
+    for f in LEGACY_FIELDS:
         if f in item:
             body[f] = item[f]
-    return _resp(200, body)
+    return body

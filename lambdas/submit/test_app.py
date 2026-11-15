@@ -75,7 +75,23 @@ def test_happy_path(env):
     assert item["status"] == "PENDING" and item["jobId"] == body["jobId"]
     assert item["sessionId"] == body["sessionId"]
     assert isinstance(item["expiresAt"], int)
-    assert json.loads(q.sent[0][1]) == {"jobId": body["jobId"]}
+    assert json.loads(q.sent[0][1]) == {"jobId": body["jobId"], "level": "beginner", "experiment_id": None}
+    assert [s["stage"] for s in item["stages"]] == ["queued"] and "experimentId" not in item
+
+
+def test_experiment_id_goes_through_sqs_and_job_row(env):
+    t, q = env
+    r = app.lambda_handler(ev(dict(GOOD, level="expert", experiment_id="bonds_protect")), None)
+    assert r["statusCode"] == 202
+    assert json.loads(q.sent[0][1]) == {"jobId": json.loads(r["body"])["jobId"], "level": "expert",
+                                        "experiment_id": "bonds_protect"}
+    assert t.items[0]["experimentId"] == "bonds_protect"
+
+
+@pytest.mark.parametrize("bad", ["", "a b", "x" * 65, 5, "a#b"])
+def test_bad_experiment_id(env, bad):
+    assert app.lambda_handler(ev(dict(GOOD, experiment_id=bad)), None)["statusCode"] == 400
+    assert env[0].items == [] and env[1].sent == []
 
 
 def test_given_session_id(env):
