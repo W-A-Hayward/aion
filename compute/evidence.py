@@ -78,8 +78,65 @@ _KEYWORD_RES = [
 ]
 CACHE_PREFIX = "processed/_evidence_cache/"
 
+# Topics. "oil" is the original extraction (oil, rates, currency channels per ticker). The research
+# topics read doc_type "research" documents (ticker "macro"): their rows get channel = topic and
+# evidence_id "<ticker_or_macro>-<topic>-<n>".
+TOPIC_OIL = "oil"
+RESEARCH_TOPICS = ("currency", "stock_bond")
+TOPICS = (TOPIC_OIL,) + RESEARCH_TOPICS
+MACRO_TICKER = "macro"
+MAX_RESEARCH_PER_TOPIC = 6    # evidence rows kept per (ticker, research topic)
+TOPIC_KEYWORDS = {
+    "currency": ["currency", "hedged", "unhedged", "hedging", "Canadian dollar", "loonie", "CAD",
+                 "USD/CAD", "exchange rate", "risk sentiment", "risk premium", "risk-off",
+                 "safe haven", "volatility", "commodity"],
+    "stock_bond": ["correlation", "equity", "equities", "stock", "stocks", "bonds", "hedge",
+                   "safe haven", "bond returns", "portfolio insurance", "inflation regime"],
+}
+
+
+def _topic_regex(keyword: str):
+    """All-capital keywords (CAD, USD/CAD) match as whole words, case-sensitive; the others as
+    case-insensitive word prefixes (so "stock" also matches "stocks")."""
+    if keyword.isupper():
+        return re.compile(r"\b" + re.escape(keyword) + r"\b")
+    return re.compile(r"\b" + re.escape(keyword), re.IGNORECASE)
+
+
+_TOPIC_RES = {t: [_topic_regex(k) for k in kws] for t, kws in TOPIC_KEYWORDS.items()}
+
+# Appended to SYSTEM_PROMPT (which is unchanged) for research topics only.
+TOPIC_PROMPTS = {
+    "currency": (
+        "\n\nTOPIC MODE (topic = currency). This document is research, not about one ticker. "
+        "Ignore the oil question above. Set relevant to true only if the passage states how currency "
+        "exposure (the Canadian dollar, USD/CAD, hedged or unhedged foreign assets, risk-off moves, "
+        "safe-haven or natural-hedge behaviour) affects the returns or risk of a Canadian investor. "
+        '"direction" is then the effect of a risk-off market on USD/CAD: positive = USD/CAD rises (the '
+        "Canadian dollar weakens), negative = it falls, mixed = unclear or it depends. "
+        'Set channel to "currency". The excerpt must still be copied character for character.'),
+    "stock_bond": (
+        "\n\nTOPIC MODE (topic = stock_bond). This document is research, not about one ticker. "
+        "Ignore the oil question above. Set relevant to true only if the passage states how stocks and "
+        "bonds move together or protect each other (correlation, bonds as a safe haven or portfolio "
+        "insurance, hedging, behaviour in an inflation regime). "
+        '"direction" is then the effect of higher inflation on the stock-bond relationship: positive = '
+        "stocks and bonds move more together (bonds protect less), negative = they move more apart "
+        "(bonds protect more), mixed = unclear or it depends. "
+        'Set channel to "none"; the topic is assigned by the program. '
+        "The excerpt must still be copied character for character."),
+}
+
+NOT_STATED = "not stated"
+KNOWN_PUBLISHERS = {   # host suffix -> publisher name, used only when the manifest has no publisher
+    "bis.org": "BIS", "federalreserve.gov": "Federal Reserve", "bankofcanada.ca": "Bank of Canada",
+    "blackrock.com": "BlackRock iShares", "pwlcapital.com": "PWL Capital",
+    "td.com": "TD Asset Management", "msci.com": "MSCI", "exxonmobil.com": "ExxonMobil",
+    "sec.gov": "SEC",
+}
+
 EVIDENCE_COLUMNS = ["evidence_id", "ticker", "doc_type", "channel", "direction",
-                    "source_url", "section", "excerpt", "s3_key"]
+                    "source_url", "section", "excerpt", "s3_key", "publisher", "date", "trust"]
 CONFIDENCE_COLUMNS = ["ticker", "channel", "label", "reason_code", "reason_text"]
 EDGE_COLUMNS = ["from_node", "to_node", "edge_type", "beta", "lo", "hi", "evidence_id"]
 
@@ -266,17 +323,29 @@ def passages_for_pages(pages: list[tuple[int | None, str]]) -> list[dict]:
 # Step 3: keyword prefilter
 # ---------------------------------------------------------------------------
 
-def score_passage(text: str) -> int:
-    """Number of distinct keywords in the passage; oil/crude/Brent/WTI/fuel/gasoline/commodity count double."""
+def score_passage(text: str, topic: str | None = None) -> int:
+    """Number of distinct keywords in the passage; oil/crude/Brent/WTI/fuel/gasoline/commodity count double.
+
+    With a research topic (currency, stock_bond) the topic's own keywords are used, each weight 1.
+    """
+    if topic in RESEARCH_TOPICS:
+        return sum(1 for rx in _TOPIC_RES[topic] if rx.search(text))
     return sum(w for rx, w in _KEYWORD_RES if rx.search(text))
 
 
-def prefilter(passages: list[dict], limit: int = MAX_PASSAGES_PER_DOC) -> list[dict]:
+def infer_topic(passages: list[dict]) -> str:
+    """Research topic whose keywords score highest over the whole document (ties: currency first)."""
+    totals = {t: sum(score_passage(p["text"], t) for p in passages) for t in RESEARCH_TOPICS}
+    return max(RESEARCH_TOPICS, key=lambda t: totals[t])
+
+
+def prefilter(passages: list[dict], limit: int = MAX_PASSAGES_PER_DOC,
+              topic: str | None = None) -> list[dict]:
     """Score every passage and keep the top `limit` (score > 0; ties go to the earlier passage).
 
     The kept passages stay in document order and keep their page number.
     """
-    scored = [(score_passage(p["text"]), i) for i, p in enumerate(passages)]
+    scored = [(score_passage(p["text"], topic), i) for i, p in enumerate(passages)]
     scored = [s for s in scored if s[0] > 0]
     top = sorted(scored, key=lambda s: (-s[0], s[1]))[:limit]
     return [passages[i] for i in sorted(i for _, i in top)]
@@ -309,15 +378,18 @@ PATHS = ("tool", "text", "failed")
 
 
 def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: str,
-                  usage: Usage) -> tuple[dict | None, str]:
+                  usage: Usage, topic: str | None = None) -> tuple[dict | None, str]:
     """One Converse call (toolChoice auto). Returns (answer, path), path in "tool", "text", "failed".
 
     "tool" = the toolUse input; "text" = JSON parsed from a plain-text reply; "failed" = neither.
+    A research `topic` (currency, stock_bond) appends its TOPIC_PROMPTS paragraph to the unchanged
+    system prompt and adds a "Topic:" line to the user message; the tool schema stays the same.
     """
-    user = f"Ticker: {ticker}\nDocument type: {doc_type}\n\nPassage:\n{passage}"
+    topic_line = f"Topic: {topic}\n" if topic in RESEARCH_TOPICS else ""
+    user = f"Ticker: {ticker}\nDocument type: {doc_type}\n{topic_line}\nPassage:\n{passage}"
     resp = client.converse(
         modelId=model_id,
-        system=[{"text": SYSTEM_PROMPT}],
+        system=[{"text": SYSTEM_PROMPT + TOPIC_PROMPTS.get(topic, "")}],
         messages=[{"role": "user", "content": [{"text": user}]}],
         inferenceConfig={"maxTokens": MAX_TOKENS},
         toolConfig=TOOL_CONFIG,
@@ -336,7 +408,8 @@ def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: st
 
 
 def classify_passage(client, model_id: str, ticker: str, doc_type: str, passage: str,
-                     usage: Usage, counts: dict | None = None) -> dict | None:
+                     usage: Usage, counts: dict | None = None,
+                     topic: str | None = None) -> dict | None:
     """Ask the model about one passage. No usable answer: retry once, then return None.
 
     `counts` (keys "tool", "text", "failed") gets one increment per passage for the path
@@ -344,7 +417,7 @@ def classify_passage(client, model_id: str, ticker: str, doc_type: str, passage:
     """
     path = "failed"
     for _ in range(2):
-        obj, path = converse_once(client, model_id, ticker, doc_type, passage, usage)
+        obj, path = converse_once(client, model_id, ticker, doc_type, passage, usage, topic)
         if obj is not None:
             break
     if counts is not None:
@@ -354,12 +427,19 @@ def classify_passage(client, model_id: str, ticker: str, doc_type: str, passage:
     return obj
 
 
-def validate_answer(obj: dict, passage: str) -> dict | None:
-    """Return a clean {channel, direction, excerpt, section} for a relevant, verbatim answer, else None."""
+def validate_answer(obj: dict, passage: str, topic: str | None = None) -> dict | None:
+    """Return a clean {channel, direction, excerpt, section} for a relevant, verbatim answer, else None.
+
+    For a research topic the model's channel is ignored and channel = topic.
+    """
     if obj.get("relevant") is not True:
         return None
     channel, direction = obj.get("channel"), obj.get("direction")
-    if channel not in CHANNELS or channel == "none" or direction not in DIRECTIONS:
+    if topic in RESEARCH_TOPICS:
+        channel = topic
+    elif channel not in CHANNELS or channel == "none":
+        return None
+    if direction not in DIRECTIONS:
         return None
     excerpt = obj.get("excerpt")
     if not isinstance(excerpt, str):
@@ -369,7 +449,10 @@ def validate_answer(obj: dict, passage: str) -> dict | None:
         return None
     section = obj.get("section")
     section = normalize_ws(section) if isinstance(section, str) else ""
-    return {"channel": channel, "direction": direction, "excerpt": excerpt, "section": section}
+    out = {"channel": channel, "direction": direction, "excerpt": excerpt, "section": section}
+    if topic in RESEARCH_TOPICS:
+        out["topic"] = topic
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -380,37 +463,129 @@ def select_evidence(candidates: list[dict], per_group: int = MAX_PER_TICKER_CHAN
     """Keep at most `per_group` rows per (ticker, channel), longest excerpt first.
 
     Each candidate has ticker, doc_type, channel, direction, source_url, section, excerpt,
-    s3_key and passage. Identical excerpts for a (ticker, channel) are kept once.
-    evidence_id = "<ticker>-<channel>-<n>" with n starting at 1.
+    s3_key and passage (research candidates also have topic = channel). Identical excerpts for a
+    (ticker, topic) are kept once. evidence_id = "<ticker_or_macro>-<topic>-<n>" with n starting at 1;
+    the topic of an oil-extraction row is its channel. Research rows (topic currency or stock_bond)
+    are ranked on their own, up to MAX_RESEARCH_PER_TOPIC, and numbered after the other rows of
+    the same group, so they never push out the oil-extraction rows.
     """
     groups: dict[tuple[str, str], list[dict]] = {}
     for c in candidates:
-        groups.setdefault((c["ticker"], c["channel"]), []).append(c)
-    out = []
-    for (ticker, channel), rows in sorted(groups.items()):
-        seen = set()
-        ranked = []
+        groups.setdefault((c["ticker"], c.get("topic") or c["channel"]), []).append(c)
+
+    def rank(rows):
+        seen, ranked = set(), []
         for r in sorted(rows, key=lambda r: -len(r["excerpt"])):   # stable: ties keep document order
             if r["excerpt"] in seen:
                 continue
             seen.add(r["excerpt"])
             ranked.append(r)
-        for n, r in enumerate(ranked[:per_group], start=1):
-            out.append({**r, "evidence_id": f"{ticker}-{channel}-{n}"})
+        return ranked
+
+    out = []
+    for (ticker, topic), rows in sorted(groups.items()):
+        research = [r for r in rows if r.get("topic") in RESEARCH_TOPICS]
+        other = [r for r in rows if r.get("topic") not in RESEARCH_TOPICS]
+        chosen = rank(other)[:per_group] + rank(research)[:MAX_RESEARCH_PER_TOPIC]
+        for n, r in enumerate(chosen, start=1):
+            out.append({**r, "evidence_id": f"{ticker}-{topic}-{n}"})
     return out
 
 
+def derive_publisher(source_url: str) -> str:
+    """Publisher from the URL host (KNOWN_PUBLISHERS, else the host without "www."); "not stated" if none."""
+    from urllib.parse import urlparse
+
+    host = (urlparse(source_url or "").hostname or "").lower()
+    host = host[4:] if host.startswith("www.") else host
+    if not host:
+        return NOT_STATED
+    for suffix, name in KNOWN_PUBLISHERS.items():
+        if host == suffix or host.endswith("." + suffix):
+            return name
+    return host
+
+
+def derive_trust(source_url: str, doc_type: str = "") -> str:
+    """Trust tier from the URL host, then the document type.
+
+    Central bank: bis.org, federalreserve.gov, bankofcanada.ca. Research: msci.com.
+    Fund issuer: ishares/blackrock, vanguard, bmo. Company filing: annual reports (doc_type).
+    Press: everything else.
+    """
+    from urllib.parse import urlparse
+
+    host = (urlparse(source_url or "").hostname or "").lower()
+
+    def on(domain: str) -> bool:
+        return host == domain or host.endswith("." + domain)
+
+    if any(on(d) for d in ("bis.org", "federalreserve.gov", "bankofcanada.ca")):
+        return "Central bank"
+    if on("msci.com"):
+        return "Research"
+    labels = host.split(".")
+    if on("blackrock.com") or on("ishares.com") or "vanguard" in labels or any(l.startswith("bmo") for l in labels):
+        return "Fund issuer"
+    dt = str(doc_type or "").lower()
+    if "annual report" in dt or "10-k" in dt or "10k" in dt or dt == "filing":
+        return "Company filing"
+    return "Press"
+
+
+def _blank(v) -> bool:
+    return v is None or (not isinstance(v, str) and pd.isna(v)) or not str(v).strip()
+
+
 def evidence_frame(rows: list[dict]) -> pd.DataFrame:
-    return pd.DataFrame(rows, columns=EVIDENCE_COLUMNS).astype(object) if rows else \
-        pd.DataFrame({c: pd.Series(dtype=object) for c in EVIDENCE_COLUMNS})
+    """Evidence table frame. A missing publisher is derived from source_url, a missing date is "not stated",
+    and trust is always derived from source_url and doc_type."""
+    if not rows:
+        return pd.DataFrame({c: pd.Series(dtype=object) for c in EVIDENCE_COLUMNS})
+    df = pd.DataFrame(rows, columns=EVIDENCE_COLUMNS).astype(object)
+    for i in df.index:
+        if _blank(df.at[i, "publisher"]):
+            df.at[i, "publisher"] = derive_publisher(df.at[i, "source_url"])
+        if _blank(df.at[i, "date"]):
+            df.at[i, "date"] = NOT_STATED
+        df.at[i, "trust"] = derive_trust(df.at[i, "source_url"], df.at[i, "doc_type"])
+    return df
+
+
+def provenance_problems(df: pd.DataFrame) -> list[str]:
+    """evidence_ids whose publisher, date, source_url or trust is missing or blank (date "not stated" is fine)."""
+    if df.empty:
+        return []
+    cols = ("publisher", "date", "source_url", "trust")
+    absent = [c for c in cols if c not in df.columns]
+    if absent:
+        return df["evidence_id"].tolist()
+    return [r["evidence_id"] for r in df.to_dict("records") if any(_blank(r[c]) for c in cols)]
+
+
+OPTIONAL_MANIFEST_COLUMNS = ("topic", "publisher", "date")
 
 
 def _read_manifest(bucket: str, s3) -> pd.DataFrame:
+    """manifest_docs.csv: file, ticker, doc_type, source_url, plus optional topic, publisher, date.
+
+    A research row with no ticker belongs to "macro". topic (oil, currency or stock_bond) may be
+    left empty: oil for other documents, inferred from the text for research documents.
+    """
     body = s3.get_object(Bucket=bucket, Key=MANIFEST_KEY)["Body"].read()
     df = pd.read_csv(io.BytesIO(body), dtype=str).fillna("")
     missing = {"file", "ticker", "doc_type", "source_url"} - set(df.columns)
     if missing:
         raise ValueError(f"{MANIFEST_KEY} is missing columns {sorted(missing)}")
+    for c in OPTIONAL_MANIFEST_COLUMNS:
+        if c not in df.columns:
+            df[c] = ""
+    for c in df.columns:
+        df[c] = df[c].str.strip()
+    df.loc[(df["doc_type"].str.lower() == "research") & (df["ticker"] == ""), "ticker"] = MACRO_TICKER
+    bad = sorted(set(df["topic"]) - set(TOPICS) - {""})
+    if bad:
+        raise ValueError(f"{MANIFEST_KEY} has unknown topic values {bad}; use one of {list(TOPICS)}")
     return df
 
 
@@ -440,7 +615,8 @@ def read_cache(bucket: str, m, s3) -> dict | None:
         raise
     payload = json.loads(body)
     if (payload.get("ticker"), payload.get("doc_type"), payload.get("source_url")) != \
-            (m.ticker, m.doc_type, m.source_url):
+            (m.ticker, m.doc_type, m.source_url) or \
+            (m.topic and payload.get("topic", TOPIC_OIL) != m.topic):
         log.info("Cache for %s was made for different manifest values; reprocessing", m.file)
         return None
     return payload
@@ -454,20 +630,22 @@ def write_cache(bucket: str, m, payload: dict, s3) -> None:
 def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage) -> dict:
     """Run the model over one document. Returns the cache payload with the kept rows."""
     key = DOCS_PREFIX + m.file
-    payload = {"file": m.file, "ticker": m.ticker, "doc_type": m.doc_type,
-               "source_url": m.source_url, "sent": 0, "skipped": 0,
-               "paths": {k: 0 for k in PATHS}, "candidates": []}
     data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
     pages = extract_pages(m.file, data)
-    kept = prefilter(passages_for_pages(pages))
+    all_passages = passages_for_pages(pages)
+    topic = m.topic or (infer_topic(all_passages) if m.doc_type.lower() == "research" else TOPIC_OIL)
+    payload = {"file": m.file, "ticker": m.ticker, "doc_type": m.doc_type,
+               "source_url": m.source_url, "topic": topic, "sent": 0, "skipped": 0,
+               "paths": {k: 0 for k in PATHS}, "candidates": []}
+    kept = prefilter(all_passages, topic=topic)
     payload["sent"] = len(kept)
     for p in kept:
         obj = classify_passage(client, model_id, m.ticker, m.doc_type, p["text"], usage,
-                                payload["paths"])
+                                payload["paths"], topic)
         if obj is None:
             payload["skipped"] += 1
             continue
-        clean = validate_answer(obj, p["text"])
+        clean = validate_answer(obj, p["text"], topic)
         if clean is None:
             continue
         payload["candidates"].append({
@@ -487,6 +665,9 @@ def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
     manifest = _read_manifest(bucket, s3)
     candidates, stats = [], {}
     for m in manifest.itertuples(index=False):
+        if not m.file or not m.source_url:
+            log.warning("Skipping manifest row %r: file and source_url are required", m.file)
+            continue
         payload = read_cache(bucket, m, s3)
         cached = payload is not None
         if payload is None:
@@ -498,7 +679,10 @@ def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
                 log.warning("Skipping %s: %s", DOCS_PREFIX + m.file, exc)
                 continue
             write_cache(bucket, m, payload, s3)
-        candidates += payload["candidates"]
+        publisher = m.publisher or derive_publisher(m.source_url)
+        date = m.date or NOT_STATED
+        # provenance comes from the manifest (the source of truth), not from the cache
+        candidates += [{**c, "publisher": publisher, "date": date} for c in payload["candidates"]]
         stats[m.file] = {"sent": payload["sent"], "skipped": payload["skipped"],
                          "kept": len(payload["candidates"]), "cached": cached,
                          "paths": payload.get("paths") or {k: 0 for k in PATHS}}
@@ -551,6 +735,8 @@ def kb_document(row: dict, passage: str) -> str:
         f"Direction: {row['direction']}\n"
         f"Source: {row['source_url']}\n"
         f"Section: {row['section']}\n"
+        f"Publisher: {row.get('publisher') or derive_publisher(row['source_url'])}\n"
+        f"Date: {row.get('date') or NOT_STATED}\n"
         f"\nExcerpt: {row['excerpt']}\n"
         f"\nPassage: {passage}\n"
     )
@@ -678,14 +864,37 @@ def build_confidence(sens: pd.DataFrame, chain_rec: pd.DataFrame, evidence: pd.D
     return pd.DataFrame(rows, columns=CONFIDENCE_COLUMNS)
 
 
+TOPIC_EDGES = {"currency": ("risk_sentiment", "usdcad"), "stock_bond": ("inflation", "stock_bond")}
+
+
+def evidence_topic(row: dict) -> str | None:
+    """Research topic of an evidence row (currency or stock_bond), None for oil-extraction rows.
+
+    stock_bond rows have channel "stock_bond"; currency research rows have doc_type "research"
+    and channel "currency" (an oil-extraction currency row from another document type is not one).
+    """
+    channel = row.get("channel")
+    if channel == "stock_bond":
+        return "stock_bond"
+    if channel == "currency" and str(row.get("doc_type", "")).lower() == "research":
+        return "currency"
+    return None
+
+
 def build_edges(links_df: pd.DataFrame, evidence: pd.DataFrame) -> pd.DataFrame:
-    """Measured edges from processed/links plus one cited edge per evidence row (oil -> ticker)."""
+    """Measured edges from processed/links plus cited edges, one per evidence row.
+
+    Oil-extraction rows give "oil -> <ticker>". Research rows give "risk_sentiment -> usdcad" (topic
+    currency) and "inflation -> stock_bond" (topic stock_bond), each linked to its evidence_id.
+    """
     rows = [{"from_node": r["from_node"], "to_node": r["to_node"], "edge_type": "measured",
              "beta": r["beta"], "lo": r["lo"], "hi": r["hi"], "evidence_id": None}
             for r in links_df.to_dict("records")]
-    rows += [{"from_node": "oil", "to_node": r["ticker"], "edge_type": "cited",
-              "beta": np.nan, "lo": np.nan, "hi": np.nan, "evidence_id": r["evidence_id"]}
-             for r in evidence.to_dict("records")]
+    for r in evidence.to_dict("records"):
+        topic = evidence_topic(r)
+        frm, to = TOPIC_EDGES[topic] if topic else ("oil", r["ticker"])
+        rows.append({"from_node": frm, "to_node": to, "edge_type": "cited",
+                     "beta": np.nan, "lo": np.nan, "hi": np.nan, "evidence_id": r["evidence_id"]})
     df = pd.DataFrame(rows, columns=EDGE_COLUMNS)
     return df.astype({"beta": float, "lo": float, "hi": float})
 
@@ -726,6 +935,7 @@ def check_outputs(bucket: str | None = None, s3=None) -> dict:
     - every evidence excerpt is found in its source document text
     - RY.TO is labelled grey
     - number of .metadata.json files under evidence/ equals the evidence row count
+    - every evidence row has a publisher, a date ("not stated" counts), a source_url and a trust tier
     """
     bucket = bucket or os.environ["BUCKET"]
     s3 = s3 or _s3_client()
@@ -746,6 +956,8 @@ def check_outputs(bucket: str | None = None, s3=None) -> dict:
         "metadata_files": n_meta,
         "evidence_rows": len(ev),
         "metadata_count_ok": n_meta == len(ev),
+        "missing_provenance": provenance_problems(ev),
+        "provenance_ok": not provenance_problems(ev),
     }
     log.info("Checks: %s", result)
     return result

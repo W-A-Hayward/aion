@@ -216,6 +216,28 @@ label rules: green = p_simple<0.05 AND p_ex2022<0.05 with the same sign AND (sha
              with the same direction); yellow = p_simple<0.05 but the rest fails; grey = p_simple>=0.05.
              For universe = extra, green/yellow also require q_simple<0.10, otherwise grey.
 
+Sources
+  Data series:
+    Bank of Canada USD/CAD (FXUSDCAD)  -> raw/starter/fx_usdcad_daily.csv
+    FRED CPIAUCSL (US CPI index)       -> raw/starter/macro_rates.csv, used only by stock_bond
+  Research documents (doc_type "research", ticker "macro", topic currency | stock_bond): one row per document
+    in raw/manual_docs/manifest_docs.csv, listed here with publisher, topic, URL (copied from the manifest,
+    never typed by hand) and trust tier:
+    | file | publisher | topic | source_url | trust |
+    | bis-stock-bond-correlation-2023-12.html | BIS | stock_bond | https://www.bis.org/publ/qtrpdf/r_qt2312v.htm | Central bank |
+    | fed-safe-haven-bonds-2026-10.html | Federal Reserve | stock_bond | https://www.federalreserve.gov/econres/notes/feds-notes/government-bonds-safe-haven-property-and-inflationary-pressures-20261016.html | Central bank |
+    | msci_2011_currency_hedging.pdf | MSCI | currency | https://www.msci.com/documents/10199/ecc9a964-0c09-4184-8ba7-084382b8074f | Research |
+    | boc_san_2025_2_cad_risk.pdf | Bank of Canada | currency | https://www.bankofcanada.ca/2025/02/staff-analytical-note-2025-2/ | Central bank |
+    | boc_mpr_2025_01_infocus.pdf | Bank of Canada | inferred from text | https://www.bankofcanada.ca/publications/mpr/mpr-2025-01-29/in-focus-2/ | Central bank |
+    | boc_san_2017_1_cad_commodities.pdf | Bank of Canada | currency | https://www.bankofcanada.ca/wp-content/uploads/2017/02/san2017-1.pdf | Central bank |
+    The manifest has no topic column: topics above are read from the file names; the pipeline infers the
+    topic from the text when the column is empty (boc_mpr_2025_01_infocus.pdf has no topic in its name).
+
+  Trust tier, from the document's host: Central bank = bis.org, federalreserve.gov, bankofcanada.ca;
+    Research = msci.com; Fund issuer = ishares/blackrock, vanguard, bmo; Company filing = annual reports;
+    Press = everything else. The evidence table also carries publisher, date ("not stated" if unknown) and trust.
+
+
 AWS names: region us-east-1; Glue database cascade; Athena workgroup cascade; DynamoDB table cascade-jobs
 (key jobId, TTL expiresAt; also holds rate#... rate-limit counters); SQS agent-jobs + agent-jobs-dlq;
 Lambdas cascade-tools|research|submit|worker|status; roles cascade-<name>-lambda; AgentCore runtime cascade_agent
