@@ -43,7 +43,7 @@ FRED_SERIES = {
     "DCOILBRENTEU": "Brent spot price, USD/bbl (U.S. EIA via FRED)",
     "T10YIE": "US 10-year breakeven inflation rate, % (Federal Reserve Bank of St. Louis via FRED)",
 }
-NEW_TICKERS = ["VFV.TO", "XSP.TO", "XESG.TO"]   # the other 11 MVP tickers are in the starter pack
+NEW_TICKERS = ["VFV.TO", "XSP.TO", "XESG.TO", "XRB.TO", "XLB.TO", "XEG.TO"]
 
 # BlackRock Canada product pages; the CSV link below is the site's export link and may change.
 HOLDINGS = {
