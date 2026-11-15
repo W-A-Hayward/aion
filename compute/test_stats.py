@@ -736,3 +736,199 @@ def test_build_risk_tables_and_summary_assert_personas():
     keys = stats.write_outputs({**base, **tables}, "b", s3, data)
     assert "processed/materiality/part-0.parquet" in keys
     assert b"do not add up" in s3.objects[("b", "processed/_summary/summary.md")]
+
+
+# ---------------------------------------------------------------------------
+# History tables: facts, protection, stock_bond, comovement
+# ---------------------------------------------------------------------------
+
+def _weekly_series(values, start="2022-01-07"):
+    return pd.Series(values, index=pd.date_range(start, periods=len(values), freq="W-FRI"), dtype=float)
+
+
+def test_drawdown_on_known_series():
+    # wealth: 1.0, 1.10, 0.88, 0.792, 1.188 -> peak week 1, trough week 3, recovered week 4
+    s = _weekly_series([0.10, -0.20, -0.10, 0.50, 0.0])
+    d = stats.drawdown_stats(s)
+    assert d["max_drawdown_pct"] == pytest.approx(-28.0)
+    assert d["drawdown_peak_date"] == s.index[0].date()
+    assert d["drawdown_trough_date"] == s.index[2].date()
+    assert d["recovery_date"] == s.index[3].date()
+
+
+def test_drawdown_not_recovered_and_no_loss_and_start_peak():
+    s = _weekly_series([0.10, -0.20, -0.10, 0.05])
+    d = stats.drawdown_stats(s)
+    assert d["max_drawdown_pct"] == pytest.approx(-28.0)
+    assert d["recovery_date"] is None
+    # peak is the starting level (before the first week): the peak date is the Friday before week 1
+    s2 = _weekly_series([-0.5, 0.1])
+    d2 = stats.drawdown_stats(s2)
+    assert d2["drawdown_peak_date"] == (s2.index[0] - pd.Timedelta(days=7)).date()
+    assert d2["drawdown_trough_date"] == s2.index[0].date()
+    up = stats.drawdown_stats(_weekly_series([0.01, 0.02]))
+    assert up["max_drawdown_pct"] == 0.0 and up["drawdown_peak_date"] is None and up["recovery_date"] is None
+
+
+def test_worst_year_ignores_partial_years_and_worst_13w():
+    idx = pd.date_range("2021-11-19", "2024-03-29", freq="W-FRI")
+    s = pd.Series(0.0, index=idx)
+    s[s.index.year == 2021] = -0.05          # partial year (6 weeks): must not win
+    s[s.index.year == 2022] = -0.001         # full year
+    s[s.index.year == 2023] = 0.001           # full year
+    year, ret = stats.worst_calendar_year(s)
+    assert year == 2022
+    assert ret == pytest.approx((0.999 ** (s.index.year == 2022).sum() - 1) * 100)
+    r = _weekly_series([0.0] * 30)
+    r.iloc[10:23] = -0.01                      # 13 weeks of -1%
+    pct, end = stats.worst_window(r, 13)
+    assert pct == pytest.approx((0.99 ** 13 - 1) * 100)
+    assert end == r.index[22].date()
+
+
+def test_rolling_correlation_known_windows():
+    rng = np.random.default_rng(5)
+    a = _weekly_series(rng.normal(0, 0.01, 120))
+    b = a.copy()
+    b.iloc[60:] = -a.iloc[60:]
+    rc = stats.rolling_correlation(a, b, 52)
+    assert len(rc) == 120 - 52 + 1
+    assert rc.iloc[0] == pytest.approx(1.0)            # first window is all weeks 0..51: b = a
+    assert rc.iloc[-1] == pytest.approx(-1.0)          # last window is all weeks 68..119: b = -a
+    k = 80
+    window = slice(k - 51, k + 1)
+    assert rc.loc[a.index[k]] == pytest.approx(np.corrcoef(a.iloc[window], b.iloc[window])[0, 1])
+
+
+def test_cpi_yoy_weekly_forward_fill():
+    months = pd.date_range("2021-11-01", periods=16, freq="MS")
+    vals = [100.0] * 12 + [104.0] + [102.0] * 3          # yoy from 2022-11-01: 4%, then 2%
+    macro = pd.DataFrame({"date": months, "series_id": "CPIAUCSL", "value": vals})
+    macro = pd.concat([macro, pd.DataFrame({"date": months, "series_id": "DGS10", "value": 1.0})])
+    weeks = pd.DatetimeIndex(["2022-10-28", "2022-11-04", "2022-12-02", "2022-12-30"])
+    y = stats.cpi_yoy_weekly(macro, weeks)
+    assert np.isnan(y.iloc[0])
+    assert y.iloc[1:].tolist() == pytest.approx([4.0, 2.0, 2.0])
+
+
+def _macro_for_split():
+    months = pd.date_range("2021-11-01", "2026-11-01", freq="MS")
+    vals = [100.0 if i < 12 else 104.0 for i in range(len(months))]   # yoy: 4% in 2022-11..2023-10, then 0%
+    return pd.DataFrame({"date": months, "series_id": "CPIAUCSL", "value": vals})
+
+
+def test_stock_bond_split_counts_and_values():
+    data = make_data()
+    sb = stats.stock_bond_table(data, _macro_for_split())
+    assert list(sb.columns) == stats.STOCK_BOND_COLUMNS
+    assert set(sb["pair"]) == {"XIU.TO/XBB.TO", "SPY/TLT"}
+    n_high = int(((WEEKS >= "2022-11-01") & (WEEKS < "2023-11-01")).sum())
+    n_low = int((WEEKS >= "2023-11-01").sum())
+    simple = np.expm1(data.ret_cad)
+    for pair, (s_t, b_t) in {"XIU.TO/XBB.TO": ("XIU.TO", "XBB.TO"), "SPY/TLT": ("SPY", "TLT")}.items():
+        g = sb[sb["pair"] == pair].set_index("measure")
+        assert g.loc["cpi_ge_3", "n_weeks"] == n_high
+        assert g.loc["cpi_lt_3", "n_weeks"] == n_low
+        hi = (WEEKS >= "2022-11-01") & (WEEKS < "2023-11-01")
+        assert g.loc["cpi_ge_3", "correlation"] == pytest.approx(
+            np.corrcoef(simple[s_t][hi], simple[b_t][hi])[0, 1])
+        roll = g[g.index == "rolling_52w"]
+        assert len(roll) == N_WEEKS - 51 and (roll["n_weeks"] == 52).all()
+        assert roll["week"].notna().all() and g.loc[["cpi_ge_3", "cpi_lt_3"], "week"].isna().all()
+
+
+def test_protection_split_counts_and_averages():
+    idx = pd.date_range("2022-01-07", periods=260, freq="W-FRI")
+    stock = pd.Series(0.01, index=idx)
+    bond = pd.Series(0.0, index=idx)
+    picks = {"2022": idx[idx.year == 2022][:10], "2026_ytd": idx[idx.year == 2026][:6],
+             "other": idx[idx.year == 2023][:10]}
+    bond_value = {"2022": 0.01, "2026_ytd": -0.02, "other": 0.03}
+    i = 0
+    for name, weeks in picks.items():
+        for w in weeks:
+            i += 1
+            stock[w] = -0.05 - 0.0001 * i
+            bond[w] = bond_value[name]
+    out = stats.protection_split(stock, bond).set_index("period")
+    assert out["n_weeks"].to_dict() == {"2022": 10, "2026_ytd": 6, "other": 10}
+    assert (out["n_worst_weeks"] == 26).all()          # ceil(10% of 260)
+    assert out["avg_bond_return_pct"].to_dict() == pytest.approx(
+        {"2022": 1.0, "2026_ytd": -2.0, "other": 3.0})
+    assert out["n_weeks"].sum() == out["n_worst_weeks"].iloc[0]
+
+
+def test_protection_table_subjects_and_split_sum():
+    data = make_data()
+    p = stats.protection_table(data)
+    assert list(p.columns) == stats.PROTECTION_COLUMNS
+    assert list(dict.fromkeys(p["subject"])) == ["robert", "XIU.TO/XBB.TO", "SPY/TLT"]
+    for _, g in p.groupby("subject"):
+        assert list(g["period"]) == list(stats.PROTECTION_PERIODS)
+        assert g["n_weeks"].sum() == g["n_worst_weeks"].iloc[0] == int(np.ceil(0.1 * N_WEEKS))
+    r = p[p["subject"] == "robert"].iloc[0]
+    assert r["stock_side"] == "ENB.TO,RY.TO" and r["bond_side"] == "TLT,XBB.TO"
+
+
+def test_comovement_matches_manual_pairwise_average():
+    data = make_data()
+    cm = stats.comovement_table(data)
+    assert list(cm.columns) == stats.COMOVEMENT_COLUMNS
+    assert len(cm) == 6
+    simple = np.expm1(data.ret_cad)
+    h = simple[["TLT", "XBB.TO", "ENB.TO", "RY.TO"]]
+    c = h.corr().to_numpy()
+    manual = c[np.triu_indices(4, 1)].mean()
+    r = cm[(cm["persona"] == "robert") & (cm["scope"] == "all")].iloc[0]
+    assert r["avg_pairwise_corr"] == pytest.approx(manual)
+    assert r["n_pairs"] == 6 and r["n_weeks"] == N_WEEKS
+    w = stats.PERSONAS["mateo"]
+    port = sum(simple[t] * wt for t, wt in w.items())
+    worst = port.sort_values(kind="mergesort").index[:int(np.ceil(0.1 * N_WEEKS))]
+    m = cm[(cm["persona"] == "mateo") & (cm["scope"] == "worst_10pct")].iloc[0]
+    assert m["n_weeks"] == len(worst) and m["n_pairs"] == 1
+    assert m["avg_pairwise_corr"] == pytest.approx(simple.loc[worst, "XIU.TO"].corr(simple.loc[worst, "VFV.TO"]))
+
+
+def test_facts_one_row_per_subject_with_context():
+    data = make_data()
+    facts = stats.facts_table(data, stats.build_subjects(data))
+    assert list(facts.columns) == stats.FACTS_COLUMNS
+    assert len(facts) == 8 and (facts["subject_type"] == "persona").sum() == 3
+    r = facts[facts["subject"] == "robert"].iloc[0]
+    s = np.expm1(stats.build_subjects(data)[0].ret)
+    assert r["total_return_pct"] == pytest.approx((np.prod(1 + s) - 1) * 100)
+    assert r["annualized_volatility_pct"] == pytest.approx(s.std(ddof=1) * np.sqrt(52) * 100)
+    assert r["max_drawdown_pct"] <= 0 and r["n_weeks"] == N_WEEKS
+    assert r["worst_year"] in (2022, 2023, 2024, 2025)               # full calendar years only
+    # context over the drawdown window: weeks after the peak up to the trough
+    peak, trough = pd.Timestamp(r["drawdown_peak_date"]), pd.Timestamp(r["drawdown_trough_date"])
+    m = (WEEKS > peak) & (WEEKS <= trough)
+    assert r["dd_us10y_chg_pp"] == pytest.approx(data.dy["us10y"][m].sum())
+    assert r["dd_ca10y_chg_pp"] == pytest.approx(data.dy["ca10y"][m].sum())
+    assert r["dd_brent_chg_pct"] == pytest.approx(np.expm1(data.brent[m].sum()) * 100)
+    assert r["dd_xiu_chg_pct"] == pytest.approx(np.expm1(data.ret_cad["XIU.TO"][m].sum()) * 100)
+    # worst 13 weeks: exactly 13 weeks ending on worst_13w_end_date
+    end = pd.Timestamp(r["worst_13w_end_date"])
+    m13 = (WEEKS > end - pd.Timedelta(days=91)) & (WEEKS <= end)
+    assert m13.sum() == 13
+    assert r["w13_brent_chg_pct"] == pytest.approx(np.expm1(data.brent[m13].sum()) * 100)
+    assert r["worst_13w_return_pct"] == pytest.approx((np.prod(1 + s[m13]) - 1) * 100)
+
+
+def test_history_tables_in_summary_and_written():
+    data = make_data()
+    tables = stats.build_history_tables(data, _macro_for_split())
+    assert list(tables) == ["facts", "protection", "stock_bond", "comovement"]
+    base = {"sensitivities": stats.sensitivities(data),
+            "portfolio_beta": stats.portfolio_beta(data, stats.persona_holdings())}
+    s3 = FakeS3()
+    keys = stats.write_outputs({**base, **tables}, "b", s3, data)
+    for name in tables:
+        assert f"processed/{name}/part-0.parquet" in keys
+    back = pd.read_parquet(io.BytesIO(s3.objects[("b", "processed/facts/part-0.parquet")]))
+    assert len(back) == 8
+    md = s3.objects[("b", "processed/_summary/summary.md")].decode()
+    for heading in ("## Facts", "## Protection", "## Stock-bond correlation", "## Comovement"):
+        assert heading in md
+    assert "robert:TLT->ZST.TO" in md and "XIU.TO/XBB.TO" in md and "cpi" not in md.split("## Facts")[0]

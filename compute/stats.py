@@ -777,6 +777,7 @@ def summary_markdown(tables: dict[str, pd.DataFrame], data: WeeklyData | None = 
         lines += fx_diagnostic_lines(fx_diagnostic(data))
     if "risk_share" in tables:
         lines += risk_summary_lines(tables)
+    lines += history_summary_lines(tables)
     return "\n".join(lines) + "\n"
 
 
@@ -1193,4 +1194,399 @@ def risk_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
         lines.append(f"| {sub} | {r2.loc[sub, 'oil']:.3f} | {r2.loc[sub, 'rates']:.3f} "
                      f"| {r2.loc[sub, 'stocks']:.3f} | {per100k(sub, 1)} | {per100k(sub, 13)} "
                      f"| {m['verdict']} | {m['verdict_at_5']} | {m['verdict_at_15']} |")
+    return lines
+
+
+# ---------------------------------------------------------------------------
+# Step 13: history tables (facts, protection, stock_bond, comovement)
+# ---------------------------------------------------------------------------
+# All of these use weekly CAD SIMPLE returns (expm1 of the weekly CAD log returns already built).
+# Thresholds below are constants fixed before looking at results.
+
+WORST_WEEKS_SHARE = 0.10          # "worst weeks" = bottom 10% of weeks (count rounded up)
+CPI_SERIES = "CPIAUCSL"           # US CPI index, monthly
+CPI_YOY_THRESHOLD_PCT = 3.0       # year-over-year inflation: high regime is >= 3.0, low is < 3.0
+CPI_HIGH, CPI_LOW = "cpi_ge_3", "cpi_lt_3"
+WORST_WINDOW_WEEKS = 13
+STOCK_BOND_PAIRS = [("XIU.TO", "XBB.TO"), ("SPY", "TLT")]    # (stock side, bond side)
+BOND_FUNDS = ("TLT", "XBB.TO", "ZST.TO")
+PROTECTION_PERIODS = ("2022", "2026_ytd", "other")           # 2022 calendar year, 2026 YTD, rest
+PROTECTION_YEAR, YTD_YEAR = 2022, 2026
+CONTEXT_YIELD_COLUMNS = {"us10y": "us10y", "ca10y": "ca10y"}  # context name -> WeeklyData.dy column
+
+CONTEXT_FIELDS = ["us10y_chg_pp", "ca10y_chg_pp", "brent_chg_pct", "xiu_chg_pct"]
+FACTS_COLUMNS = (
+    ["subject", "subject_type", "max_drawdown_pct", "drawdown_peak_date", "drawdown_trough_date",
+     "recovery_date", "worst_year", "worst_year_return_pct", "worst_13w_return_pct", "worst_13w_end_date",
+     "total_return_pct", "annualized_volatility_pct", "n_weeks"]
+    + [f"dd_{c}" for c in CONTEXT_FIELDS] + [f"w13_{c}" for c in CONTEXT_FIELDS]
+)
+PROTECTION_COLUMNS = ["subject", "subject_type", "stock_side", "bond_side", "period", "n_weeks",
+                      "avg_bond_return_pct", "avg_stock_return_pct", "n_worst_weeks"]
+STOCK_BOND_COLUMNS = ["pair", "measure", "week", "correlation", "n_weeks"]
+COMOVEMENT_COLUMNS = ["persona", "scope", "avg_pairwise_corr", "n_pairs", "n_weeks"]
+
+
+def simple_returns(log_ret: pd.Series) -> pd.Series:
+    """Weekly simple returns from weekly log returns, missing weeks dropped."""
+    return np.expm1(log_ret.dropna())
+
+
+def drawdown_stats(simple: pd.Series) -> dict:
+    """Maximum drawdown of a weekly simple-return series.
+
+    Wealth starts at 1.0 on the Friday before the first return. max_drawdown_pct is the most
+    negative value of wealth / running peak - 1 (in percent, <= 0). drawdown_peak_date is the
+    first date the running peak value was reached, drawdown_trough_date the date of the lowest
+    point, recovery_date the first later date with wealth at or above the peak (None if never).
+    With no loss at all the dates are None and the drawdown is 0.
+    """
+    s = simple.dropna().sort_index()
+    out = {"max_drawdown_pct": np.nan, "drawdown_peak_date": None,
+           "drawdown_trough_date": None, "recovery_date": None}
+    if s.empty:
+        return out
+    base = s.index[0] - pd.Timedelta(days=7)
+    wealth = pd.concat([pd.Series([1.0], index=[base]), (1.0 + s).cumprod()])
+    peak = wealth.cummax()
+    dd = wealth / peak - 1.0
+    out["max_drawdown_pct"] = float(dd.min() * 100.0)
+    if dd.min() >= 0:
+        return out
+    trough = dd.idxmin()
+    peak_value = peak.loc[trough]
+    before = wealth.loc[:trough]
+    peak_date = before.index[before == peak_value][0]
+    later = wealth.loc[trough:].iloc[1:]
+    back = later.index[later >= peak_value]
+    out["drawdown_peak_date"] = peak_date.date()
+    out["drawdown_trough_date"] = trough.date()
+    out["recovery_date"] = back[0].date() if len(back) else None
+    return out
+
+
+def worst_calendar_year(simple: pd.Series) -> tuple[int | None, float]:
+    """(year, return in percent) of the worst FULL calendar year.
+
+    A year counts only when the series covers it from its first week (on or before Jan 7) to
+    its last (on or after Dec 25); partial years such as the first sample year and the current
+    year are left out. Returns (None, NaN) when no full year exists.
+    """
+    s = simple.dropna().sort_index()
+    if s.empty:
+        return None, np.nan
+    best_year, best = None, np.inf
+    for year in sorted(set(s.index.year)):
+        if s.index.min() > pd.Timestamp(year, 1, 7) or s.index.max() < pd.Timestamp(year, 12, 25):
+            continue
+        r = float(np.prod(1.0 + s[s.index.year == year]) - 1.0)
+        if r < best:
+            best_year, best = int(year), r
+    return (best_year, best * 100.0) if best_year is not None else (None, np.nan)
+
+
+def worst_window(simple: pd.Series, window: int = WORST_WINDOW_WEEKS) -> tuple:
+    """(compounded return in percent, end date) of the worst run of `window` consecutive weeks."""
+    s = simple.dropna().sort_index()
+    sums = window_sums(np.log1p(s), window).dropna()
+    if sums.empty:
+        return np.nan, None
+    end = sums.idxmin()
+    return float(np.expm1(sums.loc[end]) * 100.0), end.date()
+
+
+def context_changes(data: WeeklyData, start, end) -> dict:
+    """Market moves over the weeks after `start` up to and including `end`.
+
+    US and Canadian 10-year yield changes in percentage points, Brent and XIU.TO in percent
+    (compounded). NaN when a week of the window is missing from the weekly data or start/end is None.
+    """
+    out = {k: np.nan for k in CONTEXT_FIELDS}
+    if start is None or end is None:
+        return out
+    start, end = pd.Timestamp(start), pd.Timestamp(end)
+    n = int(round((end - start).days / 7))
+    idx = data.brent.index
+    mask = (idx > start) & (idx <= end)
+    if n < 1 or int(mask.sum()) != n:
+        return out
+    out["us10y_chg_pp"] = float(data.dy["us10y"][mask].sum(min_count=n))
+    out["ca10y_chg_pp"] = float(data.dy["ca10y"][mask].sum(min_count=n))
+    out["brent_chg_pct"] = float(np.expm1(data.brent[mask].sum(min_count=n)) * 100.0)
+    if STOCKS_TICKER in data.ret_cad.columns:
+        out["xiu_chg_pct"] = float(np.expm1(data.ret_cad[STOCKS_TICKER][mask].sum(min_count=n)) * 100.0)
+    return out
+
+
+def facts_row(subject: Subject, data: WeeklyData) -> dict:
+    """One facts row for a subject (persona or alternative)."""
+    s = simple_returns(subject.ret)
+    dd = drawdown_stats(s)
+    year, year_ret = worst_calendar_year(s)
+    w_ret, w_end = worst_window(s)
+    row = {"subject": subject.name, "subject_type": subject.subject_type}
+    row.update(dd)
+    row.update({
+        "worst_year": year, "worst_year_return_pct": year_ret,
+        "worst_13w_return_pct": w_ret, "worst_13w_end_date": w_end,
+        "total_return_pct": float((np.prod(1.0 + s) - 1.0) * 100.0) if len(s) else np.nan,
+        "annualized_volatility_pct": float(s.std(ddof=1) * np.sqrt(52) * 100.0) if len(s) > 1 else np.nan,
+        "n_weeks": int(len(s)),
+    })
+    for prefix, start, end in (
+        ("dd", dd["drawdown_peak_date"], dd["drawdown_trough_date"]),
+        ("w13", (pd.Timestamp(w_end) - pd.Timedelta(days=7 * WORST_WINDOW_WEEKS)) if w_end else None, w_end),
+    ):
+        for k, v in context_changes(data, start, end).items():
+            row[f"{prefix}_{k}"] = v
+    return row
+
+
+def facts_table(data: WeeklyData, subjects: list[Subject]) -> pd.DataFrame:
+    """facts: one row per subject (3 personas and the alternative portfolios)."""
+    df = pd.DataFrame([facts_row(s, data) for s in subjects], columns=FACTS_COLUMNS)
+    for c in ("drawdown_peak_date", "drawdown_trough_date", "recovery_date", "worst_13w_end_date"):
+        df[c] = df[c].astype(object)
+    df["worst_year"] = df["worst_year"].astype("Int64")
+    return df.astype({"n_weeks": "Int64"})
+
+
+def _period_labels(index: pd.DatetimeIndex) -> pd.Series:
+    labels = np.where(index.year == PROTECTION_YEAR, PROTECTION_PERIODS[0],
+                      np.where(index.year == YTD_YEAR, PROTECTION_PERIODS[1], PROTECTION_PERIODS[2]))
+    return pd.Series(labels, index=index)
+
+
+def protection_split(stock: pd.Series, bond: pd.Series, share: float = WORST_WEEKS_SHARE) -> pd.DataFrame:
+    """Average bond-side return in the worst `share` of weeks for the stock side, by period.
+
+    The worst weeks are picked over all common weeks (count rounded up, ties by earlier date),
+    then split into 2022, 2026 YTD and all other weeks. Returns period, n_weeks,
+    avg_bond_return_pct, avg_stock_return_pct and n_worst_weeks (the size of the whole set).
+    """
+    df = pd.concat([stock.rename("stock"), bond.rename("bond")], axis=1).dropna()
+    k = int(np.ceil(share * len(df))) if len(df) else 0
+    worst = df.sort_values("stock", kind="mergesort").head(k)
+    period = _period_labels(worst.index)
+    rows = []
+    for p in PROTECTION_PERIODS:
+        g = worst[(period == p).to_numpy()]
+        rows.append({
+            "period": p, "n_weeks": int(len(g)),
+            "avg_bond_return_pct": float(g["bond"].mean() * 100.0) if len(g) else np.nan,
+            "avg_stock_return_pct": float(g["stock"].mean() * 100.0) if len(g) else np.nan,
+            "n_worst_weeks": int(k),
+        })
+    return pd.DataFrame(rows)
+
+
+def _side_return(simple: pd.DataFrame, weights: dict) -> pd.Series:
+    """Weekly return of a group of holdings with their weights rescaled to sum to 1."""
+    w = pd.Series(weights, dtype=float)
+    return (simple[list(w.index)] * (w / w.sum())).sum(axis=1, min_count=len(w))
+
+
+def protection_table(data: WeeklyData) -> pd.DataFrame:
+    """protection: bond-side average return in the stock side's worst weeks, by period.
+
+    Subjects: each persona that holds a bond fund (stock side = its non-bond holdings, bond
+    side = its bond funds, each side weighted by the persona weights rescaled to 1) and the
+    pairs XIU.TO/XBB.TO and SPY/TLT. Missing tickers are skipped with a warning.
+    """
+    simple = np.expm1(data.ret_cad)
+    rows = []
+
+    def add(subject, kind, stock_label, bond_label, stock, bond):
+        for r in protection_split(stock, bond).to_dict("records"):
+            rows.append({"subject": subject, "subject_type": kind, "stock_side": stock_label,
+                         "bond_side": bond_label, **r})
+
+    for persona, weights in PERSONAS.items():
+        bonds = {t: w for t, w in weights.items() if t in BOND_FUNDS}
+        stocks = {t: w for t, w in weights.items() if t not in BOND_FUNDS}
+        if not bonds or not stocks:
+            continue
+        missing = [t for t in list(bonds) + list(stocks) if t not in simple.columns]
+        if missing:
+            print(f"WARNING: no protection rows for {persona}: no returns for {missing}")
+            continue
+        add(persona, "persona", ",".join(stocks), ",".join(bonds),
+            _side_return(simple, stocks), _side_return(simple, bonds))
+    for stock_t, bond_t in STOCK_BOND_PAIRS:
+        if stock_t not in simple.columns or bond_t not in simple.columns:
+            print(f"WARNING: no protection rows for {stock_t}/{bond_t}: missing returns")
+            continue
+        add(f"{stock_t}/{bond_t}", "pair", stock_t, bond_t, simple[stock_t], simple[bond_t])
+    return pd.DataFrame(rows, columns=PROTECTION_COLUMNS).astype({"n_weeks": "Int64", "n_worst_weeks": "Int64"})
+
+
+def cpi_yoy_weekly(macro: pd.DataFrame, weeks: pd.DatetimeIndex) -> pd.Series:
+    """US CPI year-over-year change in percent, monthly values forward-filled onto `weeks`.
+
+    Each monthly observation (dated the first of its month) is compared with the one 12 months
+    earlier. A week takes the latest observation dated on or before it. Weeks before the first
+    year-over-year value are NaN.
+    """
+    m = macro[macro["series_id"] == CPI_SERIES]
+    s = pd.Series(pd.to_numeric(m["value"], errors="coerce").to_numpy(),
+                  index=pd.DatetimeIndex(pd.to_datetime(m["date"]))).dropna()
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    prev = s.copy()
+    prev.index = prev.index + pd.DateOffset(months=12)
+    yoy = ((s / prev.reindex(s.index) - 1.0) * 100.0).dropna()
+    weeks = pd.DatetimeIndex(weeks)
+    return yoy.reindex(yoy.index.union(weeks)).ffill().reindex(weeks).rename("cpi_yoy_pct")
+
+
+def _corr(a: pd.Series, b: pd.Series) -> tuple[float, int]:
+    df = pd.concat([a, b], axis=1).dropna()
+    if len(df) < 3 or df.iloc[:, 0].std() == 0 or df.iloc[:, 1].std() == 0:
+        return np.nan, int(len(df))
+    return float(df.iloc[:, 0].corr(df.iloc[:, 1])), int(len(df))
+
+
+def rolling_correlation(a: pd.Series, b: pd.Series, window: int = ROLLING_WINDOW) -> pd.Series:
+    """Rolling correlation of two weekly series over `window` weeks (weeks without a full window left out)."""
+    df = pd.concat([a.rename("a"), b.rename("b")], axis=1).dropna()
+    return df["a"].rolling(window).corr(df["b"]).dropna()
+
+
+def stock_bond_table(data: WeeklyData, macro: pd.DataFrame) -> pd.DataFrame:
+    """stock_bond: 52-week rolling correlations and the correlation by inflation regime.
+
+    Rows per pair (XIU.TO/XBB.TO, SPY/TLT): measure "rolling_52w" (one row per week, n_weeks =
+    52), and measure "cpi_ge_3" / "cpi_lt_3" (week null): the full-sample correlation over weeks
+    where US CPI year-over-year is >= / < CPI_YOY_THRESHOLD_PCT, with the number of weeks.
+    Weekly CAD simple returns are used.
+    """
+    simple = np.expm1(data.ret_cad)
+    cpi = cpi_yoy_weekly(macro, simple.index)
+    rows = []
+    for stock_t, bond_t in STOCK_BOND_PAIRS:
+        if stock_t not in simple.columns or bond_t not in simple.columns:
+            print(f"WARNING: no stock_bond rows for {stock_t}/{bond_t}: missing returns")
+            continue
+        pair = f"{stock_t}/{bond_t}"
+        for week, c in rolling_correlation(simple[stock_t], simple[bond_t]).items():
+            rows.append({"pair": pair, "measure": "rolling_52w", "week": week.date(),
+                         "correlation": float(c), "n_weeks": ROLLING_WINDOW})
+        for label, mask in ((CPI_HIGH, cpi >= CPI_YOY_THRESHOLD_PCT), (CPI_LOW, cpi < CPI_YOY_THRESHOLD_PCT)):
+            c, n = _corr(simple[stock_t][mask], simple[bond_t][mask])
+            rows.append({"pair": pair, "measure": label, "week": None, "correlation": c, "n_weeks": n})
+    df = pd.DataFrame(rows, columns=STOCK_BOND_COLUMNS)
+    df["week"] = df["week"].astype(object)
+    return df.astype({"n_weeks": "Int64"})
+
+
+def avg_pairwise_corr(simple: pd.DataFrame) -> tuple[float, int]:
+    """(mean of the pairwise correlations between columns, number of pairs)."""
+    k = simple.shape[1]
+    if k < 2 or len(simple) < 3:
+        return np.nan, k * (k - 1) // 2
+    c = simple.corr().to_numpy()
+    vals = c[np.triu_indices(k, 1)]
+    return float(np.nanmean(vals)) if np.isfinite(vals).any() else np.nan, k * (k - 1) // 2
+
+
+def comovement_table(data: WeeklyData) -> pd.DataFrame:
+    """comovement: average pairwise correlation of each persona's holdings.
+
+    scope "all" uses every week, "worst_10pct" the 10% worst weeks (rounded up) for the
+    persona's portfolio return. n_weeks is the number of weeks used.
+    """
+    simple = np.expm1(data.ret_cad)
+    rows = []
+    for persona, weights in PERSONAS.items():
+        missing = [t for t in weights if t not in simple.columns]
+        if missing:
+            print(f"WARNING: no comovement rows for {persona}: no returns for {missing}")
+            continue
+        h = simple[list(weights)].dropna()
+        port = (h * pd.Series(weights, dtype=float)).sum(axis=1)
+        k = int(np.ceil(WORST_WEEKS_SHARE * len(h))) if len(h) else 0
+        worst = port.sort_values(kind="mergesort").head(k).index
+        for scope, part in (("all", h), ("worst_10pct", h.loc[worst])):
+            c, n_pairs = avg_pairwise_corr(part)
+            rows.append({"persona": persona, "scope": scope, "avg_pairwise_corr": c,
+                         "n_pairs": n_pairs, "n_weeks": int(len(part))})
+    return pd.DataFrame(rows, columns=COMOVEMENT_COLUMNS).astype({"n_pairs": "Int64", "n_weeks": "Int64"})
+
+
+def build_history_tables(data: WeeklyData, macro: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """facts, protection, stock_bond and comovement. `macro` is raw["macro"] (needs CPIAUCSL)."""
+    return {
+        "facts": facts_table(data, build_subjects(data)),
+        "protection": protection_table(data),
+        "stock_bond": stock_bond_table(data, macro),
+        "comovement": comovement_table(data),
+    }
+
+
+def _cell(v, fmt: str = "{:.2f}") -> str:
+    if v is None or (not isinstance(v, str) and pd.isna(v)):
+        return "n/a"
+    return v if isinstance(v, str) else fmt.format(v)
+
+
+def _md_table(headers: list[str], rows: list[list[str]]) -> list[str]:
+    return ["| " + " | ".join(headers) + " |", "|" + "---|" * len(headers)] + \
+           ["| " + " | ".join(r) + " |" for r in rows]
+
+
+def history_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
+    """summary.md sections for facts, protection, stock_bond and comovement (those present)."""
+    lines: list[str] = []
+    if "facts" in tables:
+        f = tables["facts"]
+        lines += ["", "## Facts: drawdowns, worst periods, return and volatility", "",
+                  "Weekly CAD simple returns. recovery_date n/a means not recovered. worst_year covers full "
+                  "calendar years only.", ""]
+        lines += _md_table(
+            ["subject", "max drawdown %", "peak", "trough", "recovered", "worst year", "worst year %",
+             "worst 13w %", "13w end", "total return %", "ann. vol %"],
+            [[r["subject"], _cell(r["max_drawdown_pct"]), _cell(r["drawdown_peak_date"]),
+              _cell(r["drawdown_trough_date"]), _cell(r["recovery_date"]),
+              _cell(None if pd.isna(r["worst_year"]) else str(int(r["worst_year"]))),
+              _cell(r["worst_year_return_pct"]), _cell(r["worst_13w_return_pct"]),
+              _cell(r["worst_13w_end_date"]), _cell(r["total_return_pct"]),
+              _cell(r["annualized_volatility_pct"])] for _, r in f.iterrows()])
+        lines += ["", "Market moves over the same dates (yields in pp, Brent and XIU.TO in %):", ""]
+        ctx_rows = []
+        for _, r in f.iterrows():
+            for prefix, label in (("dd", "drawdown"), ("w13", "worst 13w")):
+                ctx_rows.append([r["subject"], label] + [_cell(r[f"{prefix}_{c}"]) for c in CONTEXT_FIELDS])
+        lines += _md_table(["subject", "window", "US 10y pp", "CA 10y pp", "Brent %", "XIU.TO %"], ctx_rows)
+    if "protection" in tables:
+        p = tables["protection"]
+        lines += ["", "## Protection: bond side in the 10% worst weeks of the stock side", "",
+                  "Average bond-side weekly return (%) in those weeks, by period, with the number of weeks.", ""]
+        lines += _md_table(
+            ["subject", "stock side", "bond side", "period", "weeks", "avg bond %", "avg stock %"],
+            [[r["subject"], r["stock_side"], r["bond_side"], r["period"], str(int(r["n_weeks"])),
+              _cell(r["avg_bond_return_pct"]), _cell(r["avg_stock_return_pct"])] for _, r in p.iterrows()])
+    if "stock_bond" in tables:
+        sb = tables["stock_bond"]
+        lines += ["", "## Stock-bond correlation", "",
+                  f"Weekly returns. CPI regimes use US CPI year-over-year (CPIAUCSL, forward-filled): "
+                  f"high is >= {CPI_YOY_THRESHOLD_PCT:g}%, low is < {CPI_YOY_THRESHOLD_PCT:g}%. Weeks before "
+                  "the first year-over-year value are in neither regime.", ""]
+        rows = []
+        for pair, g in sb.groupby("pair", sort=False):
+            roll = g[g["measure"] == "rolling_52w"]["correlation"]
+            reg = g.set_index("measure")
+            rows.append([pair,
+                         _cell(roll.iloc[-1] if len(roll) else None, "{:.3f}"),
+                         _cell(roll.min() if len(roll) else None, "{:.3f}"),
+                         _cell(roll.max() if len(roll) else None, "{:.3f}"),
+                         _cell(reg["correlation"].get(CPI_HIGH), "{:.3f}"), _cell(reg["n_weeks"].get(CPI_HIGH), "{:.0f}"),
+                         _cell(reg["correlation"].get(CPI_LOW), "{:.3f}"), _cell(reg["n_weeks"].get(CPI_LOW), "{:.0f}")])
+        lines += _md_table(["pair", "52w latest", "52w min", "52w max", "corr CPI>=3", "weeks",
+                            "corr CPI<3", "weeks"], rows)
+    if "comovement" in tables:
+        c = tables["comovement"]
+        lines += ["", "## Comovement: average pairwise correlation of holdings", ""]
+        lines += _md_table(
+            ["persona", "scope", "avg pairwise corr", "pairs", "weeks"],
+            [[r["persona"], r["scope"], _cell(r["avg_pairwise_corr"], "{:.3f}"), str(int(r["n_pairs"])),
+              str(int(r["n_weeks"]))] for _, r in c.iterrows()])
     return lines

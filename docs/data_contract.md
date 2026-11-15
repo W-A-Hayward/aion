@@ -10,7 +10,8 @@ All raw files are CSV. Raw inputs under raw/ (written by ingest/fetch_to_s3.py):
   raw/starter/fx_usdcad_daily.csv  date,usdcad,cadusd   (Bank of Canada FXUSDCAD)
   raw/starter/macro_rates.csv      date,series_id,value,unit,frequency,label,source  (long format)
                                    series used: BD.CDN.10YR.DQ.YLD (CA 10y), BD.CDN.2YR.DQ.YLD (CA 2y),
-                                   DGS10 (US 10y), DGS2 (US 2y); values in percent
+                                   DGS10 (US 10y), DGS2 (US 2y); values in percent;
+                                   CPIAUCSL (US CPI index, monthly, dated the 1st of the month) is used only by stock_bond
   raw/prices/snapshot=YYYY-MM-DD/prices_daily_extra.csv  same columns as prices_daily.csv,
                                    tickers VFV.TO XSP.TO XESG.TO XRB.TO XLB.TO XEG.TO, currency CAD
   raw/fred/snapshot=YYYY-MM-DD/DCOILBRENTEU.csv, T10YIE.csv
@@ -107,9 +108,49 @@ Processed tables: Parquet, one folder per table: processed/<table>/part-0.parque
                  (oil_r2, oil_p = the subject's oil row in risk_share; stress13_avg_pct, n_episodes_13, regimes =
                  the oil_up 13-week row in stress_history; normal_swing13_pct = standard deviation, in percent,
                  of the subject's NON-OVERLAPPING 13-week simple returns (consecutive blocks from the first week).)
+  facts: subject, subject_type, max_drawdown_pct, drawdown_peak_date, drawdown_trough_date, recovery_date,
+                 worst_year, worst_year_return_pct, worst_13w_return_pct, worst_13w_end_date, total_return_pct,
+                 annualized_volatility_pct, n_weeks, dd_us10y_chg_pp, dd_ca10y_chg_pp, dd_brent_chg_pct,
+                 dd_xiu_chg_pct, w13_us10y_chg_pp, w13_ca10y_chg_pp, w13_brent_chg_pct, w13_xiu_chg_pct
+                 (one row per subject: the 3 personas and the alternatives. Weekly CAD SIMPLE returns, wealth
+                 starts at 1.0 the Friday before the first week. max_drawdown_pct <= 0, in percent; peak =
+                 first date the peak level was reached (may be that starting Friday); recovery_date = first
+                 later date at or above the peak, null if not recovered. worst_year = lowest compounded return
+                 among FULL calendar years only (week data from Jan 7 or earlier to Dec 25 or later; the first
+                 and the current partial year are excluded). worst_13w = lowest compounded return over 13
+                 consecutive weeks, dated by its last week. annualized_volatility_pct = std of weekly simple
+                 returns (ddof 1) * sqrt(52) * 100. Context columns: dd_* over the weeks after the peak date up
+                 to the trough date, w13_* over the 13 weeks of the worst 13 weeks; yields = sum of weekly
+                 changes in pp (DGS10 us10y, BD.CDN.10YR.DQ.YLD ca10y), Brent and XIU.TO = compounded change
+                 in percent (XIU.TO in CAD); null if a week is missing or there is no drawdown.
+                 Weeks without a Brent return are not in the weekly series, so their returns are not compounded.)
+  protection: subject, subject_type (persona|pair), stock_side, bond_side, period, n_weeks, avg_bond_return_pct,
+                 avg_stock_return_pct, n_worst_weeks
+                 (subjects: robert (the only persona with a bond fund; stock side = its non-bond holdings ENB.TO
+                 and RY.TO, bond side = TLT and XBB.TO, each side weighted by the persona weights rescaled to 1),
+                 and the pairs XIU.TO/XBB.TO and SPY/TLT (stock/bond). Bond funds: TLT, XBB.TO, ZST.TO. The worst
+                 weeks are the bottom 10% of all weeks for the stock side (count rounded up, ties by earlier
+                 date; n_worst_weeks). period = 2022 (calendar year 2022) | 2026_ytd (calendar year 2026) |
+                 other; n_weeks per period sums to n_worst_weeks; avg_bond_return_pct = mean weekly simple
+                 return of the bond side in those weeks, in percent; null if n_weeks = 0.)
+  stock_bond: pair, measure, week, correlation, n_weeks
+                 (pairs XIU.TO/XBB.TO and SPY/TLT, weekly CAD simple returns. measure rolling_52w: one row per
+                 week with a full 52-week window, n_weeks = 52. measure cpi_ge_3 / cpi_lt_3: full-sample
+                 correlation (week null) in weeks where US CPI year-over-year is >= 3.0% / < 3.0%; n_weeks =
+                 weeks used. CPI year-over-year = CPIAUCSL / value 12 months earlier - 1, each month's value
+                 forward-filled onto the weeks from its dated 1st of the month; weeks before the first
+                 year-over-year value (2022-11-01 with data from 2021-11) belong to neither regime.)
+  comovement: persona, scope, avg_pairwise_corr, n_pairs, n_weeks
+                 (scope all | worst_10pct; mean of the pairwise correlations of the persona's holdings, weekly
+                 CAD simple returns; worst_10pct = the 10% worst weeks for the persona's portfolio return
+                 (count rounded up); n_pairs = pairs of holdings; n_weeks = weeks used.)
 Subjects (risk tables): the 3 personas (subject_type persona) and each alternative (subject_type alternative,
   subject "<persona>:<holding>-><alternative>", e.g. "robert:TLT->ZST.TO", weights after the swap).
   Weekly subject return = log(1 + sum(weight * (exp(ret_cad) - 1))).
+History constants (top of the history section in compute/stats.py, fixed before looking at results):
+  WORST_WEEKS_SHARE = 0.10, CPI_YOY_THRESHOLD_PCT = 3.0, WORST_WINDOW_WEEKS = 13, rolling window 52 weeks.
+summary.md also lists the facts, protection, stock_bond and comovement tables in readable form (the context
+  columns of facts as a second table).
 Materiality rule (constants at the top of compute/stats.py, fixed before looking at results; OIL_R2_MATERIAL = 0.10):
   "not linked"           if oil_p >= 0.05;
   "material"             if oil_r2 >= OIL_R2_MATERIAL OR |stress13_avg_pct| > normal_swing13_pct;
