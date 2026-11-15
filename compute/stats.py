@@ -10,6 +10,7 @@ s3://$BUCKET/processed/<table>/part-0.parquet.
 from __future__ import annotations
 
 import io
+import math
 import os
 import re
 from dataclasses import dataclass
@@ -1212,6 +1213,23 @@ STOCK_BOND_PAIRS = [("XIU.TO", "XBB.TO"), ("SPY", "TLT")]    # (stock side, bond
 BOND_FUNDS = ("TLT", "XBB.TO", "ZST.TO")
 PROTECTION_PERIODS = ("2022", "2026_ytd", "other")           # 2022 calendar year, 2026 YTD, rest
 PROTECTION_YEAR, YTD_YEAR = 2022, 2026
+PROTECTION_ALL = "all"            # pooled row per subject (all worst weeks)
+
+# cushion / shields (constants fixed before looking at results)
+CUSHION_STOCK_SIDES = ("XIU.TO", "SPY")
+GOLD_TICKER = "GLD"
+UNHEDGED_USD_LISTED = {"VFV.TO"}  # CAD-listed funds with unhedged USD exposure (USD-priced tickers count too)
+HEDGED_SWAPS = {("mateo", "VFV.TO", "XSP.TO")}   # (persona, holding, hedged twin) from ALTERNATIVES
+WORKING_MIN_UP_SHARE = 0.6
+WORKING_MAX_P = 0.10
+CUSHION_COLUMNS = ["stock_side", "candidate", "avg_pct_worst", "weeks_up", "weeks", "binom_p",
+                   "avg_pct_all", "corr_full"]
+SHIELDS_COLUMNS = ["persona", "item", "label", "avg_pct_worst", "weeks_up", "weeks", "binom_p",
+                   "usd_weight", "contribution_pct", "contribution_per_100k",
+                   "twin_max_drawdown", "actual_max_drawdown"]
+CUSHION_NOTE = "2021-2026 only; past behaviour; descriptive"
+CPI_REGIME_LABEL = "US CPI"
+STOCK_BOND_NOTE = "assumes independent weeks; high-CPI weeks are mostly one 2021-2023 block"
 CONTEXT_YIELD_COLUMNS = {"us10y": "us10y", "ca10y": "ca10y"}  # context name -> WeeklyData.dy column
 
 CONTEXT_FIELDS = ["us10y_chg_pp", "ca10y_chg_pp", "brent_chg_pct", "xiu_chg_pct"]
@@ -1223,7 +1241,7 @@ FACTS_COLUMNS = (
 )
 PROTECTION_COLUMNS = ["subject", "subject_type", "stock_side", "bond_side", "period", "n_weeks",
                       "avg_bond_return_pct", "avg_stock_return_pct", "n_worst_weeks"]
-STOCK_BOND_COLUMNS = ["pair", "measure", "week", "correlation", "n_weeks"]
+STOCK_BOND_COLUMNS = ["pair", "measure", "week", "correlation", "n_weeks", "regime", "z_diff", "p_diff"]
 COMOVEMENT_COLUMNS = ["persona", "scope", "avg_pairwise_corr", "n_pairs", "n_weeks"]
 
 
@@ -1377,6 +1395,12 @@ def protection_split(stock: pd.Series, bond: pd.Series, share: float = WORST_WEE
             "avg_stock_return_pct": float(g["stock"].mean() * 100.0) if len(g) else np.nan,
             "n_worst_weeks": int(k),
         })
+    rows.append({   # pooled row: all worst weeks together
+        "period": PROTECTION_ALL, "n_weeks": int(len(worst)),
+        "avg_bond_return_pct": float(worst["bond"].mean() * 100.0) if len(worst) else np.nan,
+        "avg_stock_return_pct": float(worst["stock"].mean() * 100.0) if len(worst) else np.nan,
+        "n_worst_weeks": int(k),
+    })
     return pd.DataFrame(rows)
 
 
@@ -1451,6 +1475,18 @@ def rolling_correlation(a: pd.Series, b: pd.Series, window: int = ROLLING_WINDOW
     return df["a"].rolling(window).corr(df["b"]).dropna()
 
 
+def fisher_z_diff(r1: float, n1: int, r2: float, n2: int) -> tuple[float, float]:
+    """Fisher z test of two independent correlations: (z_diff, two-sided p_diff).
+
+    z = (atanh(r1) - atanh(r2)) / sqrt(1/(n1-3) + 1/(n2-3)). Assumes independent weeks.
+    NaN when a correlation is missing or |r| = 1, or when a sample has 3 weeks or fewer.
+    """
+    if (pd.isna(r1) or pd.isna(r2) or n1 <= 3 or n2 <= 3 or abs(r1) >= 1 or abs(r2) >= 1):
+        return np.nan, np.nan
+    z = (math.atanh(r1) - math.atanh(r2)) / math.sqrt(1.0 / (n1 - 3) + 1.0 / (n2 - 3))
+    return float(z), float(math.erfc(abs(z) / math.sqrt(2.0)))
+
+
 def stock_bond_table(data: WeeklyData, macro: pd.DataFrame) -> pd.DataFrame:
     """stock_bond: 52-week rolling correlations and the correlation by inflation regime.
 
@@ -1469,10 +1505,18 @@ def stock_bond_table(data: WeeklyData, macro: pd.DataFrame) -> pd.DataFrame:
         pair = f"{stock_t}/{bond_t}"
         for week, c in rolling_correlation(simple[stock_t], simple[bond_t]).items():
             rows.append({"pair": pair, "measure": "rolling_52w", "week": week.date(),
-                         "correlation": float(c), "n_weeks": ROLLING_WINDOW})
+                         "correlation": float(c), "n_weeks": ROLLING_WINDOW,
+                         "regime": None, "z_diff": np.nan, "p_diff": np.nan})
+        regime_rows = []
         for label, mask in ((CPI_HIGH, cpi >= CPI_YOY_THRESHOLD_PCT), (CPI_LOW, cpi < CPI_YOY_THRESHOLD_PCT)):
             c, n = _corr(simple[stock_t][mask], simple[bond_t][mask])
-            rows.append({"pair": pair, "measure": label, "week": None, "correlation": c, "n_weeks": n})
+            regime_rows.append({"pair": pair, "measure": label, "week": None, "correlation": c,
+                                "n_weeks": n, "regime": CPI_REGIME_LABEL})
+        z, p = fisher_z_diff(regime_rows[0]["correlation"], regime_rows[0]["n_weeks"],
+                             regime_rows[1]["correlation"], regime_rows[1]["n_weeks"])
+        for r in regime_rows:   # the same test result sits on both regime rows
+            r["z_diff"], r["p_diff"] = z, p
+        rows += regime_rows
     df = pd.DataFrame(rows, columns=STOCK_BOND_COLUMNS)
     df["week"] = df["week"].astype(object)
     return df.astype({"n_weeks": "Int64"})
@@ -1512,13 +1556,160 @@ def comovement_table(data: WeeklyData) -> pd.DataFrame:
     return pd.DataFrame(rows, columns=COMOVEMENT_COLUMNS).astype({"n_pairs": "Int64", "n_weeks": "Int64"})
 
 
+def binom_two_sided_p(k: int, n: int) -> float:
+    """Exact two-sided binomial p-value of k successes in n trials against p = 0.5."""
+    if n <= 0:
+        return np.nan
+    m = min(k, n - k)
+    tail = sum(math.comb(n, i) for i in range(m + 1))
+    return float(min(1.0, 2.0 * tail / 2.0 ** n))
+
+
+def _worst_weeks_index(series: pd.Series, share: float = WORST_WEEKS_SHARE) -> pd.DatetimeIndex:
+    """Weeks of the worst `share` of the series (count rounded up, ties by earlier date)."""
+    s = series.dropna()
+    k = int(np.ceil(share * len(s))) if len(s) else 0
+    return s.sort_values(kind="mergesort").head(k).index
+
+
+def _worst_stats(values: pd.Series, worst: pd.DatetimeIndex) -> dict:
+    """avg_pct_worst, weeks_up, weeks and binom_p of `values` (simple returns) in the `worst` weeks."""
+    v = values.reindex(worst).dropna()
+    n = int(len(v))
+    up = int((v > 0).sum())
+    return {"avg_pct_worst": float(v.mean() * 100.0) if n else np.nan,
+            "weeks_up": up, "weeks": n, "binom_p": binom_two_sided_p(up, n)}
+
+
+def cushion_table(data: WeeklyData) -> pd.DataFrame:
+    """cushion: what rises or holds up in the worst 10% weeks of a stock side (XIU.TO, SPY).
+
+    Candidates: usdcad weekly change, TLT_usd (TLT minus usdcad, i.e. TLT in USD) and every
+    ticker in the universe (CAD returns), except the stock side itself. Weekly simple returns;
+    avg_pct_worst / avg_pct_all are means in percent; binom_p is two-sided against 0.5 for the
+    number of up weeks; corr_full is the full-sample correlation with the stock side.
+    """
+    simple = np.expm1(data.ret_cad)
+    cands: dict[str, pd.Series] = {"usdcad": np.expm1(data.usdcad)}
+    if "TLT" in data.ret_cad.columns:
+        cands["TLT_usd"] = np.expm1(data.ret_cad["TLT"] - data.usdcad)
+    cands.update({t: simple[t] for t in UNIVERSE if t in simple.columns})
+    rows = []
+    for side in CUSHION_STOCK_SIDES:
+        if side not in simple.columns:
+            print(f"WARNING: no cushion rows for {side}: no returns")
+            continue
+        worst = _worst_weeks_index(simple[side])
+        for name, cand in cands.items():
+            if name == side:
+                continue
+            c, _ = _corr(cand, simple[side])
+            rows.append({"stock_side": side, "candidate": name,
+                         **_worst_stats(cand, worst),
+                         "avg_pct_all": float(cand.mean() * 100.0) if cand.notna().any() else np.nan,
+                         "corr_full": c})
+    df = pd.DataFrame(rows, columns=CUSHION_COLUMNS)
+    return df.astype({"weeks_up": "Int64", "weeks": "Int64"})
+
+
+def usd_exposure_weight(weights: dict, currency: pd.Series) -> float:
+    """Weight in holdings priced in USD, or CAD-listed with unhedged USD exposure (e.g. VFV.TO)."""
+    return float(sum(w for t, w in weights.items()
+                     if t in UNHEDGED_USD_LISTED or (t in currency.index and currency[t] == "USD")))
+
+
+def _portfolio_simple(simple: pd.DataFrame, weights: dict) -> pd.Series:
+    """Weekly simple return of a portfolio (NaN if any holding has no return that week)."""
+    w = pd.Series(weights, dtype=float)
+    return (simple[list(w.index)] * w).sum(axis=1, min_count=len(w))
+
+
+def shield_label(avg: float, up: int, n: int, p: float) -> str:
+    """WORKING / BROKEN / NEUTRAL from the average, share of up weeks and binomial p."""
+    if pd.notna(avg) and avg > 0 and n > 0 and up / n >= WORKING_MIN_UP_SHARE and p < WORKING_MAX_P:
+        return "WORKING"
+    if pd.notna(avg) and avg <= 0:
+        return "BROKEN"
+    return "NEUTRAL"
+
+
+def shields_table(data: WeeklyData) -> pd.DataFrame:
+    """shields: in each persona's own worst 10% portfolio weeks, what held up.
+
+    Rows per persona: each holding, gold (GLD), usdcad and the hedged twin when a
+    "<persona>:A->B" hedged swap exists (HEDGED_SWAPS). usd_weight, contribution_pct
+    (percentage points) and contribution_per_100k (= contribution_pct * 1000) are filled on the
+    usdcad and hedged twin rows only. usdcad row: contribution_pct = usd_weight * average usdcad
+    change in those weeks. Twin row: contribution_pct = actual portfolio avg_pct_worst minus twin
+    avg_pct_worst (the cushion the swap would remove); twin_max_drawdown and actual_max_drawdown
+    (percent) are filled on the twin row only.
+    Labels: REMOVED (hedged twin max drawdown deeper than the actual portfolio's), HIDDEN
+    (usdcad row meeting the WORKING rules with usd_weight > 0), WORKING, BROKEN, NEUTRAL.
+    """
+    simple = np.expm1(data.ret_cad)
+    usdcad = np.expm1(data.usdcad)
+    swaps = subject_weights()
+    rows = []
+    for persona, weights in PERSONAS.items():
+        missing = [t for t in weights if t not in simple.columns]
+        if missing:
+            print(f"WARNING: no shields rows for {persona}: no returns for {missing}")
+            continue
+        port = _portfolio_simple(simple, weights)
+        worst = _worst_weeks_index(port)
+        usd_w = usd_exposure_weight(weights, data.currency)
+
+        def add(item, series, label=None, usd_weight=np.nan, contrib=None, dd=(np.nan, np.nan)):
+            st = _worst_stats(series, worst)
+            if contrib is None:   # usdcad row: usd_weight * average usdcad change (pct points)
+                contrib = usd_weight * st["avg_pct_worst"] if pd.notna(usd_weight) else np.nan
+            rows.append({"persona": persona, "item": item,
+                         "label": label or shield_label(st["avg_pct_worst"], st["weeks_up"],
+                                                        st["weeks"], st["binom_p"]),
+                         **st, "usd_weight": usd_weight, "contribution_pct": contrib,
+                         "contribution_per_100k": contrib * 1000.0 if pd.notna(contrib) else np.nan,
+                         "twin_max_drawdown": dd[0], "actual_max_drawdown": dd[1]})
+
+        for t in weights:
+            add(t, simple[t])
+        if GOLD_TICKER in simple.columns:
+            add(GOLD_TICKER, simple[GOLD_TICKER])
+        else:
+            print(f"WARNING: no {GOLD_TICKER} row for {persona}: no returns")
+        st = _worst_stats(usdcad, worst)
+        working = shield_label(st["avg_pct_worst"], st["weeks_up"], st["weeks"], st["binom_p"]) == "WORKING"
+        add("usdcad", usdcad, "HIDDEN" if working and usd_w > 0 else None, usd_w)
+        for p, holding, twin in sorted(HEDGED_SWAPS):
+            name = f"{p}:{holding}->{twin}"
+            if p != persona or name not in swaps or twin not in simple.columns:
+                continue
+            tw_weights = swaps[name][1]
+            tw_port = _portfolio_simple(simple, tw_weights)
+            dd_actual = drawdown_stats(port.dropna())["max_drawdown_pct"]
+            dd_twin = drawdown_stats(tw_port.dropna())["max_drawdown_pct"]
+            removed = pd.notna(dd_actual) and pd.notna(dd_twin) and dd_twin < dd_actual
+            # contribution = cushion the swap would remove: actual avg minus twin avg (pct points)
+            cushion_removed = (_worst_stats(port, worst)["avg_pct_worst"]
+                               - _worst_stats(tw_port, worst)["avg_pct_worst"])
+            add(name, tw_port, "REMOVED" if removed else None,
+                usd_exposure_weight(tw_weights, data.currency),
+                contrib=cushion_removed, dd=(dd_twin, dd_actual))
+    df = pd.DataFrame(rows, columns=SHIELDS_COLUMNS)
+    return df.astype({"weeks_up": "Int64", "weeks": "Int64"})
+
+
 def build_history_tables(data: WeeklyData, macro: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    """facts, protection, stock_bond and comovement. `macro` is raw["macro"] (needs CPIAUCSL)."""
+    """facts, protection, stock_bond, comovement, cushion and shields.
+
+    `macro` is raw["macro"] (needs CPIAUCSL).
+    """
     return {
         "facts": facts_table(data, build_subjects(data)),
         "protection": protection_table(data),
         "stock_bond": stock_bond_table(data, macro),
         "comovement": comovement_table(data),
+        "cushion": cushion_table(data),
+        "shields": shields_table(data),
     }
 
 
@@ -1526,6 +1717,13 @@ def _cell(v, fmt: str = "{:.2f}") -> str:
     if v is None or (not isinstance(v, str) and pd.isna(v)):
         return "n/a"
     return v if isinstance(v, str) else fmt.format(v)
+
+
+def _date_cell(v) -> str:
+    """YYYY-MM-DD for a date-like value, "n/a" when missing."""
+    if v is None or (not isinstance(v, str) and pd.isna(v)):
+        return "n/a"
+    return pd.Timestamp(v).strftime("%Y-%m-%d")
 
 
 def _md_table(headers: list[str], rows: list[list[str]]) -> list[str]:
@@ -1544,11 +1742,11 @@ def history_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
         lines += _md_table(
             ["subject", "max drawdown %", "peak", "trough", "recovered", "worst year", "worst year %",
              "worst 13w %", "13w end", "total return %", "ann. vol %"],
-            [[r["subject"], _cell(r["max_drawdown_pct"]), _cell(r["drawdown_peak_date"]),
-              _cell(r["drawdown_trough_date"]), _cell(r["recovery_date"]),
+            [[r["subject"], _cell(r["max_drawdown_pct"]), _date_cell(r["drawdown_peak_date"]),
+              _date_cell(r["drawdown_trough_date"]), _date_cell(r["recovery_date"]),
               _cell(None if pd.isna(r["worst_year"]) else str(int(r["worst_year"]))),
               _cell(r["worst_year_return_pct"]), _cell(r["worst_13w_return_pct"]),
-              _cell(r["worst_13w_end_date"]), _cell(r["total_return_pct"]),
+              _date_cell(r["worst_13w_end_date"]), _cell(r["total_return_pct"]),
               _cell(r["annualized_volatility_pct"])] for _, r in f.iterrows()])
         lines += ["", "Market moves over the same dates (yields in pp, Brent and XIU.TO in %):", ""]
         ctx_rows = []
@@ -1579,14 +1777,43 @@ def history_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
                          _cell(roll.min() if len(roll) else None, "{:.3f}"),
                          _cell(roll.max() if len(roll) else None, "{:.3f}"),
                          _cell(reg["correlation"].get(CPI_HIGH), "{:.3f}"), _cell(reg["n_weeks"].get(CPI_HIGH), "{:.0f}"),
-                         _cell(reg["correlation"].get(CPI_LOW), "{:.3f}"), _cell(reg["n_weeks"].get(CPI_LOW), "{:.0f}")])
+                         _cell(reg["correlation"].get(CPI_LOW), "{:.3f}"), _cell(reg["n_weeks"].get(CPI_LOW), "{:.0f}"),
+                         CPI_REGIME_LABEL,
+                         _cell(reg["z_diff"].get(CPI_HIGH), "{:.2f}"), _cell(reg["p_diff"].get(CPI_HIGH), "{:.3f}")])
         lines += _md_table(["pair", "52w latest", "52w min", "52w max", "corr CPI>=3", "weeks",
-                            "corr CPI<3", "weeks"], rows)
+                            "corr CPI<3", "weeks", "regime", "z_diff", "p_diff"], rows)
+        lines += ["", f"Note: {STOCK_BOND_NOTE}."]
     if "comovement" in tables:
         c = tables["comovement"]
+        c = c[c["scope"] != "worst_10pct"]    # kept in the table, not printed
         lines += ["", "## Comovement: average pairwise correlation of holdings", ""]
         lines += _md_table(
             ["persona", "scope", "avg pairwise corr", "pairs", "weeks"],
             [[r["persona"], r["scope"], _cell(r["avg_pairwise_corr"], "{:.3f}"), str(int(r["n_pairs"])),
               str(int(r["n_weeks"]))] for _, r in c.iterrows()])
+    if "cushion" in tables:
+        cu = tables["cushion"]
+        cu = cu[cu["stock_side"] == CUSHION_STOCK_SIDES[0]].sort_values(
+            "avg_pct_worst", ascending=False, kind="mergesort")
+        lines += ["", f"## Cushion: what held up in the 10% worst weeks of {CUSHION_STOCK_SIDES[0]}", "",
+                  f"{CUSHION_NOTE}. avg % are mean weekly simple returns; binom_p is two-sided against 0.5.", ""]
+        lines += _md_table(
+            ["candidate", "avg % worst", "weeks up", "weeks", "binom p", "avg % all", "corr full"],
+            [[r["candidate"], _cell(r["avg_pct_worst"]), _cell(r["weeks_up"], "{:.0f}"),
+              _cell(r["weeks"], "{:.0f}"), _cell(r["binom_p"], "{:.3f}"), _cell(r["avg_pct_all"]),
+              _cell(r["corr_full"], "{:.3f}")] for _, r in cu.iterrows()])
+    if "shields" in tables:
+        sh = tables["shields"]
+        lines += ["", "## Shields: what held up in each persona's own 10% worst weeks", "",
+                  f"{CUSHION_NOTE}. usdcad row: contribution = usd_weight * average usdcad change in "
+                  "those weeks. Hedged twin row: contribution = actual avg minus twin avg (cushion the "
+                  "swap would remove). Contributions in percentage points.", ""]
+        lines += _md_table(
+            ["persona", "item", "label", "avg % worst", "weeks up", "weeks", "binom p", "usd weight",
+             "contribution %", "per $100k", "twin max dd %", "actual max dd %"],
+            [[r["persona"], r["item"], r["label"], _cell(r["avg_pct_worst"]), _cell(r["weeks_up"], "{:.0f}"),
+              _cell(r["weeks"], "{:.0f}"), _cell(r["binom_p"], "{:.3f}"), _cell(r["usd_weight"]),
+              _cell(r["contribution_pct"]), _cell(r["contribution_per_100k"], "{:,.0f}"),
+              _cell(r["twin_max_drawdown"]), _cell(r["actual_max_drawdown"])]
+             for _, r in sh.iterrows()])
     return lines
