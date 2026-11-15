@@ -281,7 +281,7 @@ def converse_once(client, model_id: str, ticker: str, doc_type: str, passage: st
         modelId=model_id,
         system=[{"text": SYSTEM_PROMPT}],
         messages=[{"role": "user", "content": [{"text": user}]}],
-        inferenceConfig={"temperature": 0, "maxTokens": MAX_TOKENS},
+        inferenceConfig={"maxTokens": MAX_TOKENS},
     )
     usage.add(resp)
     blocks = resp["output"]["message"]["content"]

@@ -42,7 +42,7 @@ def test_classify_retries_once_then_skips():
 
         def converse(self, **kw):
             self.calls += 1
-            assert kw["inferenceConfig"] == {"temperature": 0, "maxTokens": 500}
+            assert kw["inferenceConfig"] == {"maxTokens": 500}
             return {"output": {"message": {"content": [{"text": self.texts.pop(0)}]}},
                     "usage": {"inputTokens": 10, "outputTokens": 5}}
 
