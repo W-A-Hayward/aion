@@ -48,7 +48,7 @@ def test_classify_retries_once_then_skips():
         def converse(self, **kw):
             self.calls += 1
             assert kw["inferenceConfig"] == {"maxTokens": 500}
-            assert kw["toolConfig"]["toolChoice"] == {"tool": {"name": "record_evidence"}}
+            assert kw["toolConfig"]["toolChoice"] == {"auto": {}}  # changed to auto in abb7dec
             spec = kw["toolConfig"]["tools"][0]["toolSpec"]
             assert spec["name"] == "record_evidence"
             props = spec["inputSchema"]["json"]["properties"]
