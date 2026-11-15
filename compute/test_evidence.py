@@ -65,13 +65,98 @@ def test_split_passages_overlap():
     assert parts[-1].endswith(text[-10:])
 
 
-def test_prefilter_limit_and_keywords():
-    passages = [{"page": i, "text": "oil crude Brent" if i % 2 == 0 else "nothing here"}
-                for i in range(100)]
+def test_score_counts_distinct_keywords_double_for_oil_terms():
+    assert ev.score_passage("nothing relevant") == 0
+    assert ev.score_passage("oil oil oil") == 2                     # distinct: repeats do not add
+    assert ev.score_passage("Crude and Brent") == 4
+    assert ev.score_passage("inflation and currency") == 2          # single-weight keywords
+    assert ev.score_passage("oil, inflation, duration") == 4
+
+
+def test_prefilter_keeps_top_25_by_score_in_order_with_pages():
+    passages = []
+    for i in range(60):
+        text = "oil crude Brent" if i % 3 == 0 else ("inflation" if i % 3 == 1 else "nothing here")
+        passages.append({"page": i + 1, "text": text})
     kept = ev.prefilter(passages)
     assert len(kept) == 25
-    assert all("oil" in p["text"] for p in kept)
+    # 20 passages score 6; the 5 earliest score-1 passages fill the remaining slots
+    assert sum(p["text"] == "oil crude Brent" for p in kept) == 20
+    assert sum(p["text"] == "inflation" for p in kept) == 5
     assert [p["page"] for p in kept] == sorted(p["page"] for p in kept)
+    assert all("page" in p for p in kept)
+    inflation_pages = [p["page"] for p in kept if p["text"] == "inflation"]
+    assert inflation_pages == [2, 5, 8, 11, 14]
+
+
+def test_prefilter_late_high_score_beats_early_low_score():
+    passages = [{"page": i, "text": "inflation"} for i in range(30)]
+    passages.append({"page": 99, "text": "oil crude"})
+    kept = ev.prefilter(passages)
+    assert len(kept) == 25 and kept[-1]["page"] == 99
+
+
+# --- JSON fence stripping ---------------------------------------------------
+
+def test_fence_stripping_and_brace_slice():
+    assert ev.parse_model_json('```json\n{"relevant": false}\n```') == {"relevant": False}
+    assert ev.parse_model_json('```\n{"a": 1}\n```') == {"a": 1}
+    assert ev.parse_model_json('Here you go:\n{"a": {"b": 2}} Hope that helps') == {"a": {"b": 2}}
+    assert ev.parse_model_json('{"a": 1}') == {"a": 1}
+    assert ev.parse_model_json("no json here") is None
+    assert ev.parse_model_json("[1, 2]") is None
+    assert ev.extract_json_text('```json\n{"x": 1}\n```') == '{"x": 1}'
+
+
+# --- resumable cache --------------------------------------------------------
+
+class FakeS3:
+    def __init__(self, files):
+        self.objects = dict(files)
+        self.gets = []
+
+    def get_object(self, Bucket, Key):
+        self.gets.append(Key)
+        if Key not in self.objects:
+            err = Exception("missing")
+            err.response = {"Error": {"Code": "NoSuchKey"}}
+            raise err
+        import io
+        return {"Body": io.BytesIO(self.objects[Key])}
+
+    def put_object(self, Bucket, Key, Body, **kw):
+        self.objects[Key] = Body
+
+
+class OilClient:
+    def __init__(self):
+        self.calls = 0
+
+    def converse(self, **kw):
+        self.calls += 1
+        ans = {"relevant": True, "channel": "direct", "direction": "positive",
+               "excerpt": "Higher oil prices lift revenue.", "section": "Outlook"}
+        return {"output": {"message": {"content": [{"text": json.dumps(ans)}]}},
+                "usage": {"inputTokens": 1, "outputTokens": 1}}
+
+
+def test_resume_skips_cached_document():
+    html_doc = b"<html><p>Higher oil prices lift revenue.</p></html>"
+    manifest = b"file,ticker,doc_type,source_url\na.html,XOM,page,http://a\n"
+    s3 = FakeS3({"raw/manual_docs/manifest_docs.csv": manifest, "raw/manual_docs/a.html": html_doc})
+    client = OilClient()
+    df, passages = ev.build_evidence("b", "m", s3=s3, client=client)
+    assert client.calls == 1 and len(df) == 1
+    assert "processed/_evidence_cache/a.html.json" in s3.objects
+    # second run: cache hit, no model call, same result
+    df2, _ = ev.build_evidence("b", "m", s3=s3, client=client)
+    assert client.calls == 1 and df2["evidence_id"].tolist() == df["evidence_id"].tolist()
+    # Part B input comes from the cache without the model
+    assert ev.evidence_from_cache("b", s3)["excerpt"].tolist() == df["excerpt"].tolist()
+    # a changed manifest value invalidates the cache
+    s3.objects["raw/manual_docs/manifest_docs.csv"] = manifest.replace(b"http://a", b"http://b")
+    ev.build_evidence("b", "m", s3=s3, client=client)
+    assert client.calls == 2
 
 
 def test_html_to_text_strips_tags():

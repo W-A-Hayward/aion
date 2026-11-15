@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 log = logging.getLogger("cascade.evidence")
+logging.getLogger("pypdf").setLevel(logging.ERROR)   # quiet pypdf font warnings
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -65,7 +66,13 @@ KEYWORDS = [
     "petroleum", "interest rate", "yield", "inflation", "Canadian dollar",
     "exchange rate", "currency", "duration",
 ]
-_KEYWORD_RE = re.compile(r"\b(?:" + "|".join(re.escape(k) for k in KEYWORDS) + ")", re.IGNORECASE)
+# These keywords count double in the passage score.
+DOUBLE_KEYWORDS = {"oil", "crude", "Brent", "WTI", "fuel", "gasoline", "commodity"}
+_KEYWORD_RES = [
+    (re.compile(r"\b" + re.escape(k), re.IGNORECASE), 2 if k in DOUBLE_KEYWORDS else 1)
+    for k in KEYWORDS
+]
+CACHE_PREFIX = "processed/_evidence_cache/"
 
 EVIDENCE_COLUMNS = ["evidence_id", "ticker", "doc_type", "channel", "direction",
                     "source_url", "section", "excerpt", "s3_key"]
@@ -235,16 +242,17 @@ def passages_for_pages(pages: list[tuple[int | None, str]]) -> list[dict]:
 # Step 3: keyword prefilter
 # ---------------------------------------------------------------------------
 
-def keyword_hits(text: str) -> int:
-    return len(_KEYWORD_RE.findall(text))
+def score_passage(text: str) -> int:
+    """Number of distinct keywords in the passage; oil/crude/Brent/WTI/fuel/gasoline/commodity count double."""
+    return sum(w for rx, w in _KEYWORD_RES if rx.search(text))
 
 
 def prefilter(passages: list[dict], limit: int = MAX_PASSAGES_PER_DOC) -> list[dict]:
-    """Keep passages with at least one keyword; at most `limit`, those with most hits first.
+    """Score every passage and keep the top `limit` (score > 0; ties go to the earlier passage).
 
-    The kept passages stay in document order.
+    The kept passages stay in document order and keep their page number.
     """
-    scored = [(keyword_hits(p["text"]), i) for i, p in enumerate(passages)]
+    scored = [(score_passage(p["text"]), i) for i, p in enumerate(passages)]
     scored = [s for s in scored if s[0] > 0]
     top = sorted(scored, key=lambda s: (-s[0], s[1]))[:limit]
     return [passages[i] for i in sorted(i for _, i in top)]
@@ -260,16 +268,17 @@ def is_verbatim(excerpt: str, passage: str) -> bool:
     return bool(e) and e in normalize_ws(passage)
 
 
-def _strip_fences(text: str) -> str:
-    t = text.strip()
-    m = re.match(r"^```(?:json)?\s*(.*?)\s*```$", t, flags=re.DOTALL)
-    return m.group(1) if m else t
+def extract_json_text(text: str) -> str:
+    """Remove ```json / ``` fences, then keep only the text from the first "{" to the last "}"."""
+    t = re.sub(r"```(?:json)?", "", text or "", flags=re.IGNORECASE)
+    start, end = t.find("{"), t.rfind("}")
+    return t[start:end + 1] if start != -1 and end > start else t.strip()
 
 
 def parse_model_json(text: str) -> dict | None:
-    """json.loads of the model answer (code fences removed). None if it is not a JSON object."""
+    """json.loads of the model answer after extract_json_text. None if it is not a JSON object."""
     try:
-        obj = json.loads(_strip_fences(text))
+        obj = json.loads(extract_json_text(text))
     except (ValueError, TypeError):
         return None
     return obj if isinstance(obj, dict) else None
@@ -370,47 +379,115 @@ def load_document_text(bucket: str, key: str, s3=None) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Steps 1-5 together
+# Steps 1-5 together, with a per-document cache so a run can resume
 # ---------------------------------------------------------------------------
+
+def _cache_key(file: str) -> str:
+    return f"{CACHE_PREFIX}{file}.json"
+
+
+def read_cache(bucket: str, m, s3) -> dict | None:
+    """Cached result for one manifest row, or None if absent or made for different manifest values."""
+    try:
+        body = s3.get_object(Bucket=bucket, Key=_cache_key(m.file))["Body"].read()
+    except Exception as exc:
+        code = getattr(exc, "response", {}).get("Error", {}).get("Code")
+        if code in ("NoSuchKey", "404", "NotFound"):
+            return None
+        raise
+    payload = json.loads(body)
+    if (payload.get("ticker"), payload.get("doc_type"), payload.get("source_url")) != \
+            (m.ticker, m.doc_type, m.source_url):
+        log.info("Cache for %s was made for different manifest values; reprocessing", m.file)
+        return None
+    return payload
+
+
+def write_cache(bucket: str, m, payload: dict, s3) -> None:
+    s3.put_object(Bucket=bucket, Key=_cache_key(m.file), ContentType="application/json",
+                  Body=json.dumps(payload).encode("utf-8"))
+
+
+def process_document(m, bucket: str, model_id: str, s3, client, usage: Usage) -> dict:
+    """Run the model over one document. Returns the cache payload with the kept rows."""
+    key = DOCS_PREFIX + m.file
+    payload = {"file": m.file, "ticker": m.ticker, "doc_type": m.doc_type,
+               "source_url": m.source_url, "sent": 0, "skipped": 0, "candidates": []}
+    data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+    pages = extract_pages(m.file, data)
+    kept = prefilter(passages_for_pages(pages))
+    payload["sent"] = len(kept)
+    for p in kept:
+        obj = classify_passage(client, model_id, m.ticker, m.doc_type, p["text"], usage)
+        if obj is None:
+            payload["skipped"] += 1
+            continue
+        clean = validate_answer(obj, p["text"])
+        if clean is None:
+            continue
+        payload["candidates"].append({
+            "ticker": m.ticker, "doc_type": m.doc_type, "source_url": m.source_url,
+            "s3_key": key, "passage": p["text"], "page": p["page"], **clean,
+        })
+    return payload
+
+
+def load_candidates(bucket: str, model_id: str | None, s3, client, usage: Usage,
+                    only_cached: bool = False) -> tuple[list[dict], dict[str, dict]]:
+    """Candidates from every manifest document. Cached documents are not sent to the model again.
+
+    With only_cached=True nothing is processed; documents with no cache are skipped.
+    Returns (candidates, per-document stats {file: {"sent", "skipped", "kept", "cached"}}).
+    """
+    manifest = _read_manifest(bucket, s3)
+    candidates, stats = [], {}
+    for m in manifest.itertuples(index=False):
+        payload = read_cache(bucket, m, s3)
+        cached = payload is not None
+        if payload is None:
+            if only_cached:
+                continue
+            try:
+                payload = process_document(m, bucket, model_id, s3, client, usage)
+            except Exception as exc:  # one unreadable file must not stop the run
+                log.warning("Skipping %s: %s", DOCS_PREFIX + m.file, exc)
+                continue
+            write_cache(bucket, m, payload, s3)
+        candidates += payload["candidates"]
+        stats[m.file] = {"sent": payload["sent"], "skipped": payload["skipped"],
+                         "kept": len(payload["candidates"]), "cached": cached}
+    return candidates, stats
+
+
+def log_skipped(stats: dict[str, dict]) -> None:
+    for file, st in stats.items():
+        log.info("%s: %d passages sent, %d skipped (no valid JSON after retry), %d kept%s",
+                 file, st["sent"], st["skipped"], st["kept"], " (from cache)" if st["cached"] else "")
+
+
+def _to_frame_and_passages(candidates: list[dict]) -> tuple[pd.DataFrame, dict[str, dict]]:
+    chosen = select_evidence(candidates)
+    df = evidence_frame(chosen)
+    return df, {r["evidence_id"]: {"passage": r["passage"], "page": r["page"]} for r in chosen}
+
 
 def build_evidence(bucket: str | None = None, model_id: str | None = None, s3=None,
                    client=None, usage: Usage | None = None) -> tuple[pd.DataFrame, dict[str, dict]]:
     """Read the manifest and documents, call the model and return (evidence frame, passages).
 
-    `passages` maps evidence_id to {"passage", "page"} for the Knowledge Base documents.
+    A document with processed/_evidence_cache/<file>.json is not sent to the model again, so
+    an interrupted run resumes where it stopped. `passages` maps evidence_id to
+    {"passage", "page"} for the Knowledge Base documents.
     """
     bucket = bucket or os.environ["BUCKET"]
     model_id = model_id or os.environ.get("EVIDENCE_MODEL_ID", DEFAULT_MODEL_ID)
     s3 = s3 or _s3_client()
     client = client or _bedrock_client()
     usage = usage or Usage()
-    manifest = _read_manifest(bucket, s3)
-
-    candidates = []
-    for m in manifest.itertuples(index=False):
-        key = DOCS_PREFIX + m.file
-        try:
-            data = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
-            pages = extract_pages(m.file, data)
-        except Exception as exc:  # one unreadable file must not stop the run
-            log.warning("Skipping %s: %s", key, exc)
-            continue
-        kept = prefilter(passages_for_pages(pages))
-        log.info("%s: %d pages, %d passages sent to the model", m.file, len(pages), len(kept))
-        for p in kept:
-            obj = classify_passage(client, model_id, m.ticker, m.doc_type, p["text"], usage)
-            clean = validate_answer(obj, p["text"]) if obj else None
-            if clean is None:
-                continue
-            candidates.append({
-                "ticker": m.ticker, "doc_type": m.doc_type, "source_url": m.source_url,
-                "s3_key": key, "passage": p["text"], "page": p["page"], **clean,
-            })
+    candidates, stats = load_candidates(bucket, model_id, s3, client, usage)
+    log_skipped(stats)
     usage.log_totals()
-    chosen = select_evidence(candidates)
-    df = evidence_frame(chosen)
-    passages = {r["evidence_id"]: {"passage": r["passage"], "page": r["page"]} for r in chosen}
-    return df, passages
+    return _to_frame_and_passages(candidates)
 
 
 # ---------------------------------------------------------------------------
@@ -557,13 +634,24 @@ def build_edges(links_df: pd.DataFrame, evidence: pd.DataFrame) -> pd.DataFrame:
     return df.astype({"beta": float, "lo": float, "hi": float})
 
 
+def evidence_from_cache(bucket: str, s3=None) -> pd.DataFrame | None:
+    """Evidence rows rebuilt from every cached document, or None if no document is cached."""
+    s3 = s3 or _s3_client()
+    candidates, stats = load_candidates(bucket, None, s3, None, Usage(), only_cached=True)
+    if not stats:
+        return None
+    return _to_frame_and_passages(candidates)[0]
+
+
 def run_part_b(bucket: str | None = None, s3=None) -> dict[str, pd.DataFrame]:
     """Read the three inputs, write processed/confidence and processed/edges, return both."""
     bucket = bucket or os.environ["BUCKET"]
     s3 = s3 or _s3_client()
     sens = read_parquet_s3(bucket, "processed/sensitivities/part-0.parquet", s3)
     chain_rec = read_parquet_s3(bucket, "processed/chain_reconciliation/part-0.parquet", s3)
-    evidence = read_parquet_s3(bucket, EVIDENCE_TABLE_KEY, s3)
+    evidence = evidence_from_cache(bucket, s3)
+    if evidence is None:   # no cache yet: use the written table
+        evidence = read_parquet_s3(bucket, EVIDENCE_TABLE_KEY, s3)
     links_df = read_parquet_s3(bucket, "processed/links/part-0.parquet", s3)
     out = {"confidence": build_confidence(sens, chain_rec, evidence),
            "edges": build_edges(links_df, evidence)}
