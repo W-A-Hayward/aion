@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+  variables:
+    RUN_EVAL: "false"
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.12
+    commands:
+      - pip install -r requirements.txt -r agent/requirements.txt pytest
+
+  build:
+    commands:
+      - python -m pytest compute lambdas agent -q
+      - |
+        if [ "$RUN_EVAL" = "true" ]; then
+          python eval/run_eval.py
+          python eval/report.py $(ls -t eval/results/*.jsonl | head -1)
+        fi
+
+artifacts:
+  files:
+    - eval/results/**/*
