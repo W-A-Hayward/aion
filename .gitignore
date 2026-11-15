@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+
+# Local data (never committed)
+data/
+*.parquet
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Secrets
+.env
