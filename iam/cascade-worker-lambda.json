@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadUpdateJob",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:UpdateItem"
+      ],
+      "Resource": "arn:aws:dynamodb:us-east-1:339713040194:table/cascade-jobs"
+    },
+    {
+      "Sid": "ConsumeQueue",
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-east-1:339713040194:agent-jobs"
+    },
+    {
+      "Sid": "InvokeAgent",
+      "Effect": "Allow",
+      "Action": "bedrock:InvokeAgent",
+      "Resource": "arn:aws:bedrock:us-east-1:339713040194:agent-alias/*"
+    },
+    {
+      "Sid": "WriteTraces",
+      "Effect": "Allow",
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::cascade-s3-bucket/traces/*"
+    }
+  ]
+}

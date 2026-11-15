@@ -1,0 +1,35 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvokeClaudeModel",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:us-east-1:339713040194:inference-profile/global.anthropic.claude-opus-5-5",
+        "arn:aws:bedrock:*::foundation-model/anthropic.claude-opus-5-5*"
+      ]
+    },
+    {
+      "Sid": "ReadInferenceProfile",
+      "Effect": "Allow",
+      "Action": "bedrock:GetInferenceProfile",
+      "Resource": "arn:aws:bedrock:us-east-1:339713040194:inference-profile/global.anthropic.claude-opus-5-5"
+    },
+    {
+      "Sid": "QueryKnowledgeBase",
+      "Effect": "Allow",
+      "Action": "bedrock:Retrieve",
+      "Resource": "arn:aws:bedrock:us-east-1:339713040194:knowledge-base/KNOWLEDGE_BASE_ID"
+    },
+    {
+      "Sid": "ApplyGuardrail",
+      "Effect": "Allow",
+      "Action": "bedrock:ApplyGuardrail",
+      "Resource": "arn:aws:bedrock:us-east-1:339713040194:guardrail/GUARDRAIL_ID"
+    }
+  ]
+}
