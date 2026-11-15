@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from decimal import Decimal
 from datetime import datetime, timezone
 
 import boto3
@@ -12,6 +13,7 @@ MAX_ANSWER = 100_000
 MAX_TOOL_RESPONSE = 1000
 MAX_PARAM_VALUE = 500
 MAX_EXCERPT = 500
+MIN_SESSION_ID = 33
 THROTTLE_CODES = {
     "ThrottlingException",
     "throttlingException",
@@ -32,7 +34,7 @@ def _table():
 
 def _agent():
     if "agent" not in _clients:
-        _clients["agent"] = boto3.client("bedrock-agent-runtime")
+        _clients["agent"] = boto3.client("bedrock-agentcore")
     return _clients["agent"]
 
 
@@ -53,73 +55,32 @@ def _error_code(exc):
     return ""
 
 
-def parse_stream(stream):
-    """Consume an invoke_agent event stream.
+def _json_default(o):
+    if isinstance(o, Decimal):
+        return float(o)
+    return str(o)
 
-    Returns (answer, trace_events, tool_calls, citations, guardrails).
-    """
-    answer = []
-    traces = []
-    tool_calls = []
-    citations = []
-    guardrails = []
-    seen = set()
 
-    def add_citation(ref):
-        uri = ((ref.get("location") or {}).get("s3Location") or {}).get("uri")
-        if uri is None:
-            loc = ref.get("location") or {}
-            uri = (loc.get("webLocation") or {}).get("url") or ""
-        excerpt = (ref.get("content") or {}).get("text", "")
-        key = (uri, excerpt[:100])
-        if key in seen:
-            return
-        seen.add(key)
-        citations.append({"source": uri, "excerpt": trunc(excerpt, MAX_EXCERPT)})
+def session_id_for(session_id):
+    """AgentCore runtime session ids must be at least 33 characters."""
+    return ("cascade-" + str(session_id)).ljust(MIN_SESSION_ID, "-")
 
-    for event in stream:
-        if "chunk" in event:
-            chunk = event["chunk"]
-            data = chunk.get("bytes", b"")
-            answer.append(data.decode("utf-8", errors="replace") if isinstance(data, bytes) else str(data))
-            for c in (chunk.get("attribution") or {}).get("citations", []):
-                for ref in c.get("retrievedReferences", []):
-                    add_citation(ref)
-        elif "trace" in event:
-            tr = event["trace"].get("trace", {})
-            traces.append(tr)
-            orch = tr.get("orchestrationTrace") or {}
-            inv = (orch.get("invocationInput") or {}).get("actionGroupInvocationInput")
-            if inv:
-                params = {
-                    p.get("name", ""): trunc(p.get("value"), MAX_PARAM_VALUE)
-                    for p in inv.get("parameters", [])
-                }
-                if not params and inv.get("requestBody"):
-                    params = {"requestBody": trunc(json.dumps(inv["requestBody"], default=str), MAX_PARAM_VALUE)}
-                tool_calls.append(
-                    {
-                        "function": inv.get("function") or inv.get("apiPath") or "",
-                        "actionGroup": inv.get("actionGroupName", ""),
-                        "parameters": params,
-                        "response": None,
-                    }
-                )
-            obs = orch.get("observation") or {}
-            out = obs.get("actionGroupInvocationOutput")
-            if out is not None:
-                for call in reversed(tool_calls):
-                    if call["response"] is None:
-                        call["response"] = trunc(out.get("text", ""), MAX_TOOL_RESPONSE)
-                        break
-            kb = obs.get("knowledgeBaseLookupOutput")
-            if kb:
-                for ref in kb.get("retrievedReferences", []):
-                    add_citation(ref)
-            g = tr.get("guardrailTrace")
-            if g and g.get("action") == "INTERVENED":
-                guardrails.append(g)
-    return "".join(answer), traces, tool_calls, citations, guardrails
+
+def read_body(resp):
+    """Read the invoke_agent_runtime response body and parse it as JSON (floats as Decimal for DynamoDB)."""
+    body = resp["response"]
+    raw = body.read() if hasattr(body, "read") else body
+    if isinstance(raw, bytes):
+        raw = raw.decode("utf-8", errors="replace")
+    try:
+        data = json.loads(raw, parse_float=Decimal)
+    except ValueError:
+        return {"answer": raw}
+    return data if isinstance(data, dict) else {"answer": data}
+
+
+def _list(value):
+    return value if isinstance(value, list) else []
 
 
 def _log(job_id, status, started):
@@ -164,30 +125,23 @@ def process(job_id):
         raise
 
     try:
-        resp = _agent().invoke_agent(
-            agentId=os.environ["AGENT_ID"],
-            agentAliasId=os.environ["AGENT_ALIAS_ID"],
-            sessionId=item["sessionId"],
-            inputText=item["question"],
-            enableTrace=True,
-            sessionState={"promptSessionAttributes": {"persona": item["persona"], "level": item["level"]}},
+        resp = _agent().invoke_agent_runtime(
+            agentRuntimeArn=os.environ["AGENT_RUNTIME_ARN"],
+            runtimeSessionId=session_id_for(item["sessionId"]),
+            payload=json.dumps(
+                {"question": item["question"], "persona": item["persona"], "level": item["level"]}
+            ),
         )
-        answer, traces, tool_calls, citations, guardrails = parse_stream(resp["completion"])
+        data = read_body(resp)
+        answer = data.get("answer")
+        answer = "" if answer is None else answer if isinstance(answer, str) else json.dumps(answer, default=_json_default)
+        tool_calls = _list(data.get("toolCalls"))
+        citations = _list(data.get("citations"))
         trace_key = "traces/%s.json" % job_id
         _s3().put_object(
             Bucket=os.environ["BUCKET"],
             Key=trace_key,
-            Body=json.dumps(
-                {
-                    "jobId": job_id,
-                    "answer": answer,
-                    "toolCalls": tool_calls,
-                    "citations": citations,
-                    "guardrails": guardrails,
-                    "trace": traces,
-                },
-                default=str,
-            ).encode("utf-8"),
+            Body=json.dumps({"jobId": job_id, "response": data}, default=_json_default).encode("utf-8"),
             ContentType="application/json",
         )
         duration = int((time.time() - started) * 1000)

@@ -21,10 +21,13 @@
       "Resource": "arn:aws:sqs:us-east-1:339713040194:agent-jobs"
     },
     {
-      "Sid": "InvokeAgent",
+      "Sid": "InvokeAgentRuntime",
       "Effect": "Allow",
-      "Action": "bedrock:InvokeAgent",
-      "Resource": "arn:aws:bedrock:us-east-1:339713040194:agent-alias/*"
+      "Action": "bedrock-agentcore:InvokeAgentRuntime",
+      "Resource": [
+        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-*",
+        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-*/runtime-endpoint/*"
+      ]
     },
     {
       "Sid": "WriteTraces",

@@ -10,6 +10,9 @@ app = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(app)
 
 
+ARN = "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-AbCdEfGhIj"
+
+
 def cerr(code, op="Op"):
     return ClientError({"Error": {"Code": code, "Message": "m"}}, op)
 
@@ -39,17 +42,25 @@ class FakeTable:
         self.item.update(fields)
 
 
+class FakeBody:
+    def __init__(self, data):
+        self.data = data if isinstance(data, bytes) else json.dumps(data).encode("utf-8")
+
+    def read(self):
+        return self.data
+
+
 class FakeAgent:
-    def __init__(self, completion=None, error=None):
-        self.completion = completion
+    def __init__(self, body=None, error=None):
+        self.body = body
         self.error = error
         self.calls = []
 
-    def invoke_agent(self, **kw):
+    def invoke_agent_runtime(self, **kw):
         self.calls.append(kw)
         if self.error:
             raise self.error
-        return {"completion": self.completion}
+        return {"response": FakeBody(self.body), "statusCode": 200}
 
 
 class FakeS3:
@@ -60,73 +71,23 @@ class FakeS3:
         self.puts.append(kw)
 
 
-def tr(**kw):
-    return {"trace": {"trace": kw}}
-
-
-def fake_stream():
-    return [
-        tr(
-            orchestrationTrace={
-                "invocationInput": {
-                    "actionGroupInvocationInput": {
-                        "actionGroupName": "cascade-tools",
-                        "function": "get_portfolio_beta",
-                        "parameters": [{"name": "persona", "type": "string", "value": "robert"}],
-                    }
-                }
-            }
-        ),
-        tr(
-            orchestrationTrace={
-                "observation": {"actionGroupInvocationOutput": {"text": "x" * 3000}},
-            }
-        ),
-        tr(
-            orchestrationTrace={
-                "observation": {
-                    "knowledgeBaseLookupOutput": {
-                        "retrievedReferences": [
-                            {
-                                "content": {"text": "Duration is 14.63 years"},
-                                "location": {"type": "S3", "s3Location": {"uri": "s3://b/doc.pdf"}},
-                            }
-                        ]
-                    }
-                }
-            }
-        ),
-        tr(guardrailTrace={"action": "INTERVENED", "outputAssessments": [{"topicPolicy": {}}]}),
-        tr(guardrailTrace={"action": "NONE"}),
-        {"chunk": {"bytes": b"Oil beta "}},
-        {
-            "chunk": {
-                "bytes": b"is 0.2.",
-                "attribution": {
-                    "citations": [
-                        {
-                            "retrievedReferences": [
-                                {
-                                    "content": {"text": "Duration is 14.63 years"},
-                                    "location": {"s3Location": {"uri": "s3://b/doc.pdf"}},
-                                },
-                                {
-                                    "content": {"text": "other"},
-                                    "location": {"s3Location": {"uri": "s3://b/other.pdf"}},
-                                },
-                            ]
-                        }
-                    ]
-                },
-            }
-        },
-    ]
+def fake_body():
+    return {
+        "answer": "Oil beta is 0.2.",
+        "toolCalls": [
+            {"function": "get_portfolio_exposure", "parameters": {"persona": "robert"}, "response": "ok"}
+        ],
+        "citations": [
+            {"source": "s3://b/doc.pdf", "excerpt": "Duration is 14.63 years"},
+            {"source": "s3://b/other.pdf", "excerpt": "other"},
+        ],
+        "extra": {"beta": 0.25},
+    }
 
 
 @pytest.fixture
 def setup(monkeypatch):
-    monkeypatch.setenv("AGENT_ID", "AG")
-    monkeypatch.setenv("AGENT_ALIAS_ID", "AL")
+    monkeypatch.setenv("AGENT_RUNTIME_ARN", ARN)
     monkeypatch.setenv("BUCKET", "cascade-s3-bucket")
     item = {"jobId": "j1", "status": "PENDING", "question": "Q?", "persona": "robert",
             "level": "beginner", "sessionId": "sess"}
@@ -146,34 +107,25 @@ def event(job="j1", mid="m1"):
     return {"Records": [{"messageId": mid, "body": json.dumps({"jobId": job})}]}
 
 
-def test_parse_stream():
-    answer, traces, calls, cites, guards = app.parse_stream(fake_stream())
-    assert answer == "Oil beta is 0.2."
-    assert len(traces) == 5
-    assert calls == [
-        {
-            "function": "get_portfolio_beta",
-            "actionGroup": "cascade-tools",
-            "parameters": {"persona": "robert"},
-            "response": "x" * (app.MAX_TOOL_RESPONSE - 3) + "...",
-        }
-    ]
-    assert [c["source"] for c in cites] == ["s3://b/doc.pdf", "s3://b/other.pdf"]
-    assert len(guards) == 1
+def test_session_id_padding():
+    assert app.session_id_for("sess") == "cascade-sess" + "-" * 21
+    assert len(app.session_id_for("sess")) == 33
+    long = "a" * 40
+    assert app.session_id_for(long) == "cascade-" + long
 
 
 def test_done_path(setup):
     make, item, s3 = setup
-    agent = FakeAgent(fake_stream())
-    t = make(agent)
+    agent = FakeAgent(fake_body())
+    make(agent)
     assert app.lambda_handler(event(), None) == {"batchItemFailures": []}
     kw = agent.calls[0]
-    assert kw["agentId"] == "AG" and kw["agentAliasId"] == "AL" and kw["sessionId"] == "sess"
-    assert kw["inputText"] == "Q?" and kw["enableTrace"] is True
-    assert kw["sessionState"] == {"promptSessionAttributes": {"persona": "robert", "level": "beginner"}}
+    assert kw["agentRuntimeArn"] == ARN
+    assert kw["runtimeSessionId"] == "cascade-sess" + "-" * 21
+    assert json.loads(kw["payload"]) == {"question": "Q?", "persona": "robert", "level": "beginner"}
     assert s3.puts[0]["Bucket"] == "cascade-s3-bucket" and s3.puts[0]["Key"] == "traces/j1.json"
     saved = json.loads(s3.puts[0]["Body"])
-    assert saved["answer"] == "Oil beta is 0.2." and len(saved["guardrails"]) == 1
+    assert saved["jobId"] == "j1" and saved["response"] == fake_body()
     assert item["status"] == "DONE"
     assert item["answer"] == "Oil beta is 0.2."
     assert item["traceKey"] == "traces/j1.json"
@@ -181,14 +133,32 @@ def test_done_path(setup):
     assert isinstance(item["durationMs"], int) and item["finishedAt"]
 
 
+def test_floats_become_decimal(setup):
+    make, item, s3 = setup
+    body = fake_body()
+    body["toolCalls"][0]["parameters"] = {"beta": 0.25}
+    make(FakeAgent(body))
+    app.lambda_handler(event(), None)
+    assert item["toolCalls"][0]["parameters"]["beta"] == app.Decimal("0.25")
+    assert json.loads(s3.puts[0]["Body"])["response"]["toolCalls"][0]["parameters"]["beta"] == 0.25
+
+
+def test_plain_text_body(setup):
+    make, item, s3 = setup
+    make(FakeAgent(b"just text"))
+    app.lambda_handler(event(), None)
+    assert item["status"] == "DONE" and item["answer"] == "just text"
+    assert item["toolCalls"] == [] and item["citations"] == []
+
+
 def test_limits_and_truncation(setup):
     make, item, s3 = setup
-    stream = [{"chunk": {"bytes": b"a" * 200_000}}]
-    for i in range(30):
-        stream.append(tr(orchestrationTrace={"invocationInput": {"actionGroupInvocationInput": {"function": "f%d" % i}}}))
-        stream.append(tr(orchestrationTrace={"observation": {"knowledgeBaseLookupOutput": {"retrievedReferences": [
-            {"content": {"text": "t%d" % i}, "location": {"s3Location": {"uri": "s3://b/%d" % i}}}]}}}))
-    make(FakeAgent(stream))
+    body = {
+        "answer": "a" * 200_000,
+        "toolCalls": [{"function": "f%d" % i} for i in range(30)],
+        "citations": [{"source": "s3://b/%d" % i, "excerpt": "t"} for i in range(30)],
+    }
+    make(FakeAgent(body))
     app.lambda_handler(event(), None)
     assert len(item["toolCalls"]) == 20
     assert len(item["citations"]) == 10
@@ -197,7 +167,7 @@ def test_limits_and_truncation(setup):
 
 def test_race_condition_skipped(setup):
     make, item, s3 = setup
-    agent = FakeAgent(fake_stream())
+    agent = FakeAgent(fake_body())
     make(agent, FakeTable(item, claim_error=cerr("ConditionalCheckFailedException")))
     assert app.lambda_handler(event(), None) == {"batchItemFailures": []}
     assert agent.calls == [] and s3.puts == []
@@ -227,13 +197,13 @@ def test_throttling_retried(setup):
 
 def test_missing_job_is_handled(setup):
     make, item, s3 = setup
-    make(FakeAgent(fake_stream()), FakeTable(None))
+    make(FakeAgent(fake_body()), FakeTable(None))
     assert app.lambda_handler(event(), None) == {"batchItemFailures": []}
 
 
 def test_log_has_no_question(setup, capsys):
     make, item, s3 = setup
-    make(FakeAgent(fake_stream()))
+    make(FakeAgent(fake_body()))
     app.lambda_handler(event(), None)
     line = json.loads(capsys.readouterr().out.strip().splitlines()[-1])
     assert line["jobId"] == "j1" and line["status"] == "DONE" and "durationMs" in line
