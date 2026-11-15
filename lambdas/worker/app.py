@@ -32,6 +32,8 @@ THROTTLE_CODES = {
 # docs/api_contract.md
 VERDICTS = ("NOT LINKED", "MATERIAL", "WORKING", "REMOVED", "BROKEN", "HIDDEN", "MINOR", "MYTH", "REAL")
 VERDICT_RE = re.compile(r"(%s)(?![A-Za-z0-9])" % "|".join(VERDICTS))
+# Characters skipped before the verdict word: markdown (* _ # >), punctuation (. :), dashes and whitespace.
+VERDICT_STRIP = " \t\r\n*_#>.:—–"
 DECLINE_MARKER = "[[DECLINE]]"
 CAVEAT = "2021–2026 · passé · simulation · pas un conseil"
 EVIDENCE_REF_RE = re.compile(r"\[([^\[\]\n]+)\]")
@@ -162,7 +164,7 @@ def parse_answer(text):
         text = text[len(DECLINE_MARKER):].strip()
     verdict, rest = None, text
     if not declined:
-        body = text.lstrip(" \t\r\n*_#>")
+        body = text.lstrip(VERDICT_STRIP)
         m = VERDICT_RE.match(body)
         if m:
             verdict, rest = m.group(1), body[m.end():]
@@ -322,6 +324,106 @@ def build_data(tool_results):
     return data
 
 
+def _num(value):
+    """A finite number (int, float or Decimal) or None; booleans are not numbers."""
+    if isinstance(value, bool) or not isinstance(value, (int, float, Decimal)):
+        return None
+    value = float(value)
+    return value if value == value and abs(value) != float("inf") else None
+
+
+def _fmt(value, digits=2, signed=False):
+    n = _num(value)
+    if n is None:
+        return None
+    return (("%+." if signed else "%.") + str(digits) + "f") % n
+
+
+def _pick(label, value, suffix="", digits=2, signed=False):
+    """'label value' for a number, 'label value' for a non-empty string, else None."""
+    text = _fmt(value, digits, signed)
+    if text is None and isinstance(value, str) and value:
+        text = value
+    return "%s %s%s" % (label, text, suffix if _num(value) is not None else "") if text is not None else None
+
+
+def summarize_result(name, result):
+    """Up to 3 key numbers of one raw tool result, as a short string ('' when there is nothing to show)."""
+    if isinstance(result, list):
+        if result and isinstance(result[0], dict) and result[0].get("error"):
+            return trunc("error: %s" % result[0]["error"], MAX_SUMMARY)
+        return "%d passages" % len(result)
+    if not isinstance(result, dict):
+        return ""
+    if result.get("error"):
+        return trunc("error: %s" % result["error"], MAX_SUMMARY)
+    risk, prot = _dict(result.get("risk_share")), _dict(result.get("protection"))
+    crash, facts = _dict(result.get("crash_profile")), _dict(result.get("facts"))
+    worst, scen_total = _dict(result.get("worst_weeks")), _dict(result.get("total"))
+    scen = next((s for s in _list(result.get("scenario")) if isinstance(s, dict)), {})
+    conf, val = _dict(result.get("confidence")), _dict(result.get("validation"))
+    sens, beta = _dict(result.get("sensitivity")), _dict(result.get("portfolio_beta"))
+    comp = _dict(result.get("comparison"))
+    if name == "get_portfolio_facts":
+        cands = [_pick("crash_type", crash.get("crash_type")), _pick("rates r2", risk.get("rates"), digits=3),
+                 _pick("bonds avg", prot.get("avg_bond_return_pct"), "%", signed=True),
+                 _pick("stocks r2", risk.get("stocks"), digits=3), _pick("oil r2", risk.get("oil"), digits=3),
+                 _pick("max drawdown", facts.get("max_drawdown_pct"), "%", signed=True)]
+    elif name == "test_shield":
+        cands = [_pick("%s" % result.get("ticker"), worst.get("label")),
+                 _pick("avg worst", worst.get("avg_pct_worst"), "%", signed=True),
+                 _pick("p", worst.get("binom_p"), digits=3)]
+    elif name == "run_scenario" and result.get("shock_type") == "rates":
+        cands = [_pick("rates bp", result.get("rates_shock_bp"), digits=0, signed=True),
+                 _pick("total", scen_total.get("impact_pct"), "%", signed=True),
+                 _pick("per $100k", scen_total.get("per_100k"), digits=0, signed=True)]
+    elif name == "run_scenario":
+        cands = [_pick("oil %", result.get("oil_shock_pct"), digits=0, signed=True),
+                 _pick("impact", scen.get("impact_pct"), "%", signed=True),
+                 _pick("lo", scen.get("lo_pct"), "%", signed=True), _pick("hi", scen.get("hi_pct"), "%", signed=True)]
+    elif name == "get_portfolio_exposure":
+        cands = [_pick("portfolio beta", beta.get("beta")), _pick("lo", beta.get("lo")), _pick("hi", beta.get("hi"))]
+    elif name == "get_asset_sensitivity":
+        cands = [_pick("%s beta" % result.get("ticker"), sens.get("beta_simple")),
+                 _pick("lo", sens.get("lo_simple")), _pick("hi", sens.get("hi_simple"))]
+    elif name == "explain_channel":
+        cands = [_pick("%s label" % result.get("ticker"), conf.get("label")),
+                 _pick("channel", conf.get("channel"))]
+    elif name == "get_validation":
+        cands = [_pick("label", val.get("label")), _pick("ex-2022 beta", val.get("beta_ex2022")),
+                 _pick("oos hit", val.get("oos_hit_rate"))]
+    elif name == "compare_alternative":
+        cands = [_pick("30% oil before", comp.get("impact30_before_pct"), "%", signed=True),
+                 _pick("after", comp.get("impact30_after_pct"), "%", signed=True)]
+    else:
+        return ""
+    return trunc("; ".join([c for c in cands if c][:3]), MAX_SUMMARY)
+
+
+def build_trace(steps, tool_results):
+    """Trace steps capped and truncated. A blank or 'ok' output_summary is rebuilt from the matching tool result
+    (the n-th step of a tool pairs with the n-th result of that tool)."""
+    seen = {}
+    trace = []
+    for step in _list(steps)[:MAX_TOOL_CALLS]:
+        if not isinstance(step, dict):
+            continue
+        step = dict(step)
+        name = step.get("tool")
+        n = seen.get(name, 0)
+        seen[name] = n + 1
+        summary = step.get("output_summary")
+        if summary is None or str(summary).strip().lower() in ("", "ok"):
+            results = _dict(tool_results).get(name)
+            results = results if isinstance(results, list) else [results] if results is not None else []
+            if n < len(results):
+                summary = summarize_result(name, results[n]) or summary
+        step["output_summary"] = trunc(summary, MAX_SUMMARY)
+        step["input_summary"] = trunc(step.get("input_summary"), MAX_SUMMARY)
+        trace.append(step)
+    return trace
+
+
 def build_result(agent_response):
     """Contract fields (answer, trace, data, citations) plus the legacy toolCalls/claims from one agent response."""
     raw = agent_response.get("answer_text", agent_response.get("answer"))
@@ -329,12 +431,7 @@ def build_result(agent_response):
     verdict, headline, text, declined = parse_answer(trunc(raw, MAX_ANSWER))
     tool_results = _dict(agent_response.get("tool_results"))
     text, citations = build_citations(text, collect_evidence(tool_results))
-    trace = []
-    for step in _list(agent_response.get("trace"))[:MAX_TOOL_CALLS]:
-        if isinstance(step, dict):
-            step = dict(step, output_summary=trunc(step.get("output_summary"), MAX_SUMMARY),
-                        input_summary=trunc(step.get("input_summary"), MAX_SUMMARY))
-            trace.append(step)
+    trace = build_trace(agent_response.get("trace"), tool_results)
     refusal = declined or guardrail_intervened(agent_response.get("guardrail"))
     return {
         "answer": {"verdict": verdict, "headline": headline, "text": text, "refusal": refusal, "caveat": CAVEAT},
