@@ -850,7 +850,11 @@ def test_protection_split_counts_and_averages():
             i += 1
             stock[w] = -0.05 - 0.0001 * i
             bond[w] = bond_value[name]
-    out = stats.protection_split(stock, bond).set_index("period")
+    full = stats.protection_split(stock, bond).set_index("period")
+    pooled = full.loc["all"]                              # pooled row: all worst weeks together
+    assert pooled["n_weeks"] == 26 and pooled["n_worst_weeks"] == 26
+    assert pooled["avg_bond_return_pct"] == pytest.approx((10 * 1.0 + 6 * -2.0 + 10 * 3.0) / 26)
+    out = full.drop(index="all")
     assert out["n_weeks"].to_dict() == {"2022": 10, "2026_ytd": 6, "other": 10}
     assert (out["n_worst_weeks"] == 26).all()          # ceil(10% of 260)
     assert out["avg_bond_return_pct"].to_dict() == pytest.approx(
@@ -864,8 +868,10 @@ def test_protection_table_subjects_and_split_sum():
     assert list(p.columns) == stats.PROTECTION_COLUMNS
     assert list(dict.fromkeys(p["subject"])) == ["robert", "XIU.TO/XBB.TO", "SPY/TLT"]
     for _, g in p.groupby("subject"):
-        assert list(g["period"]) == list(stats.PROTECTION_PERIODS)
-        assert g["n_weeks"].sum() == g["n_worst_weeks"].iloc[0] == int(np.ceil(0.1 * N_WEEKS))
+        assert list(g["period"]) == list(stats.PROTECTION_PERIODS) + [stats.PROTECTION_ALL]
+        split = g[g["period"] != stats.PROTECTION_ALL]
+        assert split["n_weeks"].sum() == g["n_worst_weeks"].iloc[0] == int(np.ceil(0.1 * N_WEEKS))
+        assert g[g["period"] == stats.PROTECTION_ALL]["n_weeks"].iloc[0] == g["n_worst_weeks"].iloc[0]
     r = p[p["subject"] == "robert"].iloc[0]
     assert r["stock_side"] == "ENB.TO,RY.TO" and r["bond_side"] == "TLT,XBB.TO"
 
@@ -919,7 +925,8 @@ def test_facts_one_row_per_subject_with_context():
 def test_history_tables_in_summary_and_written():
     data = make_data()
     tables = stats.build_history_tables(data, _macro_for_split())
-    assert list(tables) == ["facts", "protection", "stock_bond", "comovement"]
+    assert list(tables) == ["facts", "protection", "stock_bond", "comovement", "cushion", "shields",
+                            "crash_profile", "shield_by_crash_type"]
     base = {"sensitivities": stats.sensitivities(data),
             "portfolio_beta": stats.portfolio_beta(data, stats.persona_holdings())}
     s3 = FakeS3()
@@ -929,6 +936,9 @@ def test_history_tables_in_summary_and_written():
     back = pd.read_parquet(io.BytesIO(s3.objects[("b", "processed/facts/part-0.parquet")]))
     assert len(back) == 8
     md = s3.objects[("b", "processed/_summary/summary.md")].decode()
-    for heading in ("## Facts", "## Protection", "## Stock-bond correlation", "## Comovement"):
+    for heading in ("## Facts", "## Protection", "## Stock-bond correlation", "## Comovement",
+                    "## Cushion", "## Shields:", "## Crash profile", "## Shields by type of market week"):
         assert heading in md
+    assert "worst_10pct" not in md                       # kept in the table, not printed
+    assert "2021-2026 only; past behaviour; descriptive" in md
     assert "robert:TLT->ZST.TO" in md and "XIU.TO/XBB.TO" in md and "cpi" not in md.split("## Facts")[0]

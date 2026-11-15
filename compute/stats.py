@@ -1218,6 +1218,19 @@ PROTECTION_ALL = "all"            # pooled row per subject (all worst weeks)
 # cushion / shields (constants fixed before looking at results)
 CUSHION_STOCK_SIDES = ("XIU.TO", "SPY")
 GOLD_TICKER = "GLD"
+# External shield candidates after usdcad (items the persona holds itself are skipped).
+SHIELD_EXTERNAL_ITEMS = (GOLD_TICKER, "ZST.TO", "XBB.TO", "AGG", "TLT_usd")
+
+# crash_profile (constants fixed before looking at results)
+STOCK_CRASH_PCT = -2.0            # XIU.TO weekly return below this % = stock crash week
+RATE_SHOCK_BP = 10.0              # US 10y weekly rise above this many bp = rate shock week
+CRASH_SHARE_MIN = 0.5
+# shield_by_crash_type: (threshold_set label, XIU.TO % cut-off, US 10y bp cut-off); first is the base set
+CRASH_THRESHOLD_SETS = (("-2/+10", -2.0, 10.0), ("-1.5/+5", -1.5, 5.0), ("-2.5/+15", -2.5, 15.0))
+CRASH_TYPES = ("stock_crash", "rate_shock", "other")
+SHIELD_BY_CRASH_COLUMNS = ["threshold_set", "shield", "crash_type", "n_weeks", "avg_pct", "weeks_up", "binom_p"]
+CRASH_PROFILE_COLUMNS = ["persona", "n_weeks", "avg_xiu_pct", "avg_us10y_chg_bp", "avg_ca10y_chg_bp",
+                         "avg_brent_pct", "stock_crash_share", "rate_shock_share", "crash_type"]
 UNHEDGED_USD_LISTED = {"VFV.TO"}  # CAD-listed funds with unhedged USD exposure (USD-priced tickers count too)
 HEDGED_SWAPS = {("mateo", "VFV.TO", "XSP.TO")}   # (persona, holding, hedged twin) from ALTERNATIVES
 WORKING_MIN_UP_SHARE = 0.6
@@ -1636,7 +1649,9 @@ def shield_label(avg: float, up: int, n: int, p: float) -> str:
 def shields_table(data: WeeklyData) -> pd.DataFrame:
     """shields: in each persona's own worst 10% portfolio weeks, what held up.
 
-    Rows per persona: each holding, gold (GLD), usdcad and the hedged twin when a
+    Rows per persona, external items only (no row for the persona's own holdings): usdcad, then
+    SHIELD_EXTERNAL_ITEMS (GLD, ZST.TO, XBB.TO, AGG, TLT_usd; skipped when the persona holds it,
+    or its ticker has no returns) and the hedged twin when a
     "<persona>:A->B" hedged swap exists (HEDGED_SWAPS). usd_weight, contribution_pct
     (percentage points) and contribution_per_100k (= contribution_pct * 1000) are filled on the
     usdcad and hedged twin rows only. usdcad row: contribution_pct = usd_weight * average usdcad
@@ -1670,15 +1685,17 @@ def shields_table(data: WeeklyData) -> pd.DataFrame:
                          "contribution_per_100k": contrib * 1000.0 if pd.notna(contrib) else np.nan,
                          "twin_max_drawdown": dd[0], "actual_max_drawdown": dd[1]})
 
-        for t in weights:
-            add(t, simple[t])
-        if GOLD_TICKER in simple.columns:
-            add(GOLD_TICKER, simple[GOLD_TICKER])
-        else:
-            print(f"WARNING: no {GOLD_TICKER} row for {persona}: no returns")
         st = _worst_stats(usdcad, worst)
         working = shield_label(st["avg_pct_worst"], st["weeks_up"], st["weeks"], st["binom_p"]) == "WORKING"
         add("usdcad", usdcad, "HIDDEN" if working and usd_w > 0 else None, usd_w)
+        for item in SHIELD_EXTERNAL_ITEMS:
+            ticker = "TLT" if item == "TLT_usd" else item
+            if ticker in weights:      # the persona's own holding: tautological, no row
+                continue
+            if ticker not in simple.columns:
+                print(f"WARNING: no {item} row for {persona}: no returns")
+                continue
+            add(item, np.expm1(data.ret_cad["TLT"] - data.usdcad) if item == "TLT_usd" else simple[item])
         for p, holding, twin in sorted(HEDGED_SWAPS):
             name = f"{p}:{holding}->{twin}"
             if p != persona or name not in swaps or twin not in simple.columns:
@@ -1698,8 +1715,132 @@ def shields_table(data: WeeklyData) -> pd.DataFrame:
     return df.astype({"weeks_up": "Int64", "weeks": "Int64"})
 
 
+def crash_type_for(stock_share: float, rate_share: float) -> str:
+    """"stock" if only the stock-crash share is >= 0.5, "rates" if only the rate-shock share is
+    >= 0.5, "mixed" otherwise (including when both are >= 0.5)."""
+    stock = pd.notna(stock_share) and stock_share >= CRASH_SHARE_MIN
+    rates = pd.notna(rate_share) and rate_share >= CRASH_SHARE_MIN
+    if stock and not rates:
+        return "stock"
+    if rates and not stock:
+        return "rates"
+    return "mixed"
+
+
+def crash_profile_table(data: WeeklyData) -> pd.DataFrame:
+    """crash_profile: what the market did in each persona's own worst 10% portfolio weeks.
+
+    Averages of XIU.TO (CAD simple return, %), the weekly change of the US and Canadian 10y
+    yields (bp) and Brent (simple %). stock_crash_share = share of those weeks with XIU.TO below
+    STOCK_CRASH_PCT; rate_shock_share = share with a US 10y rise above RATE_SHOCK_BP. Shares use
+    the weeks that have data for that measure. Descriptive only.
+    """
+    simple = np.expm1(data.ret_cad)
+    rows = []
+    for persona, weights in PERSONAS.items():
+        missing = [t for t in list(weights) + [STOCKS_TICKER] if t not in simple.columns]
+        if missing:
+            print(f"WARNING: no crash_profile row for {persona}: no returns for {missing}")
+            continue
+        worst = _worst_weeks_index(_portfolio_simple(simple, weights))
+        xiu = (simple[STOCKS_TICKER].reindex(worst) * 100.0).dropna()
+        us = (data.dy["us10y"].reindex(worst) * 100.0).dropna()
+        ca = (data.dy["ca10y"].reindex(worst) * 100.0).dropna()
+        brent = (np.expm1(data.brent).reindex(worst) * 100.0).dropna()
+        stock_share = float((xiu < STOCK_CRASH_PCT).mean()) if len(xiu) else np.nan
+        rate_share = float((us > RATE_SHOCK_BP).mean()) if len(us) else np.nan
+        rows.append({
+            "persona": persona, "n_weeks": int(len(worst)),
+            "avg_xiu_pct": float(xiu.mean()) if len(xiu) else np.nan,
+            "avg_us10y_chg_bp": float(us.mean()) if len(us) else np.nan,
+            "avg_ca10y_chg_bp": float(ca.mean()) if len(ca) else np.nan,
+            "avg_brent_pct": float(brent.mean()) if len(brent) else np.nan,
+            "stock_crash_share": stock_share, "rate_shock_share": rate_share,
+            "crash_type": crash_type_for(stock_share, rate_share),
+        })
+    return pd.DataFrame(rows, columns=CRASH_PROFILE_COLUMNS).astype({"n_weeks": "Int64"})
+
+
+def classify_crash_weeks(data: WeeklyData, stock_pct: float, rate_bp: float) -> pd.Series:
+    """Label every week with an XIU.TO return: "stock_crash", "rate_shock" or "other".
+
+    stock_crash: XIU.TO weekly CAD simple return < stock_pct (percent, negative).
+    rate_shock: US 10y weekly change > rate_bp (basis points) AND XIU.TO >= stock_pct.
+    other: everything else (a week with no US 10y change cannot be a rate shock).
+    """
+    xiu = (np.expm1(data.ret_cad[STOCKS_TICKER]) * 100.0).dropna()
+    us = (data.dy["us10y"] * 100.0).reindex(xiu.index)
+    stock = xiu < stock_pct
+    rate = (us > rate_bp) & ~stock
+    return pd.Series(np.where(stock, "stock_crash", np.where(rate, "rate_shock", "other")),
+                     index=xiu.index)
+
+
+def shield_by_crash_type_table(data: WeeklyData) -> pd.DataFrame:
+    """shield_by_crash_type: how each external shield behaved by type of market week.
+
+    Market-level (all weeks, not persona-specific). Shields: usdcad, then SHIELD_EXTERNAL_ITEMS
+    that have returns (GLD, ZST.TO, XBB.TO, AGG, TLT_usd). Weeks are classified with
+    classify_crash_weeks under three threshold sets (CRASH_THRESHOLD_SETS). Per shield, threshold
+    set and crash type: n_weeks, avg_pct (mean weekly simple return, %), weeks_up (return > 0)
+    and exact two-sided binomial binom_p vs 0.5. Descriptive only.
+    """
+    if STOCKS_TICKER not in data.ret_cad.columns:
+        print(f"WARNING: no shield_by_crash_type rows: no returns for {STOCKS_TICKER}")
+        return pd.DataFrame(columns=SHIELD_BY_CRASH_COLUMNS)
+    simple = np.expm1(data.ret_cad)
+    shields: dict[str, pd.Series] = {"usdcad": np.expm1(data.usdcad)}
+    for item in SHIELD_EXTERNAL_ITEMS:
+        ticker = "TLT" if item == "TLT_usd" else item
+        if ticker not in simple.columns:
+            print(f"WARNING: no {item} in shield_by_crash_type: no returns")
+            continue
+        shields[item] = (np.expm1(data.ret_cad["TLT"] - data.usdcad) if item == "TLT_usd"
+                         else simple[item])
+    rows = []
+    for name, stock_pct, rate_bp in CRASH_THRESHOLD_SETS:
+        weeks_type = classify_crash_weeks(data, stock_pct, rate_bp)
+        for item, series in shields.items():
+            for ctype in CRASH_TYPES:
+                st = _worst_stats(series, weeks_type.index[weeks_type == ctype])
+                rows.append({"threshold_set": name, "shield": item, "crash_type": ctype,
+                             "n_weeks": st["weeks"], "avg_pct": st["avg_pct_worst"],
+                             "weeks_up": st["weeks_up"], "binom_p": st["binom_p"]})
+    df = pd.DataFrame(rows, columns=SHIELD_BY_CRASH_COLUMNS)
+    return df.astype({"n_weeks": "Int64", "weeks_up": "Int64"})
+
+
+def build_shield_by_crash_type(data: WeeklyData, bucket: str | None = None, s3=None) -> pd.DataFrame:
+    """Build shield_by_crash_type and write it to s3://bucket/processed/shield_by_crash_type/part-0.parquet.
+
+    Only this table is written (an existing object is overwritten); returns the table.
+    """
+    df = shield_by_crash_type_table(data)
+    bucket = bucket or os.environ["BUCKET"]
+    s3 = s3 or _s3_client()
+    buf = io.BytesIO()
+    df.to_parquet(buf, index=False)
+    s3.put_object(Bucket=bucket, Key="processed/shield_by_crash_type/part-0.parquet", Body=buf.getvalue())
+    return df
+
+
+def build_crash_profile(data: WeeklyData, bucket: str | None = None, s3=None) -> pd.DataFrame:
+    """Build crash_profile and write it to s3://bucket/processed/crash_profile/part-0.parquet.
+
+    Only this table is written (an existing object is overwritten); returns the table.
+    The full notebook run gets the same table through build_history_tables and write_outputs.
+    """
+    df = crash_profile_table(data)
+    bucket = bucket or os.environ["BUCKET"]
+    s3 = s3 or _s3_client()
+    buf = io.BytesIO()
+    df.to_parquet(buf, index=False)
+    s3.put_object(Bucket=bucket, Key="processed/crash_profile/part-0.parquet", Body=buf.getvalue())
+    return df
+
+
 def build_history_tables(data: WeeklyData, macro: pd.DataFrame) -> dict[str, pd.DataFrame]:
-    """facts, protection, stock_bond, comovement, cushion and shields.
+    """facts, protection, stock_bond, comovement, cushion, shields and crash_profile.
 
     `macro` is raw["macro"] (needs CPIAUCSL).
     """
@@ -1710,6 +1851,8 @@ def build_history_tables(data: WeeklyData, macro: pd.DataFrame) -> dict[str, pd.
         "comovement": comovement_table(data),
         "cushion": cushion_table(data),
         "shields": shields_table(data),
+        "crash_profile": crash_profile_table(data),
+        "shield_by_crash_type": shield_by_crash_type_table(data),
     }
 
 
@@ -1816,4 +1959,30 @@ def history_summary_lines(tables: dict[str, pd.DataFrame]) -> list[str]:
               _cell(r["contribution_pct"]), _cell(r["contribution_per_100k"], "{:,.0f}"),
               _cell(r["twin_max_drawdown"]), _cell(r["actual_max_drawdown"])]
              for _, r in sh.iterrows()])
+    if "crash_profile" in tables:
+        cp = tables["crash_profile"]
+        lines += ["", "## Crash profile: market backdrop in each persona's own 10% worst weeks", "",
+                  f"{CUSHION_NOTE}. Stock crash week: XIU.TO below {STOCK_CRASH_PCT:g}%. Rate shock week: "
+                  f"US 10y up more than {RATE_SHOCK_BP:g} bp. crash_type is stock if only the stock-crash "
+                  f"share is >= {CRASH_SHARE_MIN:g}, rates if only the rate-shock share is >= "
+                  f"{CRASH_SHARE_MIN:g}, mixed otherwise (including when both are).", ""]
+        lines += _md_table(
+            ["persona", "weeks", "avg XIU.TO %", "avg US 10y bp", "avg CA 10y bp", "avg Brent %",
+             "stock crash share", "rate shock share", "crash type"],
+            [[r["persona"], _cell(r["n_weeks"], "{:.0f}"), _cell(r["avg_xiu_pct"]),
+              _cell(r["avg_us10y_chg_bp"], "{:.1f}"), _cell(r["avg_ca10y_chg_bp"], "{:.1f}"),
+              _cell(r["avg_brent_pct"]), _cell(r["stock_crash_share"]), _cell(r["rate_shock_share"]),
+              r["crash_type"]] for _, r in cp.iterrows()])
+    if "shield_by_crash_type" in tables:
+        sc = tables["shield_by_crash_type"]
+        lines += ["", "## Shields by type of market week", "",
+                  f"{CUSHION_NOTE}; thresholds tested at three levels. Market-level: all weeks. "
+                  "stock_crash: XIU.TO below the first threshold; rate_shock: US 10y change above the "
+                  "second threshold (bp) and XIU.TO not below the first; other: the rest. Threshold sets "
+                  "are XIU.TO % / US 10y bp; -2/+10 is the base set. binom_p is two-sided against 0.5.", ""]
+        lines += _md_table(
+            ["thresholds", "shield", "crash type", "weeks", "avg %", "weeks up", "binom p"],
+            [[r["threshold_set"], r["shield"], r["crash_type"], _cell(r["n_weeks"], "{:.0f}"),
+              _cell(r["avg_pct"]), _cell(r["weeks_up"], "{:.0f}"), _cell(r["binom_p"], "{:.3f}")]
+             for _, r in sc.iterrows()])
     return lines

@@ -131,26 +131,81 @@ Processed tables: Parquet, one folder per table: processed/<table>/part-0.parque
                  and the pairs XIU.TO/XBB.TO and SPY/TLT (stock/bond). Bond funds: TLT, XBB.TO, ZST.TO. The worst
                  weeks are the bottom 10% of all weeks for the stock side (count rounded up, ties by earlier
                  date; n_worst_weeks). period = 2022 (calendar year 2022) | 2026_ytd (calendar year 2026) |
-                 other; n_weeks per period sums to n_worst_weeks; avg_bond_return_pct = mean weekly simple
+                 other | all (a pooled row per subject over all worst weeks, n_weeks = n_worst_weeks);
+                 n_weeks per period (excluding all) sums to n_worst_weeks; avg_bond_return_pct = mean weekly simple
                  return of the bond side in those weeks, in percent; null if n_weeks = 0.)
-  stock_bond: pair, measure, week, correlation, n_weeks
+  stock_bond: pair, measure, week, correlation, n_weeks, regime, z_diff, p_diff
                  (pairs XIU.TO/XBB.TO and SPY/TLT, weekly CAD simple returns. measure rolling_52w: one row per
                  week with a full 52-week window, n_weeks = 52. measure cpi_ge_3 / cpi_lt_3: full-sample
                  correlation (week null) in weeks where US CPI year-over-year is >= 3.0% / < 3.0%; n_weeks =
                  weeks used. CPI year-over-year = CPIAUCSL / value 12 months earlier - 1, each month's value
                  forward-filled onto the weeks from its dated 1st of the month; weeks before the first
-                 year-over-year value (2022-11-01 with data from 2021-11) belong to neither regime.)
+                 year-over-year value (2022-11-01 with data from 2021-11) belong to neither regime.
+                 regime = "US CPI" on the cpi_ge_3 / cpi_lt_3 rows, null on rolling_52w. z_diff, p_diff = Fisher
+                 z test of corr(CPI>=3) vs corr(CPI<3) for the pair (two-sided p), the same values on both
+                 regime rows, null on rolling rows and when a sample has 3 weeks or fewer. It assumes
+                 independent weeks; high-CPI weeks are mostly one 2021-2023 block.)
   comovement: persona, scope, avg_pairwise_corr, n_pairs, n_weeks
                  (scope all | worst_10pct; mean of the pairwise correlations of the persona's holdings, weekly
                  CAD simple returns; worst_10pct = the 10% worst weeks for the persona's portfolio return
-                 (count rounded up); n_pairs = pairs of holdings; n_weeks = weeks used.)
+                 (count rounded up); n_pairs = pairs of holdings; n_weeks = weeks used. The worst_10pct rows
+                 stay in the table but are not printed in summary.md.)
+  shields: persona, item, label, avg_pct_worst, weeks_up, weeks, binom_p, usd_weight, contribution_pct,
+                 contribution_per_100k, twin_max_drawdown, actual_max_drawdown
+                 (per persona, in the persona's own worst 10% portfolio weeks (count rounded up, ties by earlier
+                 date), weekly CAD simple returns. EXTERNAL items only, no row for the persona's own holdings
+                 (they are tautologically BROKEN): usdcad (weekly change), then GLD, ZST.TO, XBB.TO, AGG,
+                 TLT_usd (TLT minus usdcad), then the hedged twin "<persona>:A->B" when a hedged swap exists
+                 (mateo:VFV.TO->XSP.TO). An item is skipped when the persona holds it (so XBB.TO and TLT_usd
+                 have no row for robert) or when its ticker has no returns (warning printed).
+                 avg_pct_worst = mean return in percent; weeks_up = weeks with return > 0; weeks = weeks with
+                 data; binom_p = exact two-sided binomial p of weeks_up vs 0.5. usd_weight = weight of holdings
+                 priced in USD or CAD-listed with unhedged USD exposure (VFV.TO); filled on the usdcad and twin
+                 rows only. contribution_pct is in percentage points: usdcad row = usd_weight * avg usdcad
+                 change in those weeks; twin row = actual portfolio avg_pct_worst minus twin avg_pct_worst (the
+                 cushion the swap would remove, positive if the twin did worse). contribution_per_100k =
+                 contribution_pct * 1000. twin_max_drawdown and actual_max_drawdown (percent, full sample) are
+                 filled on the twin row only. label: WORKING (avg_pct_worst > 0 and weeks_up/weeks >= 0.6 and
+                 binom_p < 0.10), BROKEN (avg_pct_worst <= 0), HIDDEN (usdcad row meeting the WORKING rules
+                 with usd_weight > 0), REMOVED (twin max drawdown deeper than the actual), else NEUTRAL
+                 (inconclusive). Descriptive: 2021-2026 only, past behaviour.)
+  shield_by_crash_type: threshold_set, shield, crash_type, n_weeks, avg_pct, weeks_up, binom_p
+                 (market-level, all weeks with an XIU.TO return, not per persona. crash_type: stock_crash =
+                 XIU.TO weekly CAD simple return < the stock cut-off (%); rate_shock = US 10y weekly change >
+                 the rate cut-off (bp) AND XIU.TO >= the stock cut-off; other = the rest (a week with no US 10y
+                 change cannot be a rate shock). threshold_set = "<stock %>/<rate bp>": "-2/+10" (base),
+                 "-1.5/+5", "-2.5/+15". shield: usdcad, GLD, ZST.TO, XBB.TO, AGG, TLT_usd (a shield without
+                 returns has no rows; a crash type with no weeks keeps its row with n_weeks 0 and null
+                 avg_pct, binom_p). avg_pct = mean weekly simple return in percent; weeks_up = weeks with
+                 return > 0; binom_p = exact two-sided binomial p vs 0.5. Written by
+                 stats.build_shield_by_crash_type(); descriptive, 2021-2026 only, past behaviour,
+                 thresholds tested at three levels.)
+  cushion: stock_side, candidate, avg_pct_worst, weeks_up, weeks, binom_p, avg_pct_all, corr_full
+                 (stock_side XIU.TO | SPY, over the stock side's worst 10% weeks (count rounded up, ties by
+                 earlier date). candidate: usdcad (weekly change), TLT_usd (TLT minus usdcad) and every
+                 universe ticker with returns except the stock side itself; weekly simple returns.
+                 avg_pct_worst / avg_pct_all = mean return in percent in the worst weeks / all weeks;
+                 weeks_up = worst weeks with return > 0; weeks = worst weeks with data; binom_p = exact
+                 two-sided binomial p vs 0.5; corr_full = full-sample correlation with the stock side.
+                 Descriptive, 2021-2026 only, past behaviour.)
+  crash_profile: persona, n_weeks, avg_xiu_pct, avg_us10y_chg_bp, avg_ca10y_chg_bp, avg_brent_pct,
+                 stock_crash_share, rate_shock_share, crash_type
+                 (one row per persona, over the persona's own worst 10% portfolio weeks (same weeks as shields);
+                 n_weeks = their number. avg_xiu_pct = mean XIU.TO weekly CAD simple return in percent;
+                 avg_us10y_chg_bp / avg_ca10y_chg_bp = mean weekly change of DGS10 / BD.CDN.10YR.DQ.YLD in
+                 basis points; avg_brent_pct = mean Brent simple return in percent. stock_crash_share = share
+                 of those weeks with XIU.TO < -2%; rate_shock_share = share with US 10y up > 10 bp (each over
+                 the weeks that have data). crash_type = "stock" if stock_crash_share >= 0.5, "rates" if
+                 rate_shock_share >= 0.5, "mixed" otherwise (also when both are >= 0.5). Written by
+                 stats.build_crash_profile(); descriptive, 2021-2026 only, past behaviour.)
 Subjects (risk tables): the 3 personas (subject_type persona) and each alternative (subject_type alternative,
   subject "<persona>:<holding>-><alternative>", e.g. "robert:TLT->ZST.TO", weights after the swap).
   Weekly subject return = log(1 + sum(weight * (exp(ret_cad) - 1))).
 History constants (top of the history section in compute/stats.py, fixed before looking at results):
   WORST_WEEKS_SHARE = 0.10, CPI_YOY_THRESHOLD_PCT = 3.0, WORST_WINDOW_WEEKS = 13, rolling window 52 weeks.
 summary.md also lists the facts, protection, stock_bond and comovement tables in readable form (the context
-  columns of facts as a second table).
+  columns of facts as a second table), plus shields and crash_profile with the note
+  "2021-2026 only; past behaviour; descriptive".
 Materiality rule (constants at the top of compute/stats.py, fixed before looking at results; OIL_R2_MATERIAL = 0.10):
   "not linked"           if oil_p >= 0.05;
   "material"             if oil_r2 >= OIL_R2_MATERIAL OR |stress13_avg_pct| > normal_swing13_pct;
