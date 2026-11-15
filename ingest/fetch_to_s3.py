@@ -10,7 +10,7 @@ Uploads to s3://$BUCKET/raw/ :
 
 Usage (SageMaker AI notebook terminal; AWS access comes from the notebook's IAM role):
     pip install -r requirements.txt
-    export BUCKET=hidden-oil-<account-id>
+    export BUCKET=cascade-s3-bucket
     python ingest/fetch_to_s3.py --starter-dir data/alphaforge_starter
     python ingest/fetch_to_s3.py --starter-dir data/alphaforge_starter --no-upload   # local check only
 
@@ -150,7 +150,7 @@ def main():
     write_manifest()
 
     if not args.no_upload:
-        bucket = os.environ.get("BUCKET") or sys.exit("Set BUCKET first: export BUCKET=hidden-oil-<account-id>")
+        bucket = os.environ.get("BUCKET") or sys.exit("Set BUCKET first: export BUCKET=cascade-s3-bucket")
         upload(bucket)
 
 
