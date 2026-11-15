@@ -564,3 +564,175 @@ def test_summary_lists_top10_by_abs_beta_with_q_below_010():
     assert rows[0].startswith("| T11 |")           # |beta| = 12 is the largest eligible
     assert "T12" not in section
     assert "| robert | 0.1000 | 0.0000 | 0.2000 |" in md
+
+
+# ---------------------------------------------------------------------------
+# Risk share, stress history, contributions, materiality
+# ---------------------------------------------------------------------------
+
+def test_pick_nonoverlapping_greedy_on_synthetic_series():
+    idx = pd.date_range("2022-01-07", periods=12, freq="W-FRI")
+    log = pd.Series([0, 0, 0.1, 0.1, 0.1, 0.1, 0, 0, 0, 0.05, 0.05, 0.0], index=idx, dtype=float)
+    sums = stats.window_sums(log, 4)
+    ends = stats.pick_nonoverlapping(sums, 4, max_n=10, largest=True)
+    pos = [idx.get_loc(e) for e in ends]
+    assert pos[0] == 5                     # the best window covers weeks 2..5
+    assert all(b - a >= 4 for a, b in zip(pos, pos[1:]))
+    assert len(ends) == 2                  # only two non-overlapping 4-week windows fit greedily
+    assert stats.pick_nonoverlapping(sums, 4, max_n=1) == [idx[5]]
+    down = stats.pick_nonoverlapping(sums, 4, 10, largest=False)
+    assert idx[9] in down                  # the smallest window sum (0.05) ends at week 9
+
+
+def test_window_sums_missing_week_is_nan():
+    idx = pd.DatetimeIndex(pd.to_datetime(["2022-01-07", "2022-01-14", "2022-01-28", "2022-02-04"]))
+    s = pd.Series([0.1, 0.1, 0.1, 0.1], index=idx)
+    assert stats.window_sums(s, 2).isna().tolist() == [True, False, True, False]
+
+
+def test_select_episodes_window1_top_share_and_long_windows_cap():
+    data = make_data()
+    top = stats.select_episodes(data.brent, 1, "oil_up", 10)
+    assert len(top) == int(np.ceil(N_WEEKS * 0.10))
+    assert data.brent.loc[top].min() >= data.brent.drop(top).max()
+    down = stats.select_episodes(data.brent, 1, "oil_down", 5)
+    assert data.brent.loc[down].max() <= data.brent.drop(down).min()
+    assert len(stats.select_episodes(data.brent, 4, "oil_up")) == 10
+    assert len(stats.select_episodes(data.brent, 13, "oil_up")) == 5
+
+
+def test_risk_share_r2_matches_known_single_factor_model():
+    rng = np.random.default_rng(7)
+    x = pd.Series(rng.normal(0, 0.04, N_WEEKS), index=WEEKS)
+    y = 0.5 * x + pd.Series(rng.normal(0, 0.02, N_WEEKS), index=WEEKS)
+    r = stats.regress(y, x)
+    assert r["beta"] == pytest.approx(0.5, abs=0.1)
+    assert r["r2"] == pytest.approx(np.corrcoef(x, y)[0, 1] ** 2)
+    assert r["r2"] == pytest.approx(0.5 ** 2 * 0.04 ** 2 / (0.5 ** 2 * 0.04 ** 2 + 0.02 ** 2), abs=0.08)
+    # same through risk_share: a one-holding-like subject
+    data = make_data()
+    subjects = stats.build_subjects(data)
+    rs = stats.risk_share(data, subjects)
+    s = next(s for s in subjects if s.name == "robert")
+    oil = rs[(rs["subject"] == "robert") & (rs["factor"] == "oil")].iloc[0]
+    both = pd.concat([s.ret, data.brent], axis=1).dropna()
+    assert oil["r2"] == pytest.approx(np.corrcoef(both.iloc[:, 0], both.iloc[:, 1])[0, 1] ** 2)
+    assert set(rs["factor"]) == {"oil", "rates", "stocks"}
+    stocks = rs[(rs["subject"] == "mateo") & (rs["factor"] == "stocks")].iloc[0]
+    assert stocks["r2"] > 0.9              # mateo holds 50% XIU.TO
+
+
+def test_subjects_include_alternatives_with_swapped_weights():
+    w = stats.subject_weights()
+    assert w["robert:TLT->ZST.TO"][0] == "alternative"
+    assert w["robert:TLT->ZST.TO"][1] == {"XBB.TO": 0.40, "ENB.TO": 0.15, "RY.TO": 0.15, "ZST.TO": 0.30}
+    assert w["amira:QQQ->XIU.TO"][1] == {"QQQ": 0.25, "SHOP.TO": 0.25, "XIU.TO": 0.50}
+    assert len(w) == 3 + 5
+    for _, weights in w.values():
+        assert sum(weights.values()) == pytest.approx(1.0)
+
+
+def test_stress_contributions_sum_to_portfolio_average():
+    data = make_data()
+    subjects = stats.build_subjects(data)
+    stress = stats.stress_history(subjects, data.brent)
+    contrib = stats.stress_contributions(data, subjects)
+    assert set(contrib["persona"]) == set(stats.PERSONAS)
+    for (persona, window, direction), g in contrib.groupby(["persona", "window_weeks", "direction"]):
+        row = stress[(stress["subject"] == persona) & (stress["window_weeks"] == window)
+                     & (stress["direction"] == direction)
+                     & (stress["threshold_pct"].isna() | (stress["threshold_pct"] == 10))].iloc[0]
+        assert g["contribution_pct"].sum() == pytest.approx(row["avg_return_pct"], abs=0.5)
+        assert g["share_of_loss"].sum() == pytest.approx(1.0)
+    assert set(contrib["window_weeks"]) == {1, 4, 13}
+
+
+def test_stress_history_columns_values_and_no_inference_columns():
+    data = make_data()
+    subjects = stats.build_subjects(data)
+    st = stats.stress_history(subjects, data.brent)
+    assert list(st.columns) == stats.STRESS_HISTORY_COLUMNS
+    assert not any(c in st.columns for c in ("p", "lo", "hi", "se"))
+    r = st[(st["subject"] == "mateo") & (st["window_weeks"] == 1) & (st["direction"] == "oil_up")]
+    assert sorted(r["threshold_pct"]) == [5.0, 10.0, 20.0]
+    assert st[st["window_weeks"] > 1]["threshold_pct"].isna().all()
+    assert np.allclose(st["per_100k_avg"], st["avg_return_pct"] * 1000)
+    assert np.allclose(st["per_100k_worst"], st["worst_return_pct"] * 1000)
+    row = st[(st["subject"] == "robert") & (st["window_weeks"] == 13) & (st["direction"] == "oil_up")].iloc[0]
+    assert row["n_episodes"] == 5
+    assert len(row["episode_end_dates"].split(",")) == 5
+    assert row["worst_end_date"].isoformat() in row["episode_end_dates"]
+    assert (st["worst_return_pct"] <= st["avg_return_pct"] + 1e-12).all()
+
+
+def test_normal_swing_uses_non_overlapping_blocks():
+    idx = pd.date_range("2022-01-07", periods=39, freq="W-FRI")
+    log = pd.Series(0.0, index=idx)
+    log.iloc[0:13] = 0.01 / 13 * 1.0
+    log.iloc[13:26] = 0.0
+    log.iloc[26:39] = -0.01 / 13
+    got = stats.normal_swing(log, 13)
+    blocks = np.array([np.exp(0.01) - 1, 0.0, np.exp(-0.01) - 1]) * 100
+    assert got == pytest.approx(np.std(blocks, ddof=1))
+    assert np.isnan(stats.normal_swing(log.iloc[:20], 13))
+
+
+@pytest.mark.parametrize("r2,p,stress,swing,expected,at5,at15", [
+    (0.20, 0.01, -1.0, 3.0, "material", "material", "material"),                   # r2 rule
+    (0.02, 0.01, -5.0, 3.0, "material", "material", "material"),                   # stress rule
+    (0.07, 0.01, -1.0, 3.0, "measurable but minor", "material", "measurable but minor"),  # differs at 5
+    (0.02, 0.01, -1.0, 3.0, "measurable but minor", "measurable but minor", "measurable but minor"),
+    (0.40, 0.30, -9.0, 3.0, "not linked", "not linked", "not linked"),              # p wins
+    (0.12, 0.04, -1.0, 3.0, "material", "material", "measurable but minor"),        # differs at 15
+])
+def test_materiality_rule_on_hand_made_rows(r2, p, stress, swing, expected, at5, at15):
+    assert stats.materiality_verdict(r2, p, stress, swing, stats.OIL_R2_MATERIAL) == expected
+    assert stats.materiality_verdict(r2, p, stress, swing, stats.OIL_R2_LOW) == at5
+    assert stats.materiality_verdict(r2, p, stress, swing, stats.OIL_R2_HIGH) == at15
+
+
+def test_materiality_constants_are_fixed():
+    assert (stats.OIL_R2_MATERIAL, stats.OIL_R2_LOW, stats.OIL_R2_HIGH) == (0.10, 0.05, 0.15)
+
+
+def test_materiality_table_and_reason_text():
+    idx = pd.date_range("2022-01-07", periods=39, freq="W-FRI")
+    ret = pd.Series(np.random.default_rng(3).normal(0, 0.03, 39 * 2)[:39], index=idx)
+    subj = stats.Subject("x", "persona", {"A": 1.0}, ret)
+    risk = pd.DataFrame([{"subject": "x", "subject_type": "persona", "factor": "oil", "beta": 0.1,
+                          "lo": 0.0, "hi": 0.2, "p": 0.01, "r2": 0.03, "n_weeks": 39}])
+    stress = pd.DataFrame([{"subject": "x", "window_weeks": 13, "direction": "oil_up", "threshold_pct": np.nan,
+                            "n_episodes": 5, "avg_return_pct": -1.1, "regimes": "2022,2026"}])
+    m = stats.materiality(risk, stress, [subj])
+    assert list(m.columns) == stats.MATERIALITY_COLUMNS
+    row = m.iloc[0]
+    assert row["verdict"] == "measurable but minor"      # r2 3% < 10%, |-1.1| < swing
+    assert row["verdict_at_5"] == row["verdict_at_15"] == "measurable but minor"
+    assert "Oil explains 3.0% of weekly moves" in row["reason_text"]
+    assert "5 largest 13-week oil rises (2022, 2026)" in row["reason_text"]
+    assert "-1.1%" in row["reason_text"]
+
+
+def test_build_risk_tables_and_summary_assert_personas():
+    data = make_data()
+    tables = stats.build_risk_tables(data)
+    assert list(tables) == ["weekly_returns", "risk_share", "stress_history", "stress_contributions",
+                            "materiality"]
+    wr = tables["weekly_returns"]
+    assert list(wr.columns) == stats.WEEKLY_RETURNS_COLUMNS
+    assert {"robert", "robert:TLT->ZST.TO", "XOM"} <= set(wr["subject_or_ticker"])
+    assert len(tables["materiality"]) == 8
+    lines = stats.risk_summary_lines(tables)
+    text = "\n".join(lines)
+    assert "do not add up" in text and "robert:TLT->ZST.TO" in text
+    broken = dict(tables)
+    broken["stress_contributions"] = tables["stress_contributions"].query("persona != 'amira'")
+    with pytest.raises(AssertionError):
+        stats.risk_summary_lines(broken)
+    # write_outputs picks up the extra tables and the summary section
+    base = {"sensitivities": stats.sensitivities(data),
+            "portfolio_beta": stats.portfolio_beta(data, stats.persona_holdings())}
+    s3 = FakeS3()
+    keys = stats.write_outputs({**base, **tables}, "b", s3, data)
+    assert "processed/materiality/part-0.parquet" in keys
+    assert b"do not add up" in s3.objects[("b", "processed/_summary/summary.md")]
