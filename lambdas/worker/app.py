@@ -145,6 +145,9 @@ def process(job_id):
             ContentType="application/json",
         )
         duration = int((time.time() - started) * 1000)
+        extra = {}
+        if data.get("guardrail") is not None:
+            extra["guardrail"] = data["guardrail"]
         _set_status(
             job_id,
             "DONE",
@@ -154,6 +157,7 @@ def process(job_id):
             traceKey=trace_key,
             finishedAt=datetime.now(timezone.utc).isoformat(),
             durationMs=duration,
+            **extra,
         )
         _log(job_id, "DONE", started)
     except Exception as e:

@@ -116,7 +116,7 @@ def test_search_evidence_filter_and_rows(monkeypatch):
 
 def test_entrypoint_returns_four_keys(monkeypatch):
     class FakeAgent:
-        def __init__(self, model=None, tools=None, system_prompt=None):
+        def __init__(self, model=None, tools=None, system_prompt=None, callback_handler=None):
             FakeAgent.system_prompt = system_prompt
 
         def __call__(self, question):
@@ -132,3 +132,60 @@ def test_entrypoint_returns_four_keys(monkeypatch):
     assert out["answer"] == "final answer"
     assert out["toolCalls"][0]["name"] == "get_validation"
     assert FakeAgent.system_prompt == "INSTRUCTIONS\nPersona: robert\nLevel: advanced"
+
+
+INPUT_TRACE = {"inputAssessment": {"gid": {
+    "topicPolicy": {"topics": [{"name": "Stock tips", "type": "DENY", "action": "BLOCKED"},
+                               {"name": "Other", "type": "DENY", "action": "NONE"}]},
+    "contentPolicy": {"filters": [{"type": "INSULTS", "confidence": "HIGH", "action": "BLOCKED"}]},
+    "wordPolicy": {"customWords": [{"match": "badword", "action": "BLOCKED"}],
+                   "managedWordLists": [{"match": "prof", "type": "PROFANITY", "action": "BLOCKED"}]},
+    "sensitiveInformationPolicy": {"piiEntities": [{"type": "EMAIL", "match": "a@b.c", "action": "ANONYMIZED"}]},
+}}}
+OUTPUT_TRACE = {"outputAssessments": {"gid": [{
+    "contextualGroundingPolicy": {"filters": [
+        {"type": "GROUNDING", "threshold": 0.8, "score": 0.4, "action": "BLOCKED"},
+        {"type": "RELEVANCE", "threshold": 0.5, "score": 0.9, "action": "NONE"}]},
+}]}}
+
+
+def test_summarize_guardrail_input_and_output():
+    assert ag.summarize_guardrail(INPUT_TRACE) == [{
+        "source": "INPUT",
+        "topics": ["Stock tips"],
+        "content_filters": ["INSULTS"],
+        "words": ["badword", "prof"],
+        "sensitive_information": ["EMAIL"],
+    }]
+    assert ag.summarize_guardrail(OUTPUT_TRACE) == [{
+        "source": "OUTPUT",
+        "contextual_grounding": [{"type": "GROUNDING", "score": 0.4, "threshold": 0.8}],
+    }]
+
+
+def test_summarize_apply_guardrail_response():
+    resp = {"action": "GUARDRAIL_INTERVENED", "assessments": [INPUT_TRACE["inputAssessment"]["gid"]]}
+    recs = ag.summarize_guardrail(resp, source="INPUT")
+    assert recs[0]["source"] == "INPUT" and recs[0]["topics"] == ["Stock tips"]
+    assert ag.summarize_guardrail({"assessments": [{}]}, source="INPUT") == []
+
+
+def test_entrypoint_returns_and_logs_guardrail(monkeypatch, capsys):
+    class FakeAgent:
+        def __init__(self, model=None, tools=None, system_prompt=None, callback_handler=None):
+            self.cb = callback_handler
+
+        def __call__(self, question):
+            self.cb(event={"metadata": {"trace": {"guardrail": OUTPUT_TRACE}}})
+            self.cb(data="text")
+            return "blocked"
+
+    monkeypatch.setattr(ag, "Agent", FakeAgent)
+    monkeypatch.setattr(ag, "_build_model", lambda: object())
+    out = ag.invoke({"question": "q", "persona": "robert", "level": "advanced"})
+    assert out["guardrail"] == [{
+        "source": "OUTPUT",
+        "contextual_grounding": [{"type": "GROUNDING", "score": 0.4, "threshold": 0.8}],
+    }]
+    logged = [json.loads(l) for l in capsys.readouterr().out.splitlines() if l.startswith("{")]
+    assert {"guardrail": out["guardrail"]} in logged

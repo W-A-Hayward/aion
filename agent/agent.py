@@ -34,6 +34,7 @@ _kb_client = None
 _lock = threading.Lock()
 _tool_calls = []
 _citations = []
+_guardrail_traces = []
 
 
 # ----------------------------------------------------------------------------- helpers
@@ -254,6 +255,71 @@ def _build_model():
     )
 
 
+_FIRED = ("BLOCKED", "ANONYMIZED")
+
+
+def _fired(items):
+    return [i for i in (items or []) if isinstance(i, dict) and i.get("action") in _FIRED]
+
+
+def _summarize_assessment(a):
+    """Policies that fired in one guardrail assessment dict (Converse trace or apply_guardrail)."""
+    out = {}
+    topics = [t.get("name") for t in _fired((a.get("topicPolicy") or {}).get("topics"))]
+    filters = [f.get("type") for f in _fired((a.get("contentPolicy") or {}).get("filters"))]
+    wp = a.get("wordPolicy") or {}
+    words = [w.get("match") for w in _fired(wp.get("customWords")) + _fired(wp.get("managedWordLists"))]
+    sp = a.get("sensitiveInformationPolicy") or {}
+    entities = [e.get("type") for e in _fired(sp.get("piiEntities"))]
+    entities += [r.get("name") for r in _fired(sp.get("regexes"))]
+    grounding = [
+        {"type": f.get("type"), "score": f.get("score"), "threshold": f.get("threshold")}
+        for f in _fired((a.get("contextualGroundingPolicy") or {}).get("filters"))
+    ]
+    for key, value in (("topics", topics), ("content_filters", filters), ("words", words),
+                       ("sensitive_information", entities), ("contextual_grounding", grounding)):
+        if value:
+            out[key] = value
+    return out
+
+
+def summarize_guardrail(trace, source=None):
+    """Which guardrail policies fired. `trace` is the Converse trace["guardrail"] dict, or an
+    apply_guardrail response (pass `source`="INPUT"/"OUTPUT" for the latter).
+    Returns a list of {"source", topics, content_filters, words, sensitive_information,
+    contextual_grounding} records, one per source, containing only the policies that fired."""
+    if not isinstance(trace, dict):
+        return []
+    pairs = []
+    for a in (trace.get("inputAssessment") or {}).values():
+        pairs.append(("INPUT", a))
+    for lst in (trace.get("outputAssessments") or {}).values():
+        for a in lst or []:
+            pairs.append(("OUTPUT", a))
+    for a in trace.get("assessments") or []:
+        pairs.append((source or trace.get("source"), a))
+    merged = {}
+    for src, a in pairs:
+        if not isinstance(a, dict):
+            continue
+        for key, value in _summarize_assessment(a).items():
+            rec = merged.setdefault(src, {"source": src})
+            rec.setdefault(key, []).extend(value)
+    return list(merged.values())
+
+
+def _on_stream_event(**kwargs):
+    """Strands callback: collect guardrail traces from raw model stream metadata."""
+    ev = kwargs.get("event")
+    if not isinstance(ev, dict):
+        return
+    meta = ev.get("metadata")
+    trace = ((meta or {}).get("trace") or {}).get("guardrail") if isinstance(meta, dict) else None
+    if trace:
+        with _lock:
+            _guardrail_traces.append(trace)
+
+
 def _usage(result):
     metrics = getattr(result, "metrics", None)
     usage = getattr(metrics, "accumulated_usage", None) if metrics is not None else None
@@ -269,13 +335,23 @@ def invoke(payload):
     with _lock:
         _tool_calls.clear()
         _citations.clear()
+        _guardrail_traces.clear()
     system_prompt = "%s\nPersona: %s\nLevel: %s" % (_get_instructions(), persona, level)
-    agent = Agent(model=_build_model(), tools=TOOLS, system_prompt=system_prompt)
+    agent = Agent(model=_build_model(), tools=TOOLS, system_prompt=system_prompt,
+                  callback_handler=_on_stream_event)
     result = agent(question)
     with _lock:
         calls = list(_tool_calls)
         citations = list(_citations)
-    return {"answer": str(result), "toolCalls": calls, "citations": citations, "usage": _usage(result)}
+        traces = list(_guardrail_traces)
+    out = {"answer": str(result), "toolCalls": calls, "citations": citations, "usage": _usage(result)}
+    records = []
+    for trace in traces:
+        records.extend(summarize_guardrail(trace))
+    if records:
+        out["guardrail"] = records
+        print(json.dumps({"guardrail": records}, default=str))
+    return out
 
 
 if __name__ == "__main__":

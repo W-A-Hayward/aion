@@ -133,6 +133,22 @@ def test_done_path(setup):
     assert isinstance(item["durationMs"], int) and item["finishedAt"]
 
 
+def test_guardrail_saved_when_present(setup):
+    make, item, s3 = setup
+    body = fake_body()
+    body["guardrail"] = {"action": "INTERVENED"}
+    make(FakeAgent(body))
+    app.lambda_handler(event(), None)
+    assert item["guardrail"] == {"action": "INTERVENED"}
+
+
+def test_guardrail_absent_by_default(setup):
+    make, item, s3 = setup
+    make(FakeAgent(fake_body()))
+    app.lambda_handler(event(), None)
+    assert "guardrail" not in item
+
+
 def test_floats_become_decimal(setup):
     make, item, s3 = setup
     body = fake_body()

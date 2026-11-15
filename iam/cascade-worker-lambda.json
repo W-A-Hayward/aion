@@ -25,8 +25,8 @@
       "Effect": "Allow",
       "Action": "bedrock-agentcore:InvokeAgentRuntime",
       "Resource": [
-        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-*",
-        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-*/runtime-endpoint/*"
+        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/agent-uciA60FqQs",
+        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/agent-uciA60FqQs/*"
       ]
     },
     {
