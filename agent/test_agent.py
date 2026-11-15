@@ -134,6 +134,23 @@ def test_entrypoint_returns_four_keys(monkeypatch):
     assert FakeAgent.system_prompt == "INSTRUCTIONS\nPersona: robert\nLevel: advanced"
 
 
+def test_build_model_guards_latest_message_only(monkeypatch):
+    captured = {}
+
+    class FakeModel:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(ag, "BedrockModel", FakeModel)
+    monkeypatch.setattr(ag, "GUARDRAIL_ID", "gid")
+    monkeypatch.setattr(ag, "GUARDRAIL_VERSION", "1")
+    ag._build_model()
+    assert captured["guardrail_latest_message"] is True
+    assert captured["guardrail_id"] == "gid"
+    assert captured["guardrail_version"] == "1"
+    assert captured["guardrail_trace"] == "enabled"
+
+
 INPUT_TRACE = {"inputAssessment": {"gid": {
     "topicPolicy": {"topics": [{"name": "Stock tips", "type": "DENY", "action": "BLOCKED"},
                                {"name": "Other", "type": "DENY", "action": "NONE"}]},

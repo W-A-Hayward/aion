@@ -251,6 +251,7 @@ def _build_model():
         guardrail_id=GUARDRAIL_ID,
         guardrail_version=GUARDRAIL_VERSION,
         guardrail_trace="enabled",
+        guardrail_latest_message=True,  # evaluate only the latest user message, not the system prompt/history
         max_tokens=1500,
     )
 
