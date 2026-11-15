@@ -14,8 +14,12 @@ Usage (SageMaker AI notebook terminal; AWS access comes from the notebook's IAM 
     python ingest/fetch_to_s3.py --starter-dir data/alphaforge_starter
     python ingest/fetch_to_s3.py --starter-dir data/alphaforge_starter --no-upload   # local check only
 
-If a holdings download fails (issuer links change), click "Download holdings" on the fund
-page, save the file as data/manual/xiu_holdings.csv or data/manual/xesg_holdings.csv, and rerun.
+Manual fallbacks (the script uses data/manual/<file> first when it exists):
+  - FRED sometimes times out from AWS. Open https://fred.stlouisfed.org/series/DCOILBRENTEU and
+    .../series/T10YIE in a browser -> Download -> CSV, save as data/manual/DCOILBRENTEU.csv and
+    data/manual/T10YIE.csv, rerun.
+  - Holdings: click "Download holdings" on the fund page, save as data/manual/xiu_holdings.csv or
+    data/manual/xesg_holdings.csv, rerun.
 """
 import argparse
 import csv
@@ -23,6 +27,7 @@ import hashlib
 import io
 import os
 import sys
+import time
 from datetime import date, datetime, timezone
 from pathlib import Path
 
@@ -49,6 +54,7 @@ HOLDINGS = {
 }
 
 MANIFEST = []
+MISSING = []   # inputs that could not be fetched
 
 
 def save(content: bytes, rel_path: str, source: str, url: str, note: str = ""):
@@ -63,10 +69,18 @@ def save(content: bytes, rel_path: str, source: str, url: str, note: str = ""):
     print(f"  saved {rel_path} ({len(content):,} bytes)")
 
 
-def get(url: str) -> bytes:
-    r = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (datathon research)"}, timeout=60)
-    r.raise_for_status()
-    return r.content
+def get(url: str, tries: int = 3, timeout: int = 30) -> bytes:
+    """GET with retries and backoff (5 s, 10 s). Raises the last error if every try fails."""
+    for i in range(tries):
+        try:
+            r = requests.get(url, headers={"User-Agent": "Mozilla/5.0 (datathon research)"}, timeout=timeout)
+            r.raise_for_status()
+            return r.content
+        except requests.RequestException as e:
+            if i == tries - 1:
+                raise
+            print(f"  retry {i + 1}/{tries - 1} after error: {type(e).__name__}")
+            time.sleep(5 * (i + 1))
 
 
 def copy_starter(starter_dir: Path):
@@ -79,8 +93,20 @@ def copy_starter(starter_dir: Path):
 
 def fetch_fred():
     for sid, label in FRED_SERIES.items():
-        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}"
-        save(get(url), f"raw/fred/snapshot={TODAY}/{sid}.csv", "FRED", url, label)
+        # cosd/coed limit the download to our window: smaller, faster response
+        url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={sid}&cosd={START}&coed={END}"
+        manual = MANUAL / f"{sid}.csv"
+        if manual.exists():
+            content, src = manual.read_bytes(), f"manual download from https://fred.stlouisfed.org/series/{sid}"
+        else:
+            try:
+                content, src = get(url), url
+            except requests.RequestException as e:
+                print(f"  {sid}: download failed ({type(e).__name__}). Download the CSV from "
+                      f"https://fred.stlouisfed.org/series/{sid} and save it as {manual}, then rerun.")
+                MISSING.append(sid)
+                continue
+        save(content, f"raw/fred/snapshot={TODAY}/{sid}.csv", "FRED", src, label)
 
 
 def fetch_prices():
@@ -111,10 +137,12 @@ def fetch_holdings():
             try:
                 content, src = get(url), url
             except requests.RequestException as e:
-                print(f"  {name}: automatic download failed ({e}). Save it by hand to {manual} and rerun.")
+                print(f"  {name}: automatic download failed ({type(e).__name__}). Save it by hand to {manual} and rerun.")
+                MISSING.append(name)
                 continue
         if b"Ticker" not in content[:5000]:
             print(f"  {name}: file doesn't look like a holdings CSV. Save it by hand to {manual} and rerun.")
+            MISSING.append(name)
             continue
         save(content, f"raw/holdings/snapshot={TODAY}/{name}_holdings.csv", "BlackRock iShares Canada", src)
 
