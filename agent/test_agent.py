@@ -114,7 +114,7 @@ def test_search_evidence_filter_and_rows(monkeypatch):
     assert len(ag._citations) == 1
 
 
-def test_entrypoint_returns_four_keys(monkeypatch):
+def test_entrypoint_returns_five_keys(monkeypatch):
     class FakeAgent:
         def __init__(self, model=None, tools=None, system_prompt=None, callback_handler=None):
             FakeAgent.system_prompt = system_prompt
@@ -128,7 +128,7 @@ def test_entrypoint_returns_four_keys(monkeypatch):
 
     out = ag.invoke({"question": "q", "persona": "robert", "level": "advanced"})
 
-    assert set(out) == {"answer", "toolCalls", "citations", "usage"}
+    assert set(out) == {"answer", "toolCalls", "citations", "claims", "usage"}
     assert out["answer"] == "final answer"
     assert out["toolCalls"][0]["name"] == "get_validation"
     assert FakeAgent.system_prompt == "INSTRUCTIONS\nPersona: robert\nLevel: advanced"

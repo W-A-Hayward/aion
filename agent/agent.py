@@ -34,6 +34,7 @@ _kb_client = None
 _lock = threading.Lock()
 _tool_calls = []
 _citations = []
+_claims = []
 _guardrail_traces = []
 
 
@@ -85,6 +86,83 @@ def _record_citation(row):
         })
 
 
+def _number(value):
+    ok = isinstance(value, (int, float)) and not isinstance(value, bool) and value == value
+    return value if ok else None
+
+
+def _text(value):
+    return value if isinstance(value, str) and value else None
+
+
+def claims_from_result(name, params, result):
+    """Structured claims taken from one tool result (never from the model's prose).
+
+    Each claim is {"ticker" | "persona": str, "label"?, "beta"?, "verdict"?, "impact_pct"?}. Scenario
+    claims also carry "shock_pct", because impact_pct means nothing without it. A result with an
+    "error" gives no claims. Keep in step with eval/claims.py, which rebuilds claims from stored
+    tool calls.
+    """
+    if not isinstance(result, dict) or result.get("error"):
+        return []
+    params = params if isinstance(params, dict) else {}
+    ticker = result.get("ticker") or params.get("ticker")
+    persona = result.get("persona") or params.get("persona")
+    out = []
+
+    def add(key, subject, **fields):
+        fields = {k: v for k, v in fields.items() if v is not None}
+        if subject and fields:
+            out.append(dict({key: subject}, **fields))
+
+    def rows(key):
+        return [r for r in (result.get(key) or []) if isinstance(r, dict)]
+
+    def box(key):
+        value = result.get(key)
+        return value if isinstance(value, dict) else {}
+
+    if name == "get_portfolio_exposure":
+        for h in rows("holdings"):
+            add("ticker", h.get("ticker"), beta=_number(h.get("beta")))
+        add("persona", persona, beta=_number(box("portfolio_beta").get("beta")))
+    elif name == "get_asset_sensitivity":
+        add("ticker", ticker, beta=_number(box("sensitivity").get("beta_simple")))
+    elif name == "explain_channel":
+        add("ticker", ticker, label=_text(box("confidence").get("label")))
+    elif name == "get_validation":
+        add("ticker", ticker, label=_text(box("validation").get("label")))
+    elif name == "run_scenario":
+        shock = _number(result.get("oil_shock_pct"))
+        shock = int(shock) if shock is not None and shock == int(shock) else shock
+        for s in rows("scenario"):
+            add("persona", persona, impact_pct=_number(s.get("impact_pct")), shock_pct=shock)
+        for h in rows("holding_impacts"):
+            add("ticker", h.get("ticker"), impact_pct=_number(h.get("impact_pct")), shock_pct=shock)
+    elif name == "compare_alternative":
+        c = box("comparison")
+        add("ticker", result.get("holding"), beta=_number(c.get("beta_holding")))
+        add("ticker", result.get("alternative"), beta=_number(c.get("beta_alternative")))
+
+    # A verdict (for example from a materiality table) at the top level or one level down.
+    for holder in [result] + [v for v in result.values() if isinstance(v, dict)]:
+        verdict = _text(holder.get("verdict"))
+        if verdict:
+            if ticker:
+                add("ticker", ticker, verdict=verdict)
+            else:
+                add("persona", persona, verdict=verdict)
+    return out
+
+
+def _record_claims(name, params, result):
+    new = claims_from_result(name, params, result)
+    with _lock:
+        for claim in new:
+            if claim not in _claims:  # deduplicate
+                _claims.append(claim)
+
+
 def _call_tools_lambda(name, **params):
     """Invoke cascade-tools in the Bedrock-Agent event format; return the parsed JSON body."""
     event = {
@@ -107,6 +185,7 @@ def _call_tools_lambda(name, **params):
     except Exception as e:  # return the failure to the model instead of crashing the run
         result = {"error": "tool call failed: %s" % type(e).__name__, "allowed": []}
     _record_call(name, params, result)
+    _record_claims(name, params, result)
     return result
 
 
@@ -336,6 +415,7 @@ def invoke(payload):
     with _lock:
         _tool_calls.clear()
         _citations.clear()
+        _claims.clear()
         _guardrail_traces.clear()
     system_prompt = "%s\nPersona: %s\nLevel: %s" % (_get_instructions(), persona, level)
     agent = Agent(model=_build_model(), tools=TOOLS, system_prompt=system_prompt,
@@ -344,8 +424,10 @@ def invoke(payload):
     with _lock:
         calls = list(_tool_calls)
         citations = list(_citations)
+        claims = list(_claims)
         traces = list(_guardrail_traces)
-    out = {"answer": str(result), "toolCalls": calls, "citations": citations, "usage": _usage(result)}
+    out = {"answer": str(result), "toolCalls": calls, "citations": citations, "claims": claims,
+           "usage": _usage(result)}
     records = []
     for trace in traces:
         records.extend(summarize_guardrail(trace))
