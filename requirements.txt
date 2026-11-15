@@ -5,4 +5,5 @@ requests>=2.31
 yfinance>=0.2.50
 boto3>=1.34
 statsmodels>=0.14
-pypdf>=4.0
+pypdf[crypto]>=4.0
+fonttools
