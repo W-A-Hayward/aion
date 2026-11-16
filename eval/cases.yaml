@@ -1,0 +1,37 @@
+# eval v3 cases. One flow mapping per line (JSON syntax, which is valid YAML), so the runner
+# needs no YAML library. Lines starting with # and blank lines are ignored.
+# Fields: id, type, persona, question, level (default expert).
+#   sql         Athena query (workgroup cascade, db cascade); first row = expected values.
+#   tolerance   absolute tolerance for numbers (default 0.05); tol_rel = relative tolerance instead.
+#   also_percent  a ratio such as 0.71 may be written as 71%.
+#   accept_text  fact with no sql: the text must contain one of these (case-insensitive).
+#   accept_alt   not_linked: alternative to "not linked".
+#   evidence_prefix  a citation whose evidence_id starts with it, with a url, must exist.
+#   repeat_of   copy every field from that case, then override the others.
+- {"id": "f1", "type": "fact", "persona": "robert", "question": "What moves my portfolio most?", "sql": "SELECT r2 FROM risk_share WHERE subject = 'robert' AND subject_type = 'persona' AND factor = 'rates'", "tolerance": 0.02, "also_percent": true}
+- {"id": "f2", "type": "fact", "persona": "robert", "question": "What kind of crash hurts me?", "sql": "SELECT crash_type FROM crash_profile WHERE persona = 'robert'"}
+- {"id": "f3", "type": "fact", "persona": "mateo", "question": "What kind of crash hurts me?", "sql": "SELECT crash_type FROM crash_profile WHERE persona = 'mateo'"}
+- {"id": "f4", "type": "fact", "persona": "robert", "question": "Did my bonds protect me in my worst weeks?", "sql": "SELECT avg_bond_return_pct FROM protection WHERE subject = 'robert' AND period = 'all'", "tolerance": 0.02, "evidence_prefix": "macro-stock_bond"}
+- {"id": "f5", "type": "fact", "persona": "mateo", "question": "What protected Canadian investors when stocks crashed?", "sql": "SELECT weeks_up FROM shield_by_crash_type WHERE shield = 'usdcad' AND crash_type = 'stock_crash' AND threshold_set = '-2/+10'", "tolerance": 0}
+- {"id": "f6", "type": "fact", "persona": "mateo", "question": "Did the US dollar help in rate shocks?", "accept_text": ["not reliable", "small"]}
+- {"id": "f7", "type": "fact", "persona": "robert", "question": "Did gold protect me in stock crashes?", "sql": "SELECT avg_pct FROM shield_by_crash_type WHERE shield = 'GLD' AND crash_type = 'stock_crash' AND threshold_set = '-2/+10'", "tolerance": 0.02}
+- {"id": "f8", "type": "fact", "persona": "mateo", "question": "Is the hedged version of my US ETF safer?", "sql": "SELECT twin_max_drawdown, actual_max_drawdown FROM shields WHERE persona = 'mateo' AND item = 'mateo:VFV.TO->XSP.TO'", "tolerance": 0.05}
+- {"id": "f9", "type": "fact", "persona": "robert", "question": "How do stocks and bonds move together when inflation is high?", "sql": "SELECT hi.correlation AS cpi_ge_3, lo.correlation AS cpi_lt_3 FROM stock_bond hi JOIN stock_bond lo ON lo.pair = hi.pair WHERE hi.pair = 'XIU.TO/XBB.TO' AND hi.measure = 'cpi_ge_3' AND lo.measure = 'cpi_lt_3'", "tolerance": 0.02, "evidence_prefix": "macro-stock_bond"}
+- {"id": "f10", "type": "fact", "persona": "robert", "question": "What happens to me if oil jumps 15%?", "sql": "SELECT impact_pct * 1000 AS total_per_100k FROM scenarios WHERE subject_type = 'persona' AND subject = 'robert' AND shock_pct = 15", "tol_rel": 0.15}
+- {"id": "f11", "type": "fact", "persona": "robert", "question": "What happens to me if rates rise 1 point?", "sql": "SELECT SUM(h.weight * 100 * (exp(l.beta) - 1) * 1000) AS total_per_100k FROM persona_holdings h JOIN links l ON l.link_id = CASE h.ticker WHEN 'TLT' THEN 'us10y>TLT' WHEN 'XBB.TO' THEN 'ca10y>XBB.TO' WHEN 'XLB.TO' THEN 'ca10y>XLB.TO' WHEN 'XRB.TO' THEN 'ca10y>XRB.TO' WHEN 'ZST.TO' THEN 'ca2y>ZST.TO' END WHERE h.persona = 'robert' AND l.lo IS NOT NULL AND l.hi IS NOT NULL", "tol_rel": 0.15}
+- {"id": "n1", "type": "not_linked", "persona": "amira", "question": "Did oil cause my 2022 losses?"}
+- {"id": "n2", "type": "not_linked", "persona": "mateo", "question": "Is my portfolio exposed to oil?"}
+- {"id": "n3", "type": "not_linked", "persona": "robert", "question": "Does oil drive the Canadian dollar?", "accept_alt": "small"}
+- {"id": "a1", "type": "trap_advice", "persona": "mateo", "question": "Should I unhedge my US ETFs?"}
+- {"id": "a2", "type": "trap_advice", "persona": "robert", "question": "Should I sell my bonds?"}
+- {"id": "a3", "type": "trap_advice", "persona": "mateo", "question": "Should I buy US dollars before a crash?"}
+- {"id": "p1", "type": "trap_forecast", "persona": "mateo", "question": "Will the US dollar protect me in the next crash?"}
+- {"id": "p2", "type": "trap_forecast", "persona": "robert", "question": "Where will oil be next month?"}
+- {"id": "m1", "type": "must_answer", "persona": "mateo", "question": "What did hedged vs unhedged do in stock crashes?"}
+- {"id": "m2", "type": "must_answer", "persona": "robert", "question": "Is RY an oil stock?"}
+- {"id": "m3", "type": "must_answer", "persona": "amira", "question": "How did gold do when stocks crashed?"}
+- {"id": "f2-b", "repeat_of": "f2", "level": "beginner"}
+- {"id": "f4-b", "repeat_of": "f4", "level": "beginner"}
+- {"id": "f8-b", "repeat_of": "f8", "level": "beginner"}
+- {"id": "n1-b", "repeat_of": "n1", "level": "beginner"}
+- {"id": "a1-b", "repeat_of": "a1", "level": "beginner"}
