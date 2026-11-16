@@ -2,10 +2,13 @@
 
   python eval/run_eval.py                 all cases
   python eval/run_eval.py --only f1,a1    subset (case ids)
+  python eval/run_eval.py --rerun-failed  failed or missing cases only
 
 Env: API_URL (default https://wm28zdv834.execute-api.us-east-1.amazonaws.com). Needs AWS credentials for
 Athena (workgroup cascade, database cascade): expected numbers and labels are read there at run time.
 Writes eval/results.md and eval/results.json.
+Each case uses its own random 48-char hex x-cascade-session. A 429 on submit waits 65 s and retries (max 3).
+--rerun-failed reruns only cases that failed or never ran in eval/results.json and merges them back.
 """
 import argparse
 import json
@@ -31,6 +34,8 @@ REGION = "us-east-1"
 WORKGROUP = "cascade"
 DATABASE = "cascade"
 POLL_S = 4
+RATE_LIMIT_WAIT_S = 65
+RATE_LIMIT_RETRIES = 3
 JOB_TIMEOUT_S = 150
 ATHENA_TIMEOUT_S = 60
 HTTP_TIMEOUT_S = 20
@@ -89,10 +94,20 @@ def run_job(api_url, session, case, sleep=time.sleep, clock=time.monotonic):
     """Submit, poll until done or failed. Returns (response, error, latency_s)."""
     started = clock()
     body = {"persona": case["persona"], "question": case["question"], "level": case["level"]}
-    try:
-        sub = http("POST", api_url + "/jobs", session, body)
-    except ApiError as e:
-        return {}, "submit failed: %s" % e.args[0], clock() - started
+    retries = 0
+    while True:
+        try:
+            sub = http("POST", api_url + "/jobs", session, body)
+            break
+        except ApiError as e:
+            if e.args[1] == 429 and retries < RATE_LIMIT_RETRIES:
+                retries += 1
+                sleep(RATE_LIMIT_WAIT_S)
+                continue
+            msg = "submit failed: %s" % e.args[0]
+            if retries:
+                msg += " (after %d retries on 429)" % retries
+            return {}, msg, clock() - started
     job_id = sub.get("job_id") or sub.get("jobId") or sub.get("id")
     if not job_id:
         return sub, "submit returned no job id", clock() - started
@@ -157,7 +172,13 @@ def expected_for(case, query=athena_rows):
 
 
 # ----------------------------------------------------------------------------- run
-def run_case(case, api_url, session, query=athena_rows):
+def new_session():
+    return secrets.token_hex(24)
+
+
+def run_case(case, api_url, session=None, query=athena_rows):
+    """One session per case (48 hex chars), shared by its submit and status polls."""
+    session = session or new_session()
     result = {"id": case["id"], "type": case["type"], "level": case["level"], "persona": case["persona"],
               "question": case["question"], "expected": None, "response": {}, "passed": False,
               "reason": "", "latency_s": 0.0}
@@ -177,7 +198,7 @@ def run_case(case, api_url, session, query=athena_rows):
     return result
 
 
-def run_all(cases, api_url, session, query=athena_rows):
+def run_all(cases, api_url, session=None, query=athena_rows):
     with ThreadPoolExecutor(max_workers=MAX_PARALLEL) as pool:
         return list(pool.map(lambda c: run_case(c, api_url, session, query), cases))
 
@@ -197,7 +218,7 @@ def cell(text):
     return str(text).replace("|", "\\|").replace("\n", " ")
 
 
-def write_reports(results, api_url, session, md_path=RESULTS_MD, json_path=RESULTS_JSON):
+def write_reports(results, api_url, session=None, md_path=RESULTS_MD, json_path=RESULTS_JSON):
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
     lines = ["# Eval v3 results", "", "Run: %s. API: %s" % (now, api_url), "",
              "| id | type | level | result | reason | latency (s) |", "|---|---|---|---|---|---|"]
@@ -218,9 +239,19 @@ def write_reports(results, api_url, session, md_path=RESULTS_MD, json_path=RESUL
     return rate
 
 
+def load_previous(path=RESULTS_JSON):
+    try:
+        with open(path, encoding="utf-8") as f:
+            return {r["id"]: r for r in json.load(f).get("results", [])}
+    except (OSError, ValueError, KeyError, AttributeError):
+        return {}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Run eval v3 against the cascade API.")
     ap.add_argument("--only", help="comma-separated case ids, e.g. f1,a1")
+    ap.add_argument("--rerun-failed", action="store_true",
+                    help="rerun only cases that failed or never ran in eval/results.json, then merge")
     args = ap.parse_args(argv)
     cases = load_cases()
     if args.only:
@@ -230,9 +261,15 @@ def main(argv=None):
             ap.error("unknown case ids: %s" % ", ".join(unknown))
         cases = [c for c in cases if c["id"] in wanted]
     api_url = os.environ.get("API_URL", DEFAULT_API_URL).rstrip("/")
-    session = secrets.token_hex(24)
-    results = run_all(cases, api_url, session)
-    write_reports(results, api_url, session)
+    if args.rerun_failed:
+        previous = load_previous()
+        todo = [c for c in cases if not previous.get(c["id"], {}).get("passed")]
+        fresh = {r["id"]: r for r in run_all(todo, api_url)}
+        results = [fresh.get(c["id"]) or previous[c["id"]] for c in cases if c["id"] in fresh or c["id"] in previous]
+        print("Reran %d case(s)." % len(todo))
+    else:
+        results = run_all(cases, api_url)
+    write_reports(results, api_url)
     ok = sum(r["passed"] for r in results)
     print("%d/%d passed. Wrote %s and %s" % (ok, len(results), RESULTS_MD, RESULTS_JSON))
     return 0 if ok == len(results) else 1
