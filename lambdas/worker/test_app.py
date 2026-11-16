@@ -10,7 +10,7 @@ app = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(app)
 
 
-ARN = "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/cascade_agent-AbCdEfGhIj"
+ARN = "arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/cascade_agent-AbCdEfGhIj"
 
 
 def cerr(code, op="Op"):

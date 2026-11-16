@@ -1,6 +1,6 @@
 # IAM policies
 
-Region `us-east-1`, account `339713040194`, bucket `cascade-s3-bucket`. The full deployment order is in
+Region `us-east-1`, account `ACCOUNT_ID` (replace with your 12-digit account ID before pasting), bucket `cascade-s3-bucket`. The full deployment order is in
 [docs/infrastructure.md](../docs/infrastructure.md).
 
 For each role there are two files:
@@ -28,7 +28,7 @@ resources are created. Replace them afterwards:
 - `KNOWLEDGE_BASE_ID`: the `cascade-evidence` knowledge base ID.
 - `GUARDRAIL_ID`: the `cascade-guardrail` ID. Delete the `Guardrail` statement if you don't use one.
 
-`cascade-worker-lambda.json` names one specific runtime (`runtime/agent-uciA60FqQs`). If you create a new runtime,
+`cascade-worker-lambda.json` names one specific runtime (`runtime/RUNTIME_ID`, a placeholder). When you create the runtime,
 replace that ID with the new runtime's ID (the end of `AGENT_RUNTIME_ARN`).
 
 ## Notes
@@ -48,12 +48,12 @@ replace that ID with the new runtime's ID (the end of `AGENT_RUNTIME_ARN`).
 
 No action contains a wildcard. These resources do:
 
-- `arn:aws:glue:us-east-1:339713040194:table/cascade/*`: the tables in the `cascade` database. Glue evaluates `GetTables` and `GetPartitions` against table ARNs, and the tables are not known up front.
+- `arn:aws:glue:us-east-1:ACCOUNT_ID:table/cascade/*`: the tables in the `cascade` database. Glue evaluates `GetTables` and `GetPartitions` against table ARNs, and the tables are not known up front.
 - `arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-5-5*` and `arn:aws:bedrock:::foundation-model/...`: the global inference profile routes requests to other regions, so the region is `*` (and empty for global routing). Foundation-model ARNs have no account id. The trailing `*` covers model version suffixes.
-- `arn:aws:ecr:us-east-1:339713040194:repository/*`: the agent's container repository is named when the runtime is created. Narrow it to that repository once known.
+- `arn:aws:ecr:us-east-1:ACCOUNT_ID:repository/*`: the agent's container repository is named when the runtime is created. Narrow it to that repository once known.
 - `ecr:GetAuthorizationToken`, X-Ray and `cloudwatch:PutMetricData` (limited to the `bedrock-agentcore` namespace) only accept `*` as a resource.
 - `.../workload-identity-directory/default/workload-identity/*`: AgentCore creates the runtime's workload identity at deploy time.
-- `arn:aws:bedrock:us-east-1:339713040194:agent-alias/*` (legacy role only): the classic agent's IDs are created in the console.
+- `arn:aws:bedrock:us-east-1:ACCOUNT_ID:agent-alias/*` (legacy role only): the classic agent's IDs are created in the console.
 - `.../processed/*`, `.../athena-results/*`, `.../traces/*`: S3 key prefixes, scoped to one prefix each.
 - `s3:ListBucket` condition `processed/*`, `athena-results/*`: limits listing to those prefixes.
 

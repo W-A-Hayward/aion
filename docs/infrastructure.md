@@ -1,7 +1,9 @@
 # cascade infrastructure and deployment runbook
 
 Everything is created in the AWS console (or CloudShell / the SageMaker notebook, which run inside AWS),
-per `.kiro/steering/project.md`. Region **us-east-1**, account **339713040194**, bucket **cascade-s3-bucket**.
+per `.kiro/steering/project.md`. Region **us-east-1**, your 12-digit AWS account ID (written `ACCOUNT_ID` in this repo), bucket **cascade-s3-bucket**.
+Before pasting any file in `iam/` or `infra/api/`, replace `ACCOUNT_ID` with the account ID (top-right menu of the console)
+and `RUNTIME_ID` with the AgentCore runtime ID from step 7.
 Do the steps in order; each one depends on the ones above it. "Paste" means copy the named file's contents.
 
 ```text
@@ -105,7 +107,7 @@ Note the KB ID for step 7. Optionally create guardrail **cascade-guardrail** and
 | `GUARDRAIL_ID`, `GUARDRAIL_VERSION` | optional, from step 6 |
 | `BUCKET` | `cascade-s3-bucket` |
 
-4. Copy the runtime ARN. If its ID differs from `agent-uciA60FqQs`, update `iam/cascade-worker-lambda.json`.
+4. Copy the runtime ARN. Its last segment is the runtime ID; put it in place of `RUNTIME_ID` in `iam/cascade-worker-lambda.json`.
 5. Test in the console with payload `{"question": "How exposed is my portfolio to oil?", "persona": "robert", "level": "beginner"}`.
    The response must have a non-empty `toolCalls`.
 

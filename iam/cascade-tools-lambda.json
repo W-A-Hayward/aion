@@ -9,7 +9,7 @@
         "athena:GetQueryExecution",
         "athena:GetQueryResults"
       ],
-      "Resource": "arn:aws:athena:us-east-1:339713040194:workgroup/cascade"
+      "Resource": "arn:aws:athena:us-east-1:ACCOUNT_ID:workgroup/cascade"
     },
     {
       "Sid": "GlueCatalogReadOnly",
@@ -21,9 +21,9 @@
         "glue:GetPartitions"
       ],
       "Resource": [
-        "arn:aws:glue:us-east-1:339713040194:catalog",
-        "arn:aws:glue:us-east-1:339713040194:database/cascade",
-        "arn:aws:glue:us-east-1:339713040194:table/cascade/*"
+        "arn:aws:glue:us-east-1:ACCOUNT_ID:catalog",
+        "arn:aws:glue:us-east-1:ACCOUNT_ID:database/cascade",
+        "arn:aws:glue:us-east-1:ACCOUNT_ID:table/cascade/*"
       ]
     },
     {

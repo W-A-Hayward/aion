@@ -53,7 +53,7 @@
           "httpMethod": "POST",
           "payloadFormatVersion": "2.0",
           "timeoutInMillis": 29000,
-          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-submit/invocations"
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:ACCOUNT_ID:function:cascade-submit/invocations"
         }
       }
     },
@@ -87,7 +87,7 @@
           "httpMethod": "POST",
           "payloadFormatVersion": "2.0",
           "timeoutInMillis": 29000,
-          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-status/invocations"
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:ACCOUNT_ID:function:cascade-status/invocations"
         }
       }
     },
@@ -123,7 +123,7 @@
           "httpMethod": "POST",
           "payloadFormatVersion": "2.0",
           "timeoutInMillis": 29000,
-          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:339713040194:function:cascade-research/invocations"
+          "uri": "arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:ACCOUNT_ID:function:cascade-research/invocations"
         }
       }
     },
