@@ -10,13 +10,21 @@ export const PERSONAS = Object.freeze({
   amira: { name: 'Amira', initials: 'AM', title: 'Long-term growth', description: 'A sample tilted toward US tech and Canadian e-commerce.', risk: 'High', horizon: '15+ years', experience: 'Intermediate' },
   mateo: { name: 'Mateo', initials: 'MA', title: 'Broad equity, ESG-minded', description: 'A two-fund sample with a stated ESG preference.', risk: 'Moderate', horizon: '8–12 years', experience: 'Intermediate' },
 });
+// Sample weights: compute/stats.py PERSONAS (docs/data_contract.md persona_holdings). Kept here so the app needs no
+// local statistics file to show a sample portfolio.
+export const PERSONA_HOLDINGS = Object.freeze({
+  robert: Object.freeze([{ ticker: 'XBB.TO', weight: 0.4 }, { ticker: 'TLT', weight: 0.3 }, { ticker: 'ENB.TO', weight: 0.15 }, { ticker: 'RY.TO', weight: 0.15 }]),
+  amira: Object.freeze([{ ticker: 'QQQ', weight: 0.5 }, { ticker: 'SHOP.TO', weight: 0.25 }, { ticker: 'XIU.TO', weight: 0.25 }]),
+  mateo: Object.freeze([{ ticker: 'XIU.TO', weight: 0.5 }, { ticker: 'VFV.TO', weight: 0.5 }]),
+});
+export const MAX_PORTFOLIOS = 20;
 export const STORAGE_KEY = 'cascade.workspace.v1';
 export const DEFAULT_NAME = 'Your workspace';
 export const MAX_SAVED = 50;
 export const defaults = () => ({
   version: 1,
-  profile: { name: DEFAULT_NAME, goal: 'Understand my oil exposure', experience: 'beginner' },
-  portfolio: 'robert', capital: 10000, custom: null, watchlist: ['XIU.TO', 'TLT'], saved: [],
+  profile: { name: DEFAULT_NAME, goal: 'Understand what moves my portfolio', experience: 'beginner' },
+  portfolio: 'robert', capital: 10000, custom: null, watchlist: ['XIU.TO', 'TLT'], saved: [], portfolios: [],
 });
 const text = (value, max, fallback = '') => typeof value === 'string' ? value.trim().slice(0, max) : fallback;
 
@@ -52,6 +60,12 @@ export function sanitizeWorkspace(input) {
       holdings: input.custom.holdings.map(({ ticker, weight }) => ({ ticker, weight })) };
   }
   data.portfolio = Object.hasOwn(PERSONAS, input.portfolio) ? input.portfolio : input.portfolio === 'custom' && data.custom ? 'custom' : 'robert';
+  // Saved portfolios: named mixes the user can switch back to (shown under My portfolio).
+  if (Array.isArray(input.portfolios)) data.portfolios = input.portfolios
+    .filter(item => item && typeof item.id === 'string' && !validateHoldings(item.holdings) && Number.isFinite(Date.parse(item.savedAt)))
+    .slice(0, MAX_PORTFOLIOS).map(item => ({ id: text(item.id, 80), name: text(item.name, 60, 'Saved portfolio') || 'Saved portfolio',
+      holdings: item.holdings.map(({ ticker, weight }) => ({ ticker, weight })), savedAt: item.savedAt,
+      capital: finite(item.capital) && item.capital > 0 ? item.capital : null }));
   if (Array.isArray(input.watchlist)) data.watchlist = [...new Set(input.watchlist.filter(isSupported))];
   if (Array.isArray(input.saved)) data.saved = input.saved.filter(item => item && isSupported(item.ticker) && SHOCKS.includes(item.shock)
     && ['preview', 'api'].includes(item.source) && typeof item.id === 'string' && Number.isFinite(Date.parse(item.savedAt))).slice(0, MAX_SAVED).map(item => ({
@@ -91,8 +105,9 @@ export function createWorkspaceStore(storage) {
 }
 
 export function portfolioRows(data, workspace) {
-  return workspace.portfolio === 'custom' ? workspace.custom?.holdings ?? []
-    : data.persona_holdings.filter(row => row.persona === workspace.portfolio);
+  if (workspace.portfolio === 'custom') return workspace.custom?.holdings ?? [];
+  if (!data?.persona_holdings) return (PERSONA_HOLDINGS[workspace.portfolio] ?? []).map(h => ({ persona: workspace.portfolio, ...h }));
+  return data.persona_holdings.filter(row => row.persona === workspace.portfolio);
 }
 
 // Same columns and maths as compute/stats.py portfolio_exposure().

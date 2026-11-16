@@ -139,7 +139,10 @@ CREATE EXTERNAL TABLE IF NOT EXISTS cascade.evidence (
   `source_url`  string,
   `section`     string,
   `excerpt`     string,
-  `s3_key`      string
+  `s3_key`      string,
+  `publisher`   string,
+  `date`        string,
+  `trust`       string
 )
 STORED AS PARQUET
 LOCATION 's3://cascade-s3-bucket/processed/evidence/';
@@ -165,3 +168,194 @@ CREATE EXTERNAL TABLE IF NOT EXISTS cascade.edges (
 )
 STORED AS PARQUET
 LOCATION 's3://cascade-s3-bucket/processed/edges/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.weekly_returns (
+  `week`              date,
+  `subject_or_ticker` string,
+  `ret_cad`           double,
+  `brent_ret`         double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/weekly_returns/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.risk_share (
+  `subject`      string,
+  `subject_type` string,
+  `factor`       string,
+  `beta`         double,
+  `lo`           double,
+  `hi`           double,
+  `p`            double,
+  `r2`           double,
+  `n_weeks`      bigint
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/risk_share/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.stress_history (
+  `subject`           string,
+  `subject_type`      string,
+  `window_weeks`      bigint,
+  `direction`         string,
+  `threshold_pct`     double,
+  `n_episodes`        bigint,
+  `avg_oil_move_pct`  double,
+  `avg_return_pct`    double,
+  `worst_return_pct`  double,
+  `worst_end_date`    date,
+  `per_100k_avg`      double,
+  `per_100k_worst`    double,
+  `episode_end_dates` string,
+  `regimes`           string
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/stress_history/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.stress_contributions (
+  `persona`          string,
+  `ticker`           string,
+  `weight`           double,
+  `window_weeks`     bigint,
+  `direction`        string,
+  `avg_return_pct`   double,
+  `contribution_pct` double,
+  `share_of_loss`    double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/stress_contributions/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.materiality (
+  `subject`            string,
+  `subject_type`       string,
+  `verdict`            string,
+  `verdict_at_5`       string,
+  `verdict_at_15`      string,
+  `oil_r2`             double,
+  `oil_p`              double,
+  `stress13_avg_pct`   double,
+  `normal_swing13_pct` double,
+  `n_episodes_13`      bigint,
+  `regimes`            string,
+  `reason_text`        string
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/materiality/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.facts (
+  `subject`                   string,
+  `subject_type`              string,
+  `max_drawdown_pct`          double,
+  `drawdown_peak_date`        date,
+  `drawdown_trough_date`      date,
+  `recovery_date`             date,
+  `worst_year`                bigint,
+  `worst_year_return_pct`     double,
+  `worst_13w_return_pct`      double,
+  `worst_13w_end_date`        date,
+  `total_return_pct`          double,
+  `annualized_volatility_pct` double,
+  `n_weeks`                   bigint,
+  `dd_us10y_chg_pp`           double,
+  `dd_ca10y_chg_pp`           double,
+  `dd_brent_chg_pct`          double,
+  `dd_xiu_chg_pct`            double,
+  `w13_us10y_chg_pp`          double,
+  `w13_ca10y_chg_pp`          double,
+  `w13_brent_chg_pct`         double,
+  `w13_xiu_chg_pct`           double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/facts/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.protection (
+  `subject`              string,
+  `subject_type`         string,
+  `stock_side`           string,
+  `bond_side`            string,
+  `period`               string,
+  `n_weeks`              bigint,
+  `avg_bond_return_pct`  double,
+  `avg_stock_return_pct` double,
+  `n_worst_weeks`        bigint
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/protection/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.stock_bond (
+  `pair`        string,
+  `measure`     string,
+  `week`        date,
+  `correlation` double,
+  `n_weeks`     bigint,
+  `regime`      string,
+  `z_diff`      double,
+  `p_diff`      double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/stock_bond/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.comovement (
+  `persona`           string,
+  `scope`             string,
+  `avg_pairwise_corr` double,
+  `n_pairs`           bigint,
+  `n_weeks`           bigint
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/comovement/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.cushion (
+  `stock_side`    string,
+  `candidate`     string,
+  `avg_pct_worst` double,
+  `weeks_up`      bigint,
+  `weeks`         bigint,
+  `binom_p`       double,
+  `avg_pct_all`   double,
+  `corr_full`     double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/cushion/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.shields (
+  `persona`               string,
+  `item`                  string,
+  `label`                 string,
+  `avg_pct_worst`         double,
+  `weeks_up`              bigint,
+  `weeks`                 bigint,
+  `binom_p`               double,
+  `usd_weight`            double,
+  `contribution_pct`      double,
+  `contribution_per_100k` double,
+  `twin_max_drawdown`     double,
+  `actual_max_drawdown`   double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/shields/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.crash_profile (
+  `persona`           string,
+  `n_weeks`           bigint,
+  `avg_xiu_pct`       double,
+  `avg_us10y_chg_bp`  double,
+  `avg_ca10y_chg_bp`  double,
+  `avg_brent_pct`     double,
+  `stock_crash_share` double,
+  `rate_shock_share`  double,
+  `crash_type`        string
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/crash_profile/';
+
+CREATE EXTERNAL TABLE IF NOT EXISTS cascade.shield_by_crash_type (
+  `threshold_set` string,
+  `shield`        string,
+  `crash_type`    string,
+  `n_weeks`       bigint,
+  `avg_pct`       double,
+  `weeks_up`      bigint,
+  `binom_p`       double
+)
+STORED AS PARQUET
+LOCATION 's3://cascade-s3-bucket/processed/shield_by_crash_type/';

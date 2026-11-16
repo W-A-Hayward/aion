@@ -110,11 +110,16 @@ def main(argv=None):
     calls = body.get("toolCalls") or [] if isinstance(body, dict) else []
     check(state == "DONE", "job reached DONE", body.get("error", "") if isinstance(body, dict) else "")
     if state == "DONE":
-        check(bool((body.get("answer") or "").strip()), "answer is not empty")
+        answer = body.get("answer")
+        # docs/api_contract.md: answer is {verdict, headline, text, refusal, caveat}; older jobs return a string.
+        text = (answer.get("text") or "") if isinstance(answer, dict) else (answer or "")
+        refused = isinstance(answer, dict) and answer.get("refusal") is True
+        check(bool(text.strip()) or refused, "answer is not empty")
         check(len(calls) > 0, "agent called at least one tool", ", ".join(c.get("name", "?") for c in calls))
         check(cors_ok(h), "status CORS header", str(h.get("access-control-allow-origin")))
         print("     durationMs=%s citations=%d" % (body.get("durationMs"), len(body.get("citations") or [])))
-        print("     answer: %s" % (body.get("answer") or "")[:400].replace("\n", " "))
+        verdict = answer.get("verdict") if isinstance(answer, dict) else None
+        print("     answer: %s%s" % ("[%s] " % verdict if verdict else "", text[:400].replace("\n", " ")))
     print("\n%s" % ("ALL CHECKS PASSED" if not check.failed else "%d CHECK(S) FAILED" % check.failed))
     return 1 if check.failed else 0
 

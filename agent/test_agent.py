@@ -54,6 +54,7 @@ def _call(fn, *args, **kwargs):
 def reset(monkeypatch):
     ag._tool_calls.clear()
     ag._citations.clear()
+    ag._request["holdings"] = None
     monkeypatch.setattr(ag, "_instructions", "INSTRUCTIONS")
     yield
 
@@ -114,7 +115,7 @@ def test_search_evidence_filter_and_rows(monkeypatch):
     assert len(ag._citations) == 1
 
 
-def test_entrypoint_returns_five_keys(monkeypatch):
+def test_entrypoint_returns_contract_and_legacy_keys(monkeypatch):
     class FakeAgent:
         def __init__(self, model=None, tools=None, system_prompt=None, callback_handler=None):
             FakeAgent.system_prompt = system_prompt
@@ -128,9 +129,13 @@ def test_entrypoint_returns_five_keys(monkeypatch):
 
     out = ag.invoke({"question": "q", "persona": "robert", "level": "advanced"})
 
-    assert set(out) == {"answer", "toolCalls", "citations", "claims", "usage"}
-    assert out["answer"] == "final answer"
+    # answer_text / trace / tool_results feed the worker's contract object; the rest are the legacy keys
+    # that eval/ and the smoke test still read.
+    assert set(out) == {"answer_text", "trace", "tool_results", "answer", "toolCalls", "citations", "claims", "usage"}
+    assert out["answer"] == out["answer_text"] == "final answer"
     assert out["toolCalls"][0]["name"] == "get_validation"
+    assert out["trace"][0]["tool"] == "get_validation" and out["trace"][0]["tag"] == "measured"
+    assert out["tool_results"]["get_validation"] == [{"x": 1}]
     assert FakeAgent.system_prompt == "INSTRUCTIONS\nPersona: robert\nLevel: advanced"
 
 
@@ -206,3 +211,47 @@ def test_entrypoint_returns_and_logs_guardrail(monkeypatch, capsys):
     }]
     logged = [json.loads(l) for l in capsys.readouterr().out.splitlines() if l.startswith("{")]
     assert {"guardrail": out["guardrail"]} in logged
+
+
+def test_custom_portfolio_holdings_attached_to_portfolio_tools(monkeypatch):
+    client = mock.Mock()
+    client.invoke.return_value = _lambda_response({"ok": 1})
+    monkeypatch.setattr(ag, "_lambda_client", client)
+    holdings = [{"ticker": "XIU.TO", "weight": 0.6}, {"ticker": "ENB.TO", "weight": 0.4}]
+
+    class FakeAgent:
+        def __init__(self, model=None, tools=None, system_prompt=None, callback_handler=None):
+            FakeAgent.system_prompt = system_prompt
+
+        def __call__(self, question):
+            _call(ag.get_portfolio_exposure, "custom")
+            _call(ag.run_scenario, "Custom", "-30")
+            return "answer"
+
+    monkeypatch.setattr(ag, "Agent", FakeAgent)
+    monkeypatch.setattr(ag, "_build_model", lambda: object())
+    out = ag.invoke({"question": "q", "persona": "custom", "level": "beginner", "holdings": holdings})
+    events = [json.loads(c.kwargs["Payload"]) for c in client.invoke.call_args_list]
+    for e in events:
+        params = {p["name"]: p["value"] for p in e["parameters"]}
+        assert params["persona"] == "custom" and json.loads(params["holdings"]) == holdings
+    assert "XIU.TO 60%, ENB.TO 40%" in FakeAgent.system_prompt
+    assert "proxy" in FakeAgent.system_prompt and "compare_alternative and rates scenarios are not available" in FakeAgent.system_prompt
+    assert out["answer"] == "answer"
+
+
+def test_sample_persona_never_gets_holdings(monkeypatch):
+    client = mock.Mock()
+    client.invoke.return_value = _lambda_response({"ok": 1})
+    monkeypatch.setattr(ag, "_lambda_client", client)
+    ag._request["holdings"] = [{"ticker": "XOM", "weight": 1.0}]
+    _call(ag.get_portfolio_exposure, "robert")
+    params = json.loads(client.invoke.call_args.kwargs["Payload"])["parameters"]
+    assert params == [{"name": "persona", "type": "string", "value": "robert"}]
+
+
+@pytest.mark.parametrize("raw", [None, "XOM", [{"ticker": "x'; drop", "weight": 1}], [{"ticker": "XOM", "weight": 2}],
+                                 [{"ticker": "XOM", "weight": True}], []])
+def test_bad_holdings_are_dropped(raw):
+    assert ag._clean_holdings(raw) is None
+

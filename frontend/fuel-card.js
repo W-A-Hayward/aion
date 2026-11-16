@@ -55,7 +55,7 @@ async function init() {
     title: 'Regular gasoline · Canada · highest month',
     updatedText: `StatCan · to ${label(series.months[last])}`,
     periods: Object.keys(WINDOWS),
-    accent: '#f39a2b',
+    accent: '#16849a',
     formatValue: v => `${v.toFixed(1)}¢`,
     onPeriodChange: p => { period = p; card.update(view()); },
   });

@@ -147,10 +147,10 @@ maximum concurrency **5** (limits parallel Bedrock calls).
   sends it as `X-Cascade-Session`. `submit` stores only its SHA-256 as the job's `ownerHash`; `status` returns a
   job only to the same token (anyone else gets 404). `submit` allows 5 questions per minute per token and 30 per
   IP, plus the API Gateway throttles above.
-- **With sign-in (optional):** create a Cognito user pool, add a **JWT authorizer** to the `POST /jobs` and
-  `GET /jobs/{id}` routes (issuer = the pool, audience = the app client ID). When a JWT is present, the Lambdas use
-  its `sub` as the owner instead of the token; no code change is needed. The frontend would also need a sign-in
-  flow that sends `Authorization: Bearer <id token>`, which is not built yet.
+- **Accounts:** users sign in with a username and password (section 13). Their profile, portfolio and conversations
+  are stored per user; jobs keep using the browser token above. To also own jobs by account, add the same JWT
+  authorizer to `POST /jobs` and `GET /jobs/{id}`: the Lambdas then use the token's `sub` as the owner, with no code
+  change, but the frontend would have to send `Authorization` on those calls too.
 
 ## 11. Verify end to end
 
@@ -179,6 +179,58 @@ jobTimeoutMs: 240000,
 ```
 
 `jobTimeoutMs` should cover a full agent run (the worker may take up to 300 s).
+
+## 13. Accounts (username + password)
+
+Users create an account with a **username and a password of at least 8 characters** (no email, no other rule), sign
+in on any device and find their conversations, profile and portfolio. Cognito holds the passwords; the browser calls
+Cognito directly (`frontend/auth.js`) and the RIPPLE backend only ever sees a signed token.
+
+1. **Table.** DynamoDB → Create table `cascade-users`, partition key `userId` (String), sort key `item` (String),
+   on-demand. Items: `profile` (the workspace) and `chat#<id>` (one conversation, 350 KB max).
+2. **Lambdas.** Create role `cascade-userdata-lambda` (IAM files in `iam/`) and Lambda `cascade-userdata`
+   (`lambdas/userdata`, Python 3.12, 10 s, 256 MB, env `USERS_TABLE=cascade-users`, `ALLOWED_ORIGIN`). Create role
+   `cascade-presignup-lambda` with only `AWSLambdaBasicExecutionRole`, and Lambda `cascade-presignup`
+   (`lambdas/presignup`, 3 s, 128 MB).
+3. **User pool.**
+   ```sh
+   aws cognito-idp create-user-pool --pool-name cascade-users \
+     --policies '{"PasswordPolicy":{"MinimumLength":8,"RequireUppercase":false,"RequireLowercase":false,"RequireNumbers":false,"RequireSymbols":false}}' \
+     --username-configuration CaseSensitive=false --mfa-configuration OFF \
+     --admin-create-user-config AllowAdminCreateUserOnly=false \
+     --lambda-config PreSignUp=arn:aws:lambda:us-east-1:339713040194:function:cascade-presignup
+   aws lambda add-permission --function-name cascade-presignup --statement-id cognito-presignup \
+     --action lambda:InvokeFunction --principal cognito-idp.amazonaws.com \
+     --source-arn arn:aws:cognito-idp:us-east-1:339713040194:userpool/<USER_POOL_ID>
+   ```
+   No email or phone attribute is required; `cascade-presignup` confirms each account at sign-up (no code to type)
+   and refuses usernames that are not 3–32 letters, numbers, `.`, `-` or `_`. **Trade-off:** without a verified
+   email, a forgotten password cannot be self-reset; an admin can set a new one with
+   `aws cognito-idp admin-set-user-password --permanent`.
+4. **App client** (public, no secret):
+   ```sh
+   aws cognito-idp create-user-pool-client --user-pool-id <USER_POOL_ID> --client-name cascade-web --no-generate-secret \
+     --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH \
+     --enable-token-revocation --prevent-user-existence-errors ENABLED \
+     --access-token-validity 60 --id-token-validity 60 --refresh-token-validity 30 \
+     --token-validity-units AccessToken=minutes,IdToken=minutes,RefreshToken=days
+   ```
+   `USER_PASSWORD_AUTH` sends the password to Cognito over HTTPS. Cognito recommends SRP, where the password never
+   leaves the browser; SRP needs a client library, and this frontend has no build step. Revisit if a bundler is added.
+   `create-user-pool-client` sets every field; to change one later, read it with `describe-user-pool-client` and send
+   all fields back (`update-user-pool-client` replaces the whole configuration).
+5. **Routes.** In `infra/api/cascade-api.openapi.json` replace `REPLACE_WITH_USER_POOL_ID` and
+   `REPLACE_WITH_APP_CLIENT_ID`, then re-import (or add to the existing API): a JWT authorizer `cognito`
+   (identity source `$request.header.Authorization`, issuer `https://cognito-idp.us-east-1.amazonaws.com/<USER_POOL_ID>`,
+   audience = the app client ID) on `GET/PUT/DELETE /me` and `GET/PUT/DELETE /me/chats/{id}`, all integrated with
+   `cascade-userdata`. CORS must allow `PUT` and `DELETE` and the `authorization` header. Allow API Gateway to invoke
+   `cascade-userdata`. The frontend sends the **ID token** (its `aud` is the app client ID).
+6. **Frontend.** In `frontend/config.js` set
+   `auth: { region: 'us-east-1', userPoolId: '<USER_POOL_ID>', clientId: '<APP_CLIENT_ID>' }` and
+   `userDataUrl: 'https://abc123.execute-api.us-east-1.amazonaws.com'`. Until these are set, the app keeps everything
+   in the browser only and shows no sign-in screen.
+7. **Check.** Create an account in the app, ask a question, sign out, open the site in another browser, sign in:
+   the conversation, profile and portfolio come back. `GET /me` without a token must return 401.
 
 ## Troubleshooting
 

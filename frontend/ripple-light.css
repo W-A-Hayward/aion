@@ -1,0 +1,138 @@
+/* Shared RIPPLE identity. Local fonts; no external assets or network dependencies. */
+:root {
+  --bg: #f4f8fb; --side: #eef4f8; --bg-2: #edf3f8; --bg-3: #e1ebf3;
+  --card: #fff; --glass: #ffffffed; --line: #dce6ee; --line-2: #b8cad9;
+  --text: #142d44; --text-2: #354d63; --muted: #52697d; --ink: #142d44;
+  --accent: #176b90; --accent-2: #238ca4; --accent-3: #16849a;
+  --accent-ink: #145475; --accent-wash: #e8f3f8; --link: #12647b;
+  --grad: linear-gradient(115deg, #175c86, #147b88);
+  --hyp: #525ca0; --doc: #12647b;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --serif: var(--sans);
+}
+::selection { background: #cce9ed; }
+:focus-visible { outline: 3px solid #176b90; outline-offset: 3px; }
+button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+
+/* A persistent research desk, with the question always within reach. */
+[data-surface=chat] .aurora { display: none; }
+[data-surface=chat] .main { background: radial-gradient(ellipse at 85% 0%, #e0eff6 0, transparent 52%), #f8fbfd; }
+[data-surface=chat] .sidebar { background: #f0f5f9; backdrop-filter: none; }
+[data-surface=chat] .sb-top { padding-top: 22px; }
+[data-surface=chat] .brand { font-size: 16px; letter-spacing: .07em; }
+[data-surface=chat] .logo { background: var(--grad); box-shadow: none; border-radius: 9px; }
+.brand-tagline { font-size: 11px; color: var(--muted); padding: 6px 18px 12px; }
+.research-nav { padding: 0 10px 16px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.research-nav .sb-label { padding: 0 8px; margin: 2px 0 8px; }
+.research-nav a, .research-nav button { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 40px; padding: 8px; border: 0; border-radius: 8px; background: transparent; font-size: 12.5px; font-weight: 550; color: var(--text-2); text-align: left; text-decoration: none; }
+.research-nav a:hover, .research-nav button:hover { background: #e0edf4; color: #134e70; }
+.research-nav span { color: #537f98; font: 10px var(--mono); }
+.research-nav small { margin-left: auto; color: #537f98; }
+[data-surface=chat] .sb-new kbd { display: none; }
+[data-surface=chat] .sb-new { min-height: 42px; background: #fff; border-color: #b8cad9; }
+[data-surface=chat] .topbar { border-bottom: 1px solid var(--line); background: #ffffffb8; }
+.desk-shortcut { color: #225a76; font-size: 12px; text-decoration: none; padding: 8px 10px; white-space: nowrap; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+.desk-shortcut:hover { background: var(--accent-wash); }
+[data-surface=chat] .empty { align-items: flex-start; text-align: left; justify-content: flex-start; padding: 32px 0 24px; width: min(880px, 100% - 72px); }
+[data-surface=chat] .empty .eyebrow { font-size: 11px; padding: 4px 10px 4px 4px; box-shadow: none; }
+.welcome-label { color: #486d86; font: 10px var(--mono); letter-spacing: .16em; margin-top: 25px; }
+[data-surface=chat] .empty h1 { font-size: clamp(28px, 3vw, 36px); letter-spacing: -.025em; line-height: 1.2; margin-top: 26px; font-weight: 600; }
+[data-surface=chat] .empty h1 .g { background: none; color: #176d89; animation: none; }
+[data-surface=chat] .empty .lede { max-width: 600px; font-size: 14px; line-height: 1.7; margin-top: 16px; color: #4a6479; }
+.start-investigation { display: inline-flex; align-items: center; gap: 28px; padding: 12px 16px; margin: 20px 0; border: 1px solid #176b90; border-radius: 9px; background: #176b90; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 5px 15px #176b9015; }
+.start-investigation:hover { background: #145475; }
+.research-trail { display: flex; flex-wrap: wrap; gap: 10px 24px; margin: 0 0 10px; }
+.research-trail a, .research-trail button { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; color: #425e74; text-decoration: none; padding: 0; border: 0; background: none; }
+.research-trail b { font: 10px var(--mono); color: #137a83; }
+.research-trail a:hover, .research-trail button:hover { text-decoration: underline; }
+[data-surface=chat] .cards { gap: 10px; margin-top: 18px; }
+[data-surface=chat] .card { border-radius: 10px; box-shadow: none; padding: 15px 12px; }
+[data-surface=chat] .card b { font-size: 12.5px; }
+[data-surface=chat] .card span { font-size: 11.5px; }
+[data-surface=chat] .card-ico { color: #176b90; background: #eaf3f8; border-radius: 8px; }
+[data-surface=chat] .card:nth-child(2) .card-ico { color: #495ba0; background: #eef0fb; }
+[data-surface=chat] .card:nth-child(4) .card-ico { color: #137881; background: #e6f5f4; }
+[data-surface=chat] .snapshot { margin-top: 18px; border-radius: 10px; box-shadow: none; }
+[data-surface=chat] .snap-v { font-size: 24px; }
+[data-surface=chat] .composer { width: min(880px, 100% - 72px); padding-top: 8px; }
+[data-surface=chat] .composer-box { border-radius: 14px; box-shadow: 0 8px 28px -15px #16465e40; }
+[data-surface=chat] .avatar { background: #1c6584; }
+[data-surface=chat] .avatar::after { border-color: #d4e8ef; }
+[data-surface=chat] .eyebrow b, [data-surface=chat] .send { background: #176b90; }
+[data-surface=chat] .sb-foot { background: #f0f5f9; }
+[data-surface=chat] .chips { justify-content: flex-start; }
+[data-surface=chat] .msg-tag { color: #176b90; }
+
+/* The explorer retains its visualizations and source readers, now in the same palette. */
+[data-surface=explorer] .wordmark { font: 650 16px var(--sans); letter-spacing: .04em; white-space: nowrap; }
+.desk-home { display: inline-flex; align-items: center; align-self: stretch; font-size: 12px; color: #176b90; text-decoration: none; white-space: nowrap; padding: 0 10px; }
+[data-surface=explorer] .hero-copy { padding-top: 60px; }
+[data-surface=explorer] .hero h1 { font-size: clamp(28px, 3.5vw, 40px); line-height: 1.2; font-weight: 600; }
+[data-surface=explorer] .hero h1 em, [data-surface=explorer] h2 em { font-style: normal; }
+[data-surface=explorer] .ed-masthead, [data-surface=explorer] .rl-header { padding: 32px; text-align: left; align-items: flex-start; }
+[data-surface=explorer] .rl-header > div, [data-surface=explorer] .ed-masthead > div { align-items: flex-start; }
+[data-surface=explorer] .ed-masthead h2, [data-surface=explorer] .rl-header h2 { font-size: clamp(24px, 2.5vw, 30px); }
+[data-surface=explorer] .ed-shell, [data-surface=explorer] .rl-shell { border-radius: 14px; }
+[data-surface=explorer] .ed-warning, .rl-caution, .guide-availability { background: #edf1fa; border-color: #7383af; color: #3e4f77; }
+[data-surface=explorer] .rl-missing { color: #52618b; }
+[data-surface=explorer] .rl-page-text { background: #f9fbfd; border-color: #dce6ee; }
+[data-surface=explorer] .rl-header .ghost-button[aria-expanded=true] { background: #d8eff2; color: #145475; }
+[data-surface=explorer] .profile-avatar { background: #176b90; border-color: #176b90; color: #fff; }
+[data-surface=explorer] .ask-form .primary-button { background: #176b90; color: #fff; }
+[data-surface=explorer] .workspace-nav button[aria-current=page] { color: #12647b; border-bottom-color: #16849a; }
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .hero,
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .quotes,
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .fuel-band,
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .chat-entry { display: none; }
+[data-surface=explorer][data-panel=sources] #evidence-desk,
+[data-surface=explorer][data-panel=evidence] #research-library,
+[data-surface=explorer][data-panel=statistics] #evidence-desk,
+[data-surface=explorer][data-panel=statistics] #research-library,
+[data-surface=explorer][data-panel=portfolio] #evidence-desk,
+[data-surface=explorer][data-panel=portfolio] #research-library,
+[data-surface=explorer][data-panel=sources] #workspace-view,
+[data-surface=explorer][data-panel=evidence] #workspace-view,
+[data-surface=explorer][data-panel=sources] #research-view,
+[data-surface=explorer][data-panel=evidence] #research-view { display: none; }
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .evidence-desk,
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .research-library { margin-top: 24px; }
+[data-surface=explorer][data-panel]:not([data-panel=overview]) .workspace { padding-top: 28px; }
+@media (max-width: 1100px) {
+  [data-surface=chat] .desk-shortcut { display: none; }
+  [data-surface=explorer] .topbar-row { height: auto; min-height: 64px; flex-wrap: wrap; gap: 8px; padding-block: 10px; }
+  [data-surface=explorer] .workspace-nav { order: 3; width: 100%; overflow-x: auto; height: 40px; }
+  [data-surface=explorer] .topbar-tools { margin-left: auto; }
+}
+@media (max-width: 800px) {
+  [data-surface=chat] .empty, [data-surface=chat] .composer { width: calc(100% - 32px); }
+  [data-surface=chat] .empty { padding-top: 24px; }
+  [data-surface=chat] .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-surface=chat] .research-nav { padding-bottom: 8px; margin-bottom: 8px; }
+  [data-surface=chat] .sidebar { overflow-y: auto; }
+  [data-surface=chat] .chat-list { min-height: 100px; }
+  [data-surface=chat] .research-nav, [data-surface=chat] .sb-top { flex-shrink: 0; }
+  [data-surface=chat] .welcome-label { margin-top: 20px; }
+  [data-surface=chat] .research-trail { gap: 10px 16px; }
+  [data-surface=explorer] .ed-masthead, [data-surface=explorer] .rl-header { padding: 24px 18px; }
+}
+@media (max-width: 480px) {
+  [data-surface=chat] .seg-mini { display: inline-flex; order: 5; }
+  [data-surface=chat] .composer-bar { flex-wrap: wrap; }
+  [data-surface=chat] .seg-mini button { min-height: 30px; padding-inline: 12px; }
+}
+@media (max-width: 440px) {
+  [data-surface=chat] .mode-btn { font-size: 12px; }
+  [data-surface=chat] .empty .eyebrow { display: grid; justify-items: start; border: 0; background: transparent; padding: 0; gap: 6px; }
+  [data-surface=chat] .composer-bar { flex-wrap: wrap; gap: 6px; }
+  [data-surface=explorer] .topbar-tools { gap: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* Keep headings and supporting copy aligned with the working area. */
+[data-surface=chat] .empty h1, [data-surface=chat] .empty .lede,
+[data-surface=chat] .empty .eyebrow, [data-surface=chat] .card,
+[data-surface=chat] .snapshot { animation: none; }
+[data-surface=explorer] h1, [data-surface=explorer] h2 { text-align: left; }

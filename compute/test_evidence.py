@@ -168,7 +168,8 @@ def test_resume_skips_cached_document():
     client = OilClient()
     df, passages = ev.build_evidence("b", "m", s3=s3, client=client)
     assert client.calls == 1 and len(df) == 1
-    assert "processed/_evidence_cache/a.html.json" in s3.objects
+    # the cache key carries the document digest: processed/_evidence_cache/<file>.<sha256[:16]>.json
+    assert any(k.startswith("processed/_evidence_cache/a.html.") and k.endswith(".json") for k in s3.objects)
     # second run: cache hit, no model call, same result
     df2, _ = ev.build_evidence("b", "m", s3=s3, client=client)
     assert client.calls == 1 and df2["evidence_id"].tolist() == df["evidence_id"].tolist()

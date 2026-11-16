@@ -16,6 +16,8 @@ POLL_SECONDS = 0.3
 POLL_TIMEOUT = 20.0
 
 PERSONAS = ("robert", "amira", "mateo")
+CUSTOM = "custom"  # a user-defined portfolio: its holdings travel with the request (see norm_holdings)
+MAX_HOLDINGS = 14
 SHOCKS = (-30, -15, 15, 30)
 CORE = (
     "XIU.TO", "ENB.TO", "XOM", "TLT", "XBB.TO", "ZST.TO", "QQQ", "SHOP.TO",
@@ -90,6 +92,45 @@ def norm_persona(value):
     if v in PERSONAS:
         return v
     raise InputError("unknown persona", PERSONAS)
+
+
+def norm_portfolio(value):
+    """A sample persona, or "custom" (which then requires holdings)."""
+    v = str(value if value is not None else "").strip().lower()
+    if v in PERSONAS or v == CUSTOM:
+        return v
+    raise InputError("unknown persona", PERSONAS + (CUSTOM,))
+
+
+def norm_holdings(value):
+    """Validate custom holdings: a JSON list of {ticker, weight}, core tickers only, weights summing to 1.
+
+    Returns a tuple of (ticker, weight) pairs sorted by weight, so equal portfolios share a cache key.
+    """
+    allowed = ['[{"ticker": "XIU.TO", "weight": 0.6}, {"ticker": "ENB.TO", "weight": 0.4}]', "tickers: " + ", ".join(CORE)]
+    try:
+        rows = json.loads(value) if isinstance(value, str) else value
+    except ValueError:
+        raise InputError("holdings must be a JSON list", allowed)
+    if not isinstance(rows, list) or not 1 <= len(rows) <= MAX_HOLDINGS:
+        raise InputError("holdings must list 1-%d positions" % MAX_HOLDINGS, allowed)
+    out, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict):
+            raise InputError("each holding needs ticker and weight", allowed)
+        t = str(row.get("ticker") or "").strip().upper()
+        if t not in CORE:
+            raise InputError("holding ticker not supported", allowed)
+        w = row.get("weight")
+        if isinstance(w, bool) or not isinstance(w, (int, float)) or not math.isfinite(w) or not 0 < w <= 1:
+            raise InputError("holding weight must be between 0 and 1", allowed)
+        if t in seen:
+            raise InputError("duplicate holding: " + t, allowed)
+        seen.add(t)
+        out.append((t, round(float(w), 6)))
+    if abs(sum(w for _, w in out) - 1) > 0.005:
+        raise InputError("holding weights must sum to 1", allowed)
+    return tuple(sorted(out, key=lambda r: (-r[1], r[0])))
 
 
 def norm_ticker(value):
@@ -313,6 +354,76 @@ def explain_channel(ticker):
         "units": "beta_direct/beta_chain: % move per 1% move in Brent (weekly, CAD); share_explained: "
                  "beta_chain / beta_direct; link beta: % move (yield links in percentage points) per 1% "
                  "move in the previous node; duration_years: effective duration; moves in % or bp as named",
+    }
+
+
+CUSTOM_NOTE = ("custom portfolio: the portfolio beta is the weighted sum of each holding's own beta "
+               "(contribution = weight x beta), a proxy with no confidence range of its own; it is not "
+               "regressed on the portfolio's history like the sample personas")
+
+
+def _custom_rows(holdings):
+    """Join custom holdings to their simple betas, as compute/stats.py portfolio_exposure() does."""
+    tickers = ", ".join(_lit(t) for t, _ in holdings)
+    sens = {r["ticker"]: r for r in run_query(
+        "SELECT ticker, beta_simple, lo_simple, hi_simple FROM sensitivities WHERE ticker IN (" + tickers + ")"
+    )}
+    rows = []
+    for t, w in holdings:
+        s = sens.get(t) or {}
+        beta = s.get("beta_simple")
+        rows.append({"ticker": t, "weight": w, "beta": beta, "lo": s.get("lo_simple"), "hi": s.get("hi_simple"),
+                     "contribution": w * beta if isinstance(beta, (int, float)) else None})
+    return rows
+
+
+def _weighted_beta(rows):
+    if not rows or any(r["contribution"] is None for r in rows):
+        return None
+    return sum(r["contribution"] for r in rows)
+
+
+def get_custom_exposure(holdings):
+    rows = _custom_rows(holdings)
+    beta = _weighted_beta(rows)
+    return {
+        "persona": CUSTOM,
+        "holdings": rows,
+        "portfolio_beta": {"beta": beta, "lo": None, "hi": None, "method": "weighted_sum_proxy"},
+        "note": CUSTOM_NOTE,
+        "units": BETA_UNITS + "; weight: share of portfolio; contribution: weight x beta",
+    }
+
+
+def run_custom_scenario(holdings, shock):
+    rows = _custom_rows(holdings)
+    beta = _weighted_beta(rows)
+    log_shock = math.log(1 + shock / 100.0)
+
+    def impact(b):
+        return 100 * (math.exp(b * log_shock) - 1)
+
+    impacts = []
+    for r in rows:
+        if not all(isinstance(r[k], (int, float)) for k in ("beta", "lo", "hi")):
+            continue
+        lo, hi = sorted((impact(r["lo"]), impact(r["hi"])))
+        point = impact(r["beta"])
+        impacts.append({"ticker": r["ticker"], "weight": r["weight"], "impact_pct": point, "lo_pct": lo,
+                        "hi_pct": hi, "contribution_pct": r["weight"] * point})
+    scen = [] if beta is None else [{"subject": CUSTOM, "subject_type": "persona", "shock_pct": shock,
+                                     "impact_pct": impact(beta), "lo_pct": None, "hi_pct": None,
+                                     "method": "weighted_sum_proxy"}]
+    return {
+        "persona": CUSTOM,
+        "oil_shock_pct": shock,
+        "scenario": scen,
+        "holding_impacts": impacts,
+        "note": CUSTOM_NOTE + "; the portfolio impact applies the shock formula to that proxy beta",
+        "units": "impact_pct: estimated % change in value for a Brent move of oil_shock_pct %, "
+                 "= 100 x (exp(beta x ln(1 + shock/100)) - 1) (log formula, weekly beta, CAD); "
+                 "lo_pct/hi_pct: 95% range from the beta range, ordered low to high (none for the proxy); "
+                 "contribution_pct: weight x impact_pct",
     }
 
 
@@ -824,7 +935,11 @@ def _dispatch(fn, params):
     """Validate, then return (cache_key, thunk)."""
     if fn == "get_portfolio_exposure":
         _require(params, ["persona"])
-        p = norm_persona(params["persona"])
+        p = norm_portfolio(params["persona"])
+        if p == CUSTOM:
+            _require(params, ["persona", "holdings"])
+            h = norm_holdings(params["holdings"])
+            return (fn, p, h), lambda: get_custom_exposure(h)
         return (fn, p), lambda: get_portfolio_exposure(p)
     if fn in ("get_asset_sensitivity", "explain_channel", "get_validation"):
         _require(params, ["ticker"])
@@ -838,8 +953,12 @@ def _dispatch(fn, params):
             bp = norm_rates_bp(params["rates_shock_bp"])
             return (fn, "rates", p, bp), lambda: run_scenario_rates(p, bp)
         _require(params, ["persona", "oil_shock_pct"])
-        p = norm_persona(params["persona"])
+        p = norm_portfolio(params["persona"])
         s = norm_shock(params["oil_shock_pct"])
+        if p == CUSTOM:
+            _require(params, ["persona", "oil_shock_pct", "holdings"])
+            h = norm_holdings(params["holdings"])
+            return (fn, p, h, s), lambda: run_custom_scenario(h, s)
         return (fn, p, s), lambda: run_scenario(p, s)
     if fn == "get_portfolio_facts":
         _require(params, ["persona"])

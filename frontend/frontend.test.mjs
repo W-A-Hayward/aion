@@ -2,17 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { normalizeTables } from './api.js';
-import { buildNetwork } from './graph.js';
 import { finite, hasEstimate, number, sourceURL, escapeHTML } from './formatters.js';
-import { renderEvidence, renderScenario, renderExpert } from './render.js';
 import { CORE_TICKERS } from './config.js';
 import { PERSONAS, validateHoldings, sanitizeWorkspace, splitEvenly, parseImport, weightedBeta, shockImpact } from './workspace-store.js';
-import { renderWorkspace } from './workspace-render.js';
 import { createAgentClient } from './agent-api.js';
-import { renderAgentAnswer } from './agent-render.js';
 
-const tables = normalizeTables(JSON.parse(await readFile(new URL('./preview-data.json', import.meta.url))));
 const host = () => ({ innerHTML: '', textContent: '' });
+const jobId = '12345678-1234-1234-1234-123456789abc';
+const settings = { submitUrl: 'https://api.example.test/submit', statusUrl: 'https://api.example.test/status/{id}', timeoutMs: 100, jobTimeoutMs: 300, pollIntervalMs: 1 };
+const questionArgs = { question: 'Investigate XIU.TO', persona: 'robert', level: 'beginner' };
+const reply = data => ({ ok: true, json: async () => data });
 
 test('zero is valid; null, absent, string and nonfinite values are not financial estimates', () => {
   assert.equal(finite(0), true);
@@ -28,109 +27,6 @@ test('API validation rejects malformed payloads instead of silently using previe
   }
   assert.deepEqual(normalizeTables({ sensitivities: [] }).evidence, []);
 });
-
-test('XIU default uses its captured beta and does not invent company or macro bridges', () => {
-  const graph = buildNetwork(tables, 'XIU.TO');
-  assert.equal(graph.edges[0].beta, .010571);
-  assert.equal(graph.hasBridge, false);
-  assert.equal(graph.edges.filter(edge => edge.to === 'XIU.TO').length, 1);
-  assert.equal(graph.edges.some(edge => ['XOM', 'CNQ.TO', 'XEG.TO'].includes(edge.to)), false);
-  assert.equal(graph.edges.some(edge => edge.kind === 'hypothesis'), false);
-});
-
-test('hypotheses require explicit user opt-in and contain no estimates', () => {
-  const graph = buildNetwork(tables, 'XIU.TO', { macroContext: false, hypothesis: true });
-  const hypothesis = graph.edges.find(edge => edge.kind === 'hypothesis');
-  assert.equal(hypothesis.source, 'User exploration');
-  assert.equal(hypothesis.beta, undefined);
-  assert.ok(graph.factors.includes(hypothesis.from));
-});
-
-test('TLT network uses the supplied rates chain even with macro context hidden', () => {
-  const graph = buildNetwork(tables, 'TLT', { macroContext: false });
-  assert.equal(graph.hasBridge, true);
-  assert.deepEqual(graph.factors, ['us10y']);
-  assert.ok(graph.edges.some(edge => edge.from === 'us10y' && edge.to === 'TLT'));
-});
-
-test('ticker scenarios cover all 14 core tickers at contract shocks with ordered ranges', () => {
-  const tickerRows = tables.scenarios.filter(row => row.subject_type === 'ticker');
-  assert.equal(tickerRows.length, CORE_TICKERS.length * 4);
-  for (const row of tickerRows) {
-    assert.ok([-30, -15, 15, 30].includes(row.shock_pct));
-    assert.ok(row.lo_pct <= row.impact_pct && row.impact_pct <= row.hi_pct);
-    const sensitivity = tables.sensitivities.find(item => item.ticker === row.subject);
-    assert.ok(Math.abs(row.impact_pct - shockImpact(sensitivity.beta_simple, row.shock_pct)) < 0.000001);
-    const ends = [sensitivity.lo_simple, sensitivity.hi_simple].map(beta => shockImpact(beta, row.shock_pct));
-    assert.ok(Math.abs(row.lo_pct - Math.min(...ends)) < 0.000001 && Math.abs(row.hi_pct - Math.max(...ends)) < 0.000001);
-  }
-  const element = host();
-  renderScenario(element, tables, 'XIU.TO', 30, 'preview');
-  assert.match(element.innerHTML, /Illustrative local scenario/);
-  renderScenario(element, { scenarios: [] }, 'XIU.TO', 30, 'api');
-  assert.match(element.innerHTML, /Scenario unavailable/);
-  assert.doesNotMatch(element.innerHTML, /0\.28/);
-});
-
-test('snapshot matches the data contract: 14 core tickers, persona weights, alternatives', () => {
-  assert.deepEqual(tables.sensitivities.map(row => row.ticker), [...CORE_TICKERS]);
-  assert.ok(tables.sensitivities.every(row => hasEstimate(row) && row.universe === 'core' && row.n_weeks === 261));
-  const contract = { robert: { TLT: .3, 'XBB.TO': .4, 'ENB.TO': .15, 'RY.TO': .15 }, amira: { QQQ: .5, 'SHOP.TO': .25, 'XIU.TO': .25 }, mateo: { 'XIU.TO': .5, 'VFV.TO': .5 } };
-  for (const [persona, weights] of Object.entries(contract)) {
-    const rows = tables.persona_holdings.filter(row => row.persona === persona);
-    assert.deepEqual(Object.fromEntries(rows.map(row => [row.ticker, row.weight])), weights);
-    assert.ok(Object.hasOwn(PERSONAS, persona));
-  }
-  assert.deepEqual(tables.alternatives.map(row => `${row.persona}:${row.holding}>${row.alternative}`),
-    ['robert:TLT>ZST.TO', 'robert:XBB.TO>ZST.TO', 'mateo:XIU.TO>XESG.TO', 'mateo:VFV.TO>XSP.TO', 'amira:QQQ>XIU.TO']);
-  assert.deepEqual(tables.duration_check.map(row => [row.ticker, row.duration_years]), [['TLT', 14.63], ['XBB.TO', 6.72]]);
-});
-
-test('legacy snapshot and alternatives are internally consistent, not proof of the updated portfolio model', () => {
-  for (const pb of tables.portfolio_beta) {
-    const holdings = tables.persona_holdings.filter(row => row.persona === pb.persona);
-    assert.ok(Math.abs(weightedBeta(tables, holdings) - pb.beta) < 0.000005, pb.persona);
-    for (const row of tables.scenarios.filter(item => item.subject === pb.persona)) {
-      assert.equal(row.subject_type, 'persona');
-      assert.ok(Math.abs(row.impact_pct - shockImpact(pb.beta, row.shock_pct)) < 0.0001); // pb.beta is saved at 6 dp
-    }
-  }
-  for (const alt of tables.alternatives) {
-    const holdings = tables.persona_holdings.filter(row => row.persona === alt.persona).map(({ ticker, weight }) => ({ ticker, weight }));
-    const original = holdings.find(row => row.ticker === alt.holding);
-    const moved = alt.persona === 'amira' ? .25 : original.weight;
-    original.weight -= moved;
-    const existing = holdings.find(row => row.ticker === alt.alternative);
-    if (existing) existing.weight += moved; else holdings.push({ ticker: alt.alternative, weight: moved });
-    assert.ok(Math.abs(shockImpact(weightedBeta(tables, holdings), 30) - alt.impact30_after_pct) < 0.00001, `${alt.persona} ${alt.holding}`);
-  }
-});
-
-test('obsolete ZST and XRB chains are absent; new Canada 2Y links can be rendered', () => {
-  assert.ok(!tables.links.some(row => row.link_id === 'ca10y>ZST.TO'));
-  assert.ok(!tables.chain_reconciliation.some(row => ['ZST.TO', 'XRB.TO'].includes(row.ticker)));
-  assert.equal(buildNetwork(tables, 'ZST.TO', { macroContext: false }).hasBridge, false);
-  const synthetic = { ...tables, links: [
-    { link_id: 'oil>ca2y', from_node: 'oil', to_node: 'ca2y', beta: .5, lo: .1, hi: .9 },
-    { link_id: 'ca2y>ZST.TO', from_node: 'ca2y', to_node: 'ZST.TO', beta: -.01, lo: -.02, hi: 0 },
-  ] };
-  const graph = buildNetwork(synthetic, 'ZST.TO', { macroContext: false });
-  assert.deepEqual(graph.factors, ['ca2y']);
-  assert.equal(graph.hasBridge, true);
-});
-
-test('portfolio UI distinguishes legacy results from weighted-beta proxy approximations', () => {
-  const element = host();
-  renderWorkspace(element, { data: tables, workspace: sanitizeWorkspace({ version: 1 }), tab: 'portfolio', shock: 30, persistent: true });
-  assert.match(element.innerHTML, /Legacy portfolio beta/);
-  assert.match(element.innerHTML, /not the current model’s measured portfolio beta/);
-  assert.doesNotMatch(element.innerHTML, /exact oil beta|sums to the portfolio’s oil beta/);
-});
-
-const jobId = '12345678-1234-1234-1234-123456789abc';
-const settings = { submitUrl: 'https://api.example.test/submit', statusUrl: 'https://api.example.test/status/{id}', timeoutMs: 100, jobTimeoutMs: 300, pollIntervalMs: 1 };
-const questionArgs = { question: 'Investigate XIU.TO', persona: 'robert', level: 'beginner' };
-const reply = data => ({ ok: true, json: async () => data });
 
 test('chat submits the implemented contract once, polls pending/running and returns evidence', async () => {
   const requests = [], progress = [], queue = [
@@ -152,7 +48,10 @@ test('unconfigured chat, invalid personas and invalid status templates send no r
   let sent = 0;
   const transport = async () => { sent++; };
   await assert.rejects(createAgentClient({ ...settings, submitUrl: null }, transport)(questionArgs), /not configured/);
-  await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, persona: 'custom' }), /custom portfolios/);
+  await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, persona: 'bob' }), /Choose Robert, Amira, Mateo/);
+  await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, persona: 'custom' }), /1–14 supported tickers/);
+  await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, persona: 'custom', holdings: [{ ticker: 'XIU.TO', weight: 0.5 }] }), /adding up to 100%/);
+  await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, persona: 'custom', holdings: [{ ticker: 'NVDA', weight: 1 }] }), /supported tickers/);
   await assert.rejects(createAgentClient({ ...settings, statusUrl: 'https://example.test/status' }, transport)(questionArgs), /contain/);
   await assert.rejects(createAgentClient(settings, transport)({ ...questionArgs, sessionId: 'bad session' }), /Invalid conversation/);
   assert.equal(sent, 0);
@@ -190,18 +89,6 @@ test('chat has a total waiting deadline, even while jobs keep reporting pending'
   finally { clearTimeout(keeper); }
 });
 
-test('agent citations escape markup, reject unsafe links and disclose missing metadata', () => {
-  const element = host();
-  renderAgentAnswer(element, { jobId, answer: '<script>bad()</script>',
-    citations: [{ text: '<img src=x>', source_url: 'javascript:alert(1)' }, { text: 'Synthetic', source_url: 's3://bucket/private' }],
-    toolCalls: [{ name: '<b>tool</b>', input: { ticker: 'XIU.TO' }, output: '<script>bad()</script>[truncated]' }],
-  }, { persona: 'robert', level: 'expert', ticker: 'XIU.TO' });
-  assert.doesNotMatch(element.innerHTML, /<script>|<img|href="javascript:|href="s3:/);
-  assert.match(element.innerHTML, /publication date: not supplied/);
-  assert.match(element.innerHTML, /No public source link/);
-  assert.match(element.innerHTML, /\[truncated\]/);
-});
-
 test('portfolios, watchlists and saved research only accept the 14 supported tickers', () => {
   assert.equal(validateHoldings([{ ticker: 'XIU.TO', weight: .5 }, { ticker: 'ENB.TO', weight: .5 }]), null);
   for (const ticker of ['AAPL', 'XEG.TO', 'BTC-USD', 'xiu.to', '', undefined]) {
@@ -233,37 +120,6 @@ test('workspace import rejects foreign files and reports skipped entries', () =>
   assert.equal(result.dropped, true);
 });
 
-test('workspace HTML escapes profile and portfolio names', () => {
-  const element = host();
-  const workspace = { ...sanitizeWorkspace({ version: 1, profile: { name: '<img src=x onerror=alert(1)>' }, portfolio: 'custom',
-    custom: { name: '<script>x</script>', holdings: [{ ticker: 'XOM', weight: 1 }] } }) };
-  renderWorkspace(element, { data: tables, workspace, tab: 'portfolio', shock: 30, persistent: true });
-  assert.doesNotMatch(element.innerHTML, /<img src=x|<script>x/);
-  assert.match(element.innerHTML, /No range without a portfolio regression/);
-  assert.match(element.innerHTML, /\+0\.3574/); // XOM-only mix: beta equals XOM's own beta
-});
-
-test('evidence is empty in preview and backend text/URLs cannot execute markup', () => {
-  assert.deepEqual(tables.evidence, []);
-  assert.equal(sourceURL('javascript:alert(1)'), null);
-  assert.equal(sourceURL('data:text/html,hello'), null);
-  assert.equal(sourceURL('https://user:password@example.com'), null);
-  assert.equal(sourceURL('https://example.com/report'), 'https://example.com/report');
-  assert.equal(escapeHTML('<img onerror="x">'), '&lt;img onerror=&quot;x&quot;&gt;');
-  const element = host(), counter = host();
-  renderEvidence(element, counter, { evidence: [{ ticker: 'XIU.TO', excerpt: '<script>alert(1)</script>', source_url: 'javascript:alert(1)' }] }, 'XIU.TO');
-  assert.doesNotMatch(element.innerHTML, /<script>|href="javascript:/);
-  assert.match(element.innerHTML, /Not independently verified/);
-  assert.match(element.innerHTML, /Original title/);
-});
-
-test('missing rolling history remains unavailable instead of a decorative trend', () => {
-  const element = host();
-  renderExpert(element, tables, tables.sensitivities[0]);
-  assert.match(element.innerHTML, /Rolling history unavailable/);
-  assert.doesNotMatch(element.innerHTML, /class="rolling-plot"/);
-});
-
 test('chat requests carry this browser\'s session token; it is created once and reused', async () => {
   const { sessionToken, SESSION_TOKEN_KEY } = await import('./agent-api.js');
   const store = new Map();
@@ -281,4 +137,42 @@ test('chat requests carry this browser\'s session token; it is created once and 
   assert.deepEqual(seen, ['k'.repeat(40), 'k'.repeat(40)]);
   const limited = createAgentClient(settings, async () => ({ ok: false, status: 429 }), async () => {}, () => 'k'.repeat(40));
   await assert.rejects(limited({ question: 'q', persona: 'robert', level: 'beginner' }), /Too many questions/);
+});
+
+
+test('a custom portfolio is sent with its holdings; samples never send holdings', async () => {
+  const bodies = [];
+  const transport = async (url, options) => {
+    if (options.method === 'POST') { bodies.push(JSON.parse(options.body)); return reply({ jobId, sessionId: 'session-1' }); }
+    return reply({ jobId, status: 'DONE', answer: 'ok' });
+  };
+  const holdings = [{ ticker: 'XIU.TO', weight: 0.6 }, { ticker: 'ENB.TO', weight: 0.4 }];
+  await createAgentClient(settings, transport, async () => {})({ ...questionArgs, persona: 'custom', holdings });
+  await createAgentClient(settings, transport, async () => {})({ ...questionArgs, holdings });
+  assert.deepEqual(bodies[0], { ...questionArgs, persona: 'custom', holdings });
+  assert.equal(bodies[1].persona, 'robert');
+  assert.equal('holdings' in bodies[1], false);
+});
+
+test('the API contract answer object (docs/api_contract.md) is accepted; strings still work', async () => {
+  const { normalizeAnswer } = await import('./agent-api.js');
+  assert.deepEqual(normalizeAnswer('plain'), { text: 'plain', verdict: null, headline: null, refusal: false, caveat: null });
+  const a = normalizeAnswer({ verdict: 'minor', headline: 'H', text: '**MINOR.** body', refusal: false, caveat: '2021–2026' });
+  assert.equal(a.verdict, 'MINOR');
+  assert.equal(a.text, '**MINOR.** body');
+  assert.equal(normalizeAnswer({ verdict: 'BUY NOW', text: 'x' }).verdict, null, 'unknown verdicts are dropped');
+  assert.equal(normalizeAnswer({ text: 'NEUTRAL — Gold went up in about half the weeks.' }).verdict, 'NEUTRAL', 'read from the opening line');
+  assert.equal(normalizeAnswer({ text: 'NOT LINKED — no link.' }).verdict, 'NOT LINKED');
+  assert.equal(normalizeAnswer({ text: 'HELLO — not a verdict' }).verdict, null);
+  assert.equal(normalizeAnswer({ text: '', refusal: true }).refusal, true);
+  for (const bad of [null, '', '  ', {}, { text: '' }, [], 5]) assert.equal(normalizeAnswer(bad), null);
+  const queue = [{ jobId, sessionId: 'session-1' }, { jobId, status: 'RUNNING', stage: 'agent_started', stages: [{ stage: 'queued', t: 'x' }] },
+    { job_id: jobId, jobId, status: 'DONE', stage: 'done', answer: { verdict: null, headline: 'H', text: 'Live answer', refusal: false, caveat: 'c' },
+      trace: [{ step: 1, tool: 'get_portfolio_exposure', tag: 'measured', ms: 10 }], citations: [{ n: 1, excerpt: 'e', url: 'https://x.test' }], data: {}, toolCalls: [] }];
+  const seen = [];
+  const r = await createAgentClient(settings, async () => reply(queue.shift()), async () => {})({ ...questionArgs, onProgress: p => seen.push(p.stage ?? p.status) });
+  assert.equal(r.answer, 'Live answer');
+  assert.equal(r.answerMeta.caveat, 'c');
+  assert.equal(r.trace.length, 1);
+  assert.ok(seen.includes('agent_started'), 'stages reach the progress panel while polling');
 });

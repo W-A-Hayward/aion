@@ -1,0 +1,174 @@
+/* Investigation progress panel and "View investigation steps" record (investigation-progress.js).
+   Uses the host page's tokens when present (chat.css, styles.css) with matching fallbacks. */
+.ip, .ip-record {
+  --ip-accent: var(--accent, #4f46e5);
+  --ip-accent-wash: var(--accent-wash, #eef0ff);
+  --ip-line: var(--line, #e5e8f1);
+  --ip-text: var(--text, #0b1020);
+  --ip-text-2: var(--text-2, #394158);
+  --ip-muted: var(--muted, #6b7288);
+  --ip-card: var(--card, #fff);
+  --ip-ok: var(--ok, #17704a);
+  --ip-bad: var(--danger, #b0281c);
+  --ip-mono: var(--mono, ui-monospace, "SF Mono", Menlo, Consolas, monospace);
+}
+
+/* ---------- live panel ---------- */
+.ip {
+  position: relative; width: min(460px, 100%); padding: 14px 16px 12px; border: 1px solid var(--ip-line); border-radius: 16px;
+  background: linear-gradient(180deg, var(--ip-card), color-mix(in srgb, var(--ip-card) 70%, var(--ip-accent-wash)));
+  box-shadow: 0 1px 2px #0000000a, 0 14px 34px -24px rgb(40 40 120 / .3); color: var(--ip-text);
+  animation: ip-enter .32s cubic-bezier(.2, .7, .2, 1) both;
+}
+.ip-head { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.ip-mark { position: relative; width: 22px; height: 22px; display: grid; place-items: center; }
+.ip-mark i { width: 8px; height: 8px; border-radius: 50%; background: var(--ip-accent); }
+.ip-mark::before, .ip-mark::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 1.5px solid var(--ip-accent); opacity: 0; }
+.ip[data-state=running] .ip-mark::before { animation: ip-ripple 2.2s ease-out infinite; }
+.ip[data-state=running] .ip-mark::after { animation: ip-ripple 2.2s ease-out 1.1s infinite; }
+.ip[data-state=done] .ip-mark i { background: var(--ip-ok); }
+.ip[data-state=failed] .ip-mark i, .ip[data-state=timeout] .ip-mark i { background: var(--ip-bad); }
+.ip[data-state=stopped] .ip-mark i { background: var(--ip-muted); }
+.ip-titles { display: grid; min-width: 0; }
+.ip-title { font-weight: 600; font-size: 14.5px; letter-spacing: -.005em; overflow-wrap: anywhere; }
+.ip-detail { font-size: 12.5px; color: var(--ip-muted); overflow-wrap: anywhere; }
+.ip-elapsed { font: 500 12px var(--ip-mono); color: var(--ip-muted); font-variant-numeric: tabular-nums; }
+
+/* indeterminate track: no percentage exists, so nothing here implies one */
+.ip-track { position: relative; height: 3px; margin: 12px 0 4px; border-radius: 3px; background: color-mix(in srgb, var(--ip-line) 80%, transparent); overflow: hidden; }
+.ip-track span { position: absolute; inset: 0; border-radius: inherit; }
+.ip[data-state=running] .ip-track span { width: 38%; background: linear-gradient(90deg, transparent, var(--ip-accent), transparent); animation: ip-sweep 1.6s cubic-bezier(.45, 0, .2, 1) infinite; }
+.ip[data-state=done] .ip-track span { background: var(--ip-ok); animation: ip-fill .4s ease-out both; }
+.ip[data-state=failed] .ip-track span, .ip[data-state=timeout] .ip-track span { background: var(--ip-bad); }
+.ip[data-state=stopped] .ip-track span { background: var(--ip-muted); opacity: .45; }
+
+/* steps */
+.ip-steps { list-style: none; margin: 8px 0 0; padding: 0; display: grid; }
+.ip-step { position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: start; gap: 10px; padding: 5px 0; font-size: 13.5px; color: var(--ip-text-2); }
+.ip-step:not(:last-child)::after { content: ''; position: absolute; left: 9.5px; top: 25px; bottom: -5px; width: 1px; background: var(--ip-line); }
+.ip[data-state=running] .ip-step:last-child { animation: ip-step-in .34s cubic-bezier(.2, .7, .2, 1) both; }
+.ip-icon { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--ip-line); background: var(--ip-card); }
+.ip-icon svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ip-step[data-state=done] .ip-icon { color: var(--ip-ok); border-color: color-mix(in srgb, var(--ip-ok) 35%, transparent); background: color-mix(in srgb, var(--ip-ok) 8%, var(--ip-card)); }
+.ip-step[data-state=failed] .ip-icon { color: var(--ip-bad); border-color: color-mix(in srgb, var(--ip-bad) 40%, transparent); background: color-mix(in srgb, var(--ip-bad) 8%, var(--ip-card)); }
+.ip-step[data-state=stopped] .ip-icon, .ip-step[data-state=skipped] .ip-icon { color: var(--ip-muted); }
+.ip-step[data-state=active] { color: var(--ip-text); font-weight: 500; }
+.ip-step[data-state=active] .ip-icon { border-color: color-mix(in srgb, var(--ip-accent) 45%, transparent); background: var(--ip-accent-wash); }
+.ip-step[data-state=pending] { color: var(--ip-muted); }
+.ip-spin { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid color-mix(in srgb, var(--ip-accent) 30%, transparent); border-top-color: var(--ip-accent); animation: ip-spin .8s linear infinite; }
+.ip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--ip-line); }
+.ip-step-text { display: grid; min-width: 0; overflow-wrap: anywhere; }
+.ip-summary { font-size: 12.5px; color: var(--ip-muted); font-weight: 400; overflow-wrap: anywhere; }
+.ip-dur { font: 11.5px var(--ip-mono); color: var(--ip-muted); font-variant-numeric: tabular-nums; padding-top: 2px; white-space: nowrap; }
+.ip-foot { margin: 8px 0 0; font-size: 11.5px; color: var(--ip-muted); line-height: 1.45; }
+.ip-job { font-family: var(--ip-mono); margin-left: 4px; }
+
+/* ---------- record under the answer ---------- */
+.ip-record { font-size: 13px; color: var(--ip-muted); width: 100%; }
+.ip-record > summary { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 5px 11px 5px 9px; border: 1px solid var(--ip-line); border-radius: 999px; background: var(--ip-card); color: var(--ip-text-2); cursor: pointer; list-style: none; transition: border-color .15s, background-color .15s; }
+.ip-record > summary::-webkit-details-marker { display: none; }
+.ip-record > summary:hover { border-color: color-mix(in srgb, var(--ip-accent) 40%, var(--ip-line)); background: var(--ip-accent-wash); }
+.ip-chev { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .18s ease; flex: none; }
+.ip-record[open] .ip-chev { transform: rotate(90deg); }
+.ip-meta { color: var(--ip-muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ip-meta::before { content: '·'; margin-right: 8px; }
+.ip-record-body { display: grid; gap: 14px; margin-top: 10px; padding: 14px 16px; border: 1px solid var(--ip-line); border-radius: 14px; background: var(--ip-card); animation: ip-enter .22s ease-out both; }
+.ip-record h4 { margin: 0 0 2px; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ip-text-2); }
+.ip-src { margin: 0; font-size: 12px; color: var(--ip-muted); line-height: 1.45; }
+.ip-record .ip-steps { margin-top: 6px; }
+.ip-tools { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 8px; }
+.ip-tools > li { padding: 8px 10px; border: 1px solid var(--ip-line); border-radius: 10px; }
+.ip-tools > li[data-state=failed] { border-color: color-mix(in srgb, var(--ip-bad) 35%, var(--ip-line)); }
+.ip-tool-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ip-tool-head code { font: 500 12.5px var(--ip-mono); color: var(--ip-text); overflow-wrap: anywhere; background: none; border: 0; padding: 0; }
+.ip-tool-head .ip-dur { margin-left: auto; padding: 0; }
+.ip-badge { font-size: 10.5px; font-weight: 600; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; background: var(--ip-accent-wash); color: var(--accent-ink, #3730a3); }
+.ip-badge.bad { background: color-mix(in srgb, var(--ip-bad) 10%, var(--ip-card)); color: var(--ip-bad); }
+.ip-io { margin-top: 6px; }
+.ip-io summary { cursor: pointer; font-size: 12px; width: fit-content; }
+.ip-io pre { margin: 6px 0 0; padding: 8px 10px; background: var(--side, #f0f2f8); border-radius: 8px; font: 12px/1.5 var(--ip-mono); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 220px; overflow: auto; color: var(--ip-text-2); }
+.msg.assistant > .ip-record, .agent-turn > div > .ip-record { margin-bottom: 2px; }
+
+/* ---------- AWS pipeline ---------- */
+.ip:has(.ip-pipe) { width: min(640px, 100%); }
+.ip-pipe-wrap { margin-top: 14px; }
+.ip-pipe { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.ip-node { position: relative; display: grid; justify-items: center; align-content: start; gap: 3px; min-width: 0; padding: 0 2px; text-align: center; }
+.ip-node + .ip-node::before { content: ''; position: absolute; top: 10px; right: calc(50% + 13px); width: calc(100% - 26px); height: 2px; border-radius: 2px; background: var(--ip-line); }
+.ip-node[data-state=done]::before, .ip-node[data-state=skipped]::before, .ip-node[data-state=active]::before, .ip-node[data-state=failed]::before, .ip-node[data-state=stopped]::before {
+  background: linear-gradient(90deg, var(--ip-accent), var(--accent-2, #8b5cf6)); }
+.ip-node[data-state=active]::after { content: ''; position: absolute; top: 10px; left: calc(50% + 13px); width: calc(100% - 26px); height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, var(--ip-accent), transparent); background-size: 200% 100%; animation: ip-flow 1.3s linear infinite; opacity: .7; }
+.ip-node:last-child::after { display: none; }
+.ip-ndot { position: relative; z-index: 1; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ip-line); background: var(--ip-card); color: #fff; transition: background .3s, border-color .3s; }
+.ip-ndot svg { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.ip-node[data-state=done] .ip-ndot { border-color: transparent; background: linear-gradient(135deg, var(--ip-accent), var(--accent-2, #8b5cf6)); box-shadow: 0 4px 10px -4px var(--ip-accent); animation: ip-pop .35s cubic-bezier(.2, .7, .2, 1) both; }
+.ip-node[data-state=active] .ip-ndot { border-color: var(--ip-accent); background: var(--ip-accent-wash); }
+.ip-node[data-state=active] .ip-ndot::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--ip-accent); }
+.ip-node[data-state=active] .ip-ndot::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; border: 2px solid var(--ip-accent); opacity: 0; animation: ip-ripple 1.8s ease-out infinite; }
+.ip-node[data-state=skipped] .ip-ndot, .ip-node[data-state=stopped] .ip-ndot { color: var(--ip-muted); background: var(--side, #f0f2f8); }
+.ip-node[data-state=failed] .ip-ndot { border-color: transparent; background: var(--ip-bad); }
+.ip-node[data-state=unknown] .ip-ndot { border-style: dashed; }
+.ip-ntext { display: grid; min-width: 0; }
+.ip-nlabel { font-size: 12px; font-weight: 600; color: var(--ip-text-2); line-height: 1.25; overflow-wrap: anywhere; }
+.ip-nsvc { font: 10.5px var(--ip-mono); color: var(--ip-muted); line-height: 1.3; overflow-wrap: anywhere; }
+.ip-ndur { font: 10.5px var(--ip-mono); color: var(--ip-muted); font-variant-numeric: tabular-nums; min-height: 14px; }
+.ip-node[data-state=waiting] .ip-nlabel, .ip-node[data-state=unknown] .ip-nlabel, .ip-node[data-state=skipped] .ip-nlabel { color: var(--ip-muted); font-weight: 500; }
+.ip-node[data-state=active] .ip-nlabel { color: var(--ip-text); }
+.ip-record .ip-pipe { margin-top: 8px; }
+
+/* ---------- How RIPPLE reasoned ---------- */
+.ip-steps2 { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; counter-reset: s; }
+.ip-s { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 1px solid var(--ip-line); border-radius: 12px; background: var(--ip-card); }
+.ip-s[data-state=failed] { border-color: color-mix(in srgb, var(--ip-bad) 30%, var(--ip-line)); }
+.ip-snum { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 7px; background: var(--side, #f0f2f8); font: 600 11.5px var(--ip-mono); color: var(--ip-text-2); }
+.ip-sbody { display: grid; gap: 5px; min-width: 0; }
+.ip-shead { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; min-width: 0; }
+.ip-shead b { font-size: 13.5px; font-weight: 600; color: var(--ip-text); }
+.ip-shead code { font: 11.5px var(--ip-mono); color: var(--ip-muted); background: none; border: 0; padding: 0; }
+.ip-shead .ip-dur { margin-left: auto; padding: 0; }
+.ip-sline { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; margin: 0; font-size: 13px; color: var(--ip-text-2); overflow-wrap: anywhere; }
+.ip-sline > span { flex: none; width: 88px; white-space: nowrap; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ip-muted); }
+.ip-sline em { font: normal 500 12px var(--ip-mono); padding: 2px 7px; border-radius: 6px; background: var(--side, #f0f2f8); color: var(--ip-text); }
+.ip-sline em.more { background: none; color: var(--ip-muted); }
+.ip-tag { display: inline-flex; align-items: center; height: 19px; padding: 0 7px; border-radius: 6px; font: 600 10.5px var(--ip-mono); letter-spacing: .02em; }
+.ip-tag::before { content: '['; opacity: .55; } .ip-tag::after { content: ']'; opacity: .55; }
+.ip-tag[data-kind=measured] { background: var(--ip-accent-wash); color: var(--accent-ink, #3730a3); }
+.ip-tag[data-kind=source], .ip-tag[data-kind=documented] { background: #e0f7fa; color: #0e7490; }
+.ip-tag[data-kind=simulated] { background: #f3edff; color: #6d28d9; }
+.ip-tag.bad { background: color-mix(in srgb, var(--ip-bad) 10%, var(--ip-card)); color: var(--ip-bad); }
+.ip-src .ip-tag { margin-right: 2px; }
+.ip-steps2 + .ip-src { margin-top: 10px; }
+@keyframes ip-flow { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@keyframes ip-pop { from { transform: scale(.6); } }
+
+@media (max-width: 620px) {
+  .ip-pipe { grid-template-columns: 1fr; gap: 0; }
+  .ip-node { grid-template-columns: 22px minmax(0, 1fr) auto; justify-items: start; align-items: center; gap: 10px; padding: 5px 0; text-align: left; }
+  .ip-ntext { grid-auto-flow: column; justify-content: start; gap: 6px; align-items: baseline; }
+  .ip-node + .ip-node::before { top: -9px; left: 10px; right: auto; width: 2px; height: 18px; }
+  .ip-node[data-state=active]::after { display: none; }
+  .ip-sline > span { width: auto; }
+}
+
+@keyframes ip-enter { from { opacity: 0; transform: translateY(4px); } }
+@keyframes ip-step-in { from { opacity: 0; transform: translateX(-4px); } }
+@keyframes ip-ripple { 0% { transform: scale(.4); opacity: .55; } 100% { transform: scale(1.35); opacity: 0; } }
+@keyframes ip-sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(265%); } }
+@keyframes ip-fill { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); transform-origin: left; } }
+@keyframes ip-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 520px) {
+  .ip { padding: 12px 13px 10px; border-radius: 14px; }
+  .ip-record-body { padding: 12px; }
+  .ip-meta { display: none; }
+}
+
+/* No motion: the running state stays visible (static half track, static ring), nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  .ip, .ip-record-body, .ip-step, .ip-track span, .ip-mark::before, .ip-mark::after, .ip-spin, .ip-chev, .ip-node::after, .ip-ndot, .ip-ndot::after { animation: none !important; transition: none !important; }
+  .ip-node[data-state=active]::after { opacity: .5; background: var(--ip-accent); }
+  .ip[data-state=running] .ip-track span { width: 100%; transform: none; background: repeating-linear-gradient(90deg, var(--ip-accent) 0 8px, transparent 8px 14px); opacity: .55; }
+  .ip[data-state=running] .ip-mark::before { opacity: .4; transform: scale(1); }
+  .ip-spin { border-color: var(--ip-accent); border-top-color: var(--ip-accent); }
+}

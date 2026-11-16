@@ -4,30 +4,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#faf9f6">
-  <meta name="description" content="Cascade: an agent that explains where your portfolio's oil exposure comes from.">
-  <title>Cascade</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f1d1a'/%3E%3Cpath d='M16 6s-7 9-7 14a7 7 0 0 0 14 0c0-5-7-14-7-14z' fill='%23e98a2c'/%3E%3C/svg%3E">
+  <meta name="theme-color" content="#f4f8fb">
+  <meta name="description" content="RIPPLE AI: an agent that checks what moved or protected your portfolio: rates, stocks, oil and the dollar.">
+  <title>RIPPLE AI</title>
+  <link rel="icon" type="image/svg+xml" href="./ripple-mark.svg">
   <link rel="stylesheet" href="./chat.css">
+  <link rel="stylesheet" href="./investigation-progress.css">
+  <link rel="stylesheet" href="./answer-data.css">
+  <link rel="stylesheet" href="./ripple-light.css">
+  <link rel="stylesheet" href="./library.css">
+  <link rel="stylesheet" href="./views.css">
   <script type="module" src="./chat.js"></script>
 </head>
-<body>
+<body data-surface="chat">
   <a class="skip-link" href="#composer-input">Skip to message box</a>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="app" id="app" data-sidebar="open">
     <aside class="sidebar" id="sidebar" aria-label="Conversations">
       <div class="sb-top">
-        <span class="brand"><svg viewBox="0 0 24 32" aria-hidden="true"><path d="M12 1S2 13.5 2 20.5a10 10 0 0 0 20 0C22 13.5 12 1 12 1z"/></svg>Cascade</span>
+        <span class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 14.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0"/><path d="M4 9.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0" opacity=".55"/></svg></span>RIPPLE AI</span>
         <button type="button" class="icon-btn" id="sb-close" aria-label="Close sidebar" title="Close sidebar">
           <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><path d="M7.5 3.5v13"/></svg>
         </button>
       </div>
       <button type="button" class="sb-new" id="new-chat">
-        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>New chat
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg><span>New investigation</span><kbd data-kbd="mod+shift+O"></kbd>
       </button>
+      <nav class="app-nav" aria-label="Sections">
+        <button type="button" data-go="agent"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h9A1.5 1.5 0 0 1 16 5.5v6a1.5 1.5 0 0 1-1.5 1.5H9l-3.5 3v-3A1.5 1.5 0 0 1 4 11.5z"/></svg>Agent</button>
+        <button type="button" data-go="statistics"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16V9M8.5 16V4M13 16v-5M17 16H3"/></svg>Statistics</button>
+        <button type="button" data-go="sources"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h6l3 3v12h-9z"/><path d="M11.5 2.5v3h3M8 10h4.5M8 13h4.5"/></svg>Sources</button>
+        <button type="button" data-go="about"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 9v5M10 6.5v.01"/></svg>About</button>
+      </nav>
+      <label class="sb-search">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
+        <span class="sr-only">Search conversations</span>
+        <input id="chat-search" type="search" placeholder="Search conversations" autocomplete="off" spellcheck="false">
+      </label>
       <p class="sb-label" id="chat-list-label">Recent</p>
       <nav class="chat-list" id="chat-list" aria-labelledby="chat-list-label"></nav>
       <div class="sb-foot">
+        <button type="button" class="sb-cmd" id="palette-sb"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="4" width="14" height="12" rx="2.5"/><path d="M6.5 8.5l2 1.5-2 1.5M10.5 12h3"/></svg>Command menu<kbd data-kbd="mod+K"></kbd></button>
         <p id="agent-status" class="agent-status"></p>
+        <p id="sync-status" class="sync-status" role="status" hidden></p>
       </div>
     </aside>
     <div class="scrim" id="scrim" hidden></div>
@@ -41,46 +60,170 @@
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 4.5H5a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 5 16.5h9a1.5 1.5 0 0 0 1.5-1.5V8.5"/><path d="M14.5 3.5l2 2-6 6H8.5v-2z"/></svg>
         </button>
         <div class="mode">
-          <button type="button" class="mode-btn" id="mode-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="mode-menu">
-            <span id="mode-label">Cascade</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
-          </button>
-          <div class="menu mode-menu" id="mode-menu" role="menu" hidden>
-            <button type="button" role="menuitemradio" data-mode="agent" aria-checked="false"><b>Agent</b><span id="agent-option-note">Investigates with tools on the backend</span></button>
-            <button type="button" role="menuitemradio" data-mode="offline" aria-checked="true"><b>Offline</b><span>Answers from saved data on this device · no AI</span></button>
-          </div>
+          <span class="mode-btn mode-static"><span class="mode-dot" aria-hidden="true"></span><span id="view-title">RIPPLE Agent</span></span>
         </div>
         <div class="topbar-spacer"></div>
+        <button type="button" class="icon-btn" id="export-chat" aria-label="Export conversation as Markdown" title="Export conversation" hidden>
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3.5v9M6.5 9l3.5 3.5L13.5 9"/><path d="M4 13.5v1.5A1.5 1.5 0 0 0 5.5 16.5h9A1.5 1.5 0 0 0 16 15v-1.5"/></svg>
+        </button>
+        <button type="button" class="cmd-btn" id="palette-btn" aria-label="Open command menu">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg><span>Search or run a command</span><kbd data-kbd="mod+K"></kbd>
+        </button>
         <div class="profile">
           <button type="button" class="avatar" id="profile-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu" aria-label="Profile">?</button>
           <div class="menu profile-menu" id="profile-menu" role="menu" hidden>
-            <div class="pm-head"><b id="pm-name"></b><span id="pm-portfolio"></span></div>
-            <button type="button" role="menuitem" data-open="profile">Profile</button>
-            <button type="button" role="menuitem" data-open="portfolio">Portfolio</button>
+            <div class="pm-head"><b id="pm-name"></b><span id="pm-portfolio"></span><span class="pm-account" id="pm-account" hidden></span></div>
+            <button type="button" role="menuitem" data-go="portfolio">My portfolio &amp; saved</button>
+            <button type="button" role="menuitem" data-open="profile">Edit profile</button>
             <hr>
-            <button type="button" role="menuitem" id="sign-out">Sign out</button>
+            <button type="button" role="menuitem" id="change-password" hidden>Change password</button>
+            <button type="button" role="menuitem" id="sign-out">Reset local workspace</button>
+            <button type="button" role="menuitem" id="delete-account" class="danger" hidden>Delete account</button>
           </div>
         </div>
       </header>
 
+      <div class="views">
+      <section class="view view-agent" data-view="agent" aria-label="Agent">
       <main class="thread" id="thread" aria-live="polite" tabindex="-1"></main>
 
       <form class="composer" id="composer" autocomplete="off">
         <div class="composer-box">
-          <label class="sr-only" for="composer-input">Message Cascade</label>
-          <textarea id="composer-input" rows="1" maxlength="900" placeholder="Ask about your oil exposure…" required></textarea>
-          <button type="submit" class="send" id="send" aria-label="Send" title="Send">
-            <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4M5 9l5-5 5 5"/></svg>
-          </button>
-          <button type="button" class="send stop" id="stop" aria-label="Stop" title="Stop" hidden>
-            <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="8" height="8" rx="1.5"/></svg>
-          </button>
+          <label class="sr-only" for="composer-input">Message RIPPLE AI</label>
+          <textarea id="composer-input" rows="1" maxlength="900" placeholder="Ask what moved or protected your portfolio…" required></textarea>
+          <div class="composer-bar">
+            <div class="tools">
+              <button type="button" class="pill" id="tools-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="tools-menu">
+                <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h8M15 6h1M4 14h2M9 14h7"/><circle cx="13.5" cy="6" r="1.8"/><circle cx="7.5" cy="14" r="1.8"/></svg>Tools
+              </button>
+              <div class="menu tools-menu" id="tools-menu" role="dialog" aria-label="Tools" hidden></div>
+            </div>
+            <button type="button" class="pill" id="portfolio-chip" title="Change portfolio"></button>
+            <div class="seg-mini" role="radiogroup" aria-label="Explanation level">
+              <button type="button" role="radio" data-level="beginner" aria-checked="true">Beginner</button>
+              <button type="button" role="radio" data-level="expert" aria-checked="false">Expert</button>
+            </div>
+            <span class="bar-spacer"></span>
+            <button type="submit" class="send" id="send" aria-label="Send" title="Send">
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4M5 9l5-5 5 5"/></svg>
+            </button>
+            <button type="button" class="send stop" id="stop" aria-label="Stop" title="Stop" hidden>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="6" y="6" width="8" height="8" rx="1.5"/></svg>
+            </button>
+          </div>
         </div>
         <p class="composer-note">Historical relationships from weekly data, not forecasts or investment advice.</p>
       </form>
+      </section>
+
+      <section class="view view-page" data-view="statistics" aria-labelledby="stats-title" hidden>
+        <div class="page" id="stats-view"></div>
+      </section>
+
+      <section class="view view-page" data-view="sources" aria-labelledby="rl-title" hidden>
+        <div class="page page-wide">
+    <section id="research-library" class="research-library" aria-labelledby="rl-title" aria-busy="true">
+      <div class="rl-shell">
+        <header class="rl-header"><div><span class="ed-eyebrow">RIPPLE AI / Research Library</span><h2 id="rl-title" tabindex="-1">Source library</h2>
+          <p>Reports, holdings, fuel prices and economic data, with acquisition and verification status.</p><p id="rl-summary">52 registered sources · loading availability…</p></div>
+          <button type="button" class="ghost-button" id="rl-toggle" aria-expanded="false" aria-controls="rl-workspace">Open / close library</button></header>
+        <p id="rl-status" class="rl-status" role="status"></p><button type="button" id="rl-retry" hidden>Retry catalog</button>
+        <div id="rl-workspace" hidden>
+          <div class="rl-controls"><div class="rl-filters">
+            <label>Find a source<input id="rl-query" type="search" placeholder="Company, ticker, source title…"></label>
+            <label>Source group<select id="rl-group"><option value="">All source groups</option></select></label>
+            <label>Research availability<select id="rl-status-filter"><option value="">All availability</option><option value="usable">Usable for intended research</option><option value="context_only">Context only</option><option value="needs_attention">Needs attention</option></select></label>
+            <label>File format<select id="rl-format"><option value="">All file formats</option></select></label>
+            <button type="button" id="rl-clear">Clear filters</button>
+          </div><form id="rl-search-form" class="rl-text-search"><label>Search inside the filtered documents · exact phrase<input id="rl-text-query" type="search" required minlength="2" maxlength="200" placeholder="Try diesel, oil and gas, fuel surcharge…"></label><button type="submit" class="primary-button">Search source text</button><button type="button" class="ghost-button" id="rl-stop-search" hidden>Stop</button></form>
+            <p id="rl-search-progress" role="status"></p><div id="rl-search-results" aria-live="polite"></div>
+          </div>
+          <div class="rl-workbench"><aside class="rl-sidebar" aria-label="Official research register"><p id="rl-count" class="rl-count" role="status"></p><div id="rl-list"></div></aside><article id="rl-detail" class="rl-detail" tabindex="-1" aria-label="Selected source and local content"></article></div>
+        </div>
+      </div>
+        </div>
+      </section>
+
+      <section class="view view-page" data-view="about" aria-labelledby="about-title" hidden>
+        <div class="page about">
+          <header class="page-head">
+            <p class="eyebrow-text">About RIPPLE AI</p>
+            <h1 id="about-title">See what really moved your portfolio, and what protected it</h1>
+            <p class="lede">RIPPLE is a research agent. Ask about your portfolio in plain words: it measures how interest rates, stocks and oil moved your holdings over 2021–2026, reads company and central-bank sources, and answers with a verdict you can check step by step.</p>
+            <div class="page-actions"><button type="button" class="btn primary" data-go="agent">Ask the agent</button><button type="button" class="btn ghost" data-go="sources">Browse the sources</button></div>
+          </header>
+
+          <section class="about-why" aria-label="Why it is useful">
+            <article><span class="why-k">01</span><h2>Test what you believe</h2><p>“My bonds protect me.” “Gold is a hedge.” Say it, and RIPPLE runs the matching test on your holdings, then answers with a verdict: REAL, MYTH, WORKING, BROKEN, MINOR…</p></article>
+            <article><span class="why-k">02</span><h2>Three risks, one picture</h2><p>Interest rates, stocks and oil are measured separately, so you see which one actually drove your weekly moves instead of guessing.</p></article>
+            <article><span class="why-k">03</span><h2>Numbers you can trace</h2><p>Every figure is tagged <span class="ip-tag" data-kind="measured">measured</span> or <span class="ip-tag" data-kind="source">source</span>, and “How RIPPLE reasoned” lists each tool the agent called and what it found.</p></article>
+            <article><span class="why-k">04</span><h2>Honest by design</h2><p>No buy or sell advice, no forecasts. A guardrail checks every answer, and history is described as history: 2021–2026, past behaviour, not a prediction.</p></article>
+          </section>
+
+          <section class="about-shock" aria-labelledby="shock-title">
+            <div class="shock-copy">
+              <p class="eyebrow-text">What a shock looks like</p>
+              <h2 id="shock-title">A shock you could feel at the pump</h2>
+              <p>Canadian gasoline peaked at <b data-fuel-peak>207.2¢</b> a litre in <b data-fuel-peak-month>Jun 2022</b>. Shocks like this hit oil, interest rates and stock markets at the same time.</p>
+              <p>RIPPLE measures how each of those moved <em>your</em> holdings, then checks whether your shields (bonds, gold, the US dollar) actually cushioned the worst weeks. Latest reading: <b data-fuel-latest>184.3¢</b>.</p>
+              <p class="fine">Statistics Canada table 18-10-0001-01: monthly regular gasoline, self-serve, cents per litre including taxes. Shown as an example of a shock, not an input to the agent.</p>
+            </div>
+            <div class="fuel-stage"><div id="fuel-card"></div></div>
+          </section>
+
+          <section class="about-how" aria-labelledby="how-title">
+            <p class="eyebrow-text">How the agent works</p>
+            <h2 id="how-title">From your question to a verdict</h2>
+            <ol class="how-steps">
+              <li style="--i:0"><b>You ask</b><span>Your question and portfolio go to the RIPPLE API and wait in a queue.</span><small>API Gateway · SQS</small></li>
+              <li style="--i:1"><b>The agent plans</b><span>It decides which tests answer your question.</span><small>Bedrock AgentCore</small></li>
+              <li style="--i:2"><b>It measures</b><span>Betas, scenarios, risk shares and shield tests from 261 weeks of data.</span><small>Athena</small></li>
+              <li style="--i:3"><b>It reads sources</b><span>Annual reports and central-bank research explain why.</span><small>Knowledge base</small></li>
+              <li style="--i:4"><b>It checks itself</b><span>A guardrail blocks advice and predictions.</span><small>Bedrock guardrail</small></li>
+              <li style="--i:5"><b>You get a verdict</b><span>With every step, figure and source shown.</span><small>How RIPPLE reasoned</small></li>
+            </ol>
+          </section>
+
+          <section class="quotes" aria-labelledby="quotes-title">
+            <div class="quotes-head">
+              <p class="eyebrow-text">Company disclosures</p>
+              <h2 id="quotes-title">What companies say about their exposure</h2>
+              <p>Excerpts from annual reports, with their original page. Select one to open the report in Sources. A company describing its exposure does not tell you which way its shares moved: that is what the agent measures.</p>
+            </div>
+            <div class="quotes-stage" id="quotes-stage" aria-label="Passages from company annual reports"></div>
+          </section>
+
+          <section class="about-limits" aria-labelledby="limits-title">
+            <h2 id="limits-title">Good to know</h2>
+            <ul>
+              <li>Results describe 2021–2026 weekly history. They are not forecasts and not investment advice.</li>
+              <li>Three sample portfolios are built in; you can also enter your own holdings from the 14 supported tickers.</li>
+              <li>Every source the agent cites can be opened in Sources, with its acquisition and verification status.</li>
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <section class="view view-page" data-view="portfolio" aria-labelledby="pf-title" hidden>
+        <div class="page" id="portfolio-view"></div>
+      </section>
+      </div>
     </div>
   </div>
 
   <dialog class="sheet" id="signup" aria-labelledby="signup-title"></dialog>
   <dialog class="sheet" id="settings" aria-labelledby="settings-title"></dialog>
+  <dialog class="sheet" id="login" aria-labelledby="login-title"></dialog>
+  <dialog class="sheet" id="password-dialog" aria-labelledby="password-title"></dialog>
+  <dialog class="palette" id="palette" aria-label="Command menu">
+    <div class="pal-search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5.5"/><path d="M13.2 13.2L17 17"/></svg>
+      <input id="palette-input" type="text" placeholder="Type a command or search conversations…" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="true" aria-controls="palette-list" aria-autocomplete="list">
+      <kbd>esc</kbd>
+    </div>
+    <ul class="pal-list" id="palette-list" role="listbox" aria-label="Results"></ul>
+    <p class="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> run</span><span><kbd>esc</kbd> close</span></p>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 </body>
 </html>

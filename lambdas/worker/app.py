@@ -478,6 +478,15 @@ def store_cached(key, job_id, expires_at):
 
 # ----------------------------------------------------------------------------- job processing
 
+def agent_payload(item, level, experiment_id):
+    """The agent request. A custom portfolio's holdings (stored as JSON by lambdas/submit) go with it."""
+    payload = {"persona": item["persona"], "question": item["question"], "level": level,
+               "experiment_id": experiment_id}
+    if item.get("persona") == "custom" and item.get("holdings"):
+        payload["holdings"] = json.loads(item["holdings"])
+    return payload
+
+
 def process(job_id, level=None, experiment_id=None):
     """Process one job. Returns True if handled, raises on throttling.
 
@@ -509,7 +518,8 @@ def process(job_id, level=None, experiment_id=None):
     try:
         if not item.get("stages"):  # a job row written before submit recorded the queued stage
             _add_stages(job_id, ["queued"])
-        key = cache_key(item["persona"], experiment_id, level) if experiment_id else None
+        # Custom portfolios differ per user: never share cached answers between them.
+        key = cache_key(item["persona"], experiment_id, level) if experiment_id and item["persona"] != "custom" else None
         cached = find_cached(key, job_id) if key else None
         if cached:
             fields = {k: cached[k] for k in ("answer", "trace", "data", "citations", "toolCalls", "claims")
@@ -524,10 +534,7 @@ def process(job_id, level=None, experiment_id=None):
         resp = _agent().invoke_agent_runtime(
             agentRuntimeArn=os.environ["AGENT_RUNTIME_ARN"],
             runtimeSessionId=session_id_for(item.get("agentSessionId") or item["sessionId"]),
-            payload=json.dumps(
-                {"persona": item["persona"], "question": item["question"], "level": level,
-                 "experiment_id": experiment_id}
-            ),
+            payload=json.dumps(agent_payload(item, level, experiment_id)),
         )
         data = read_body(resp)
         result = build_result(data)

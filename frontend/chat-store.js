@@ -37,6 +37,32 @@ export function createChatStore(storage = globalThis.localStorage) {
       return chat;
     },
     setSession(id, sessionId) { const chat = chats.find(c => c.id === id); if (chat) { chat.sessionId = sessionId; save(); } },
+    /** Server summaries ({id, title, updatedAt}) from a signed-in account: unknown or newer ones are marked `remote`
+     *  until their messages are fetched; local conversations the server does not have are returned for upload. */
+    merge(summaries) {
+      const known = new Set();
+      for (const s of Array.isArray(summaries) ? summaries : []) {
+        if (!s || typeof s.id !== 'string') continue;
+        known.add(s.id);
+        const local = chats.find(c => c.id === s.id);
+        if (!local) chats.push({ id: s.id, title: s.title || 'Conversation', createdAt: s.updatedAt, updatedAt: s.updatedAt, sessionId: null, messages: [], remote: true });
+        else if ((s.updatedAt || '') > (local.updatedAt || '')) { local.remote = true; local.title = s.title || local.title; local.updatedAt = s.updatedAt; }
+      }
+      chats.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      chats = chats.slice(0, MAX_CHATS);
+      save();
+      return chats.filter(c => !known.has(c.id) && c.messages.length).map(c => c.id);
+    },
+    /** Replace a conversation with the full copy fetched from the account. */
+    replace(chat) {
+      if (!chat || typeof chat.id !== 'string' || !Array.isArray(chat.messages)) return null;
+      const next = { id: chat.id, title: chat.title || 'Conversation', createdAt: chat.createdAt || chat.updatedAt, updatedAt: chat.updatedAt,
+        sessionId: chat.sessionId ?? null, messages: chat.messages.slice(-MAX_MESSAGES) };
+      const i = chats.findIndex(c => c.id === chat.id);
+      if (i >= 0) chats[i] = next; else chats.unshift(next);
+      save();
+      return next;
+    },
     remove(id) { chats = chats.filter(c => c.id !== id); save(); },
     clear() { chats = []; try { storage?.removeItem(CHATS_KEY); } catch {} },
   };

@@ -502,3 +502,10 @@ def test_cache_ignored_when_source_job_is_gone_or_not_done(setup):
     make(agent, t)
     app.lambda_handler(event(job="j2", level="beginner", experiment_id="bonds_protect"), None)
     assert len(agent.calls) == 1
+
+
+def test_custom_portfolio_payload_and_no_shared_cache():
+    item = {"persona": "custom", "question": "Q?", "holdings": json.dumps([{"ticker": "XIU.TO", "weight": 1.0}])}
+    assert app.agent_payload(item, "beginner", "exp1") == {"persona": "custom", "question": "Q?", "level": "beginner",
+                                                          "experiment_id": "exp1", "holdings": [{"ticker": "XIU.TO", "weight": 1.0}]}
+    assert "holdings" not in app.agent_payload({"persona": "robert", "question": "Q?"}, "beginner", None)

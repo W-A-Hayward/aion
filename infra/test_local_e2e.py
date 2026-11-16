@@ -59,13 +59,38 @@ class FakeDynamo:
                 raise ClientError({"Error": {"Code": "ConditionalCheckFailedException", "Message": ""}}, "UpdateItem")
             for clause in re.split(r"\s+(?=SET |ADD )", UpdateExpression.strip()):
                 verb, body = clause.split(" ", 1)
-                for part in body.split(","):
+                for part in self._top_level(body):
                     if verb == "SET":
-                        attr, val = (s.strip() for s in part.split("="))
-                        item[name(attr)] = values[val]
+                        attr, val = (s.strip() for s in part.split("=", 1))
+                        item[name(attr)] = self._value(val, item, name, values)
                     else:
                         attr, val = part.split()
                         item[name(attr)] = item.get(name(attr), 0) + values[val]
+
+    @staticmethod
+    def _top_level(body):
+        """Split on commas outside parentheses (list_append(if_not_exists(a, b), c) is one part)."""
+        parts, depth, cur = [], 0, ""
+        for ch in body:
+            depth += ch == "("
+            depth -= ch == ")"
+            if ch == "," and depth == 0:
+                parts.append(cur)
+                cur = ""
+            else:
+                cur += ch
+        return [p.strip() for p in parts + [cur] if p.strip()]
+
+    def _value(self, expr, item, name, values):
+        """:placeholder, if_not_exists(#a, :b) or list_append(x, y): the subset the Lambdas use."""
+        expr = expr.strip()
+        m = re.fullmatch(r"(list_append|if_not_exists)\((.*)\)", expr)
+        if not m:
+            return values[expr]
+        a, b = self._top_level(m.group(2))
+        if m.group(1) == "if_not_exists":
+            return item.get(name(a), self._value(b, item, name, values))
+        return list(self._value(a, item, name, values)) + list(self._value(b, item, name, values))
 
     @staticmethod
     def _holds(cond, item, name, values):

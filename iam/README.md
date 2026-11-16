@@ -15,6 +15,8 @@ For each role there are two files:
 | `cascade-submit-lambda` | `cascade-submit-lambda*.json` | `lambda.amazonaws.com` | Lambda `cascade-submit` (job rows, rate-limit counters, SQS send) |
 | `cascade-status-lambda` | `cascade-status-lambda*.json` | `lambda.amazonaws.com` | Lambda `cascade-status` |
 | `cascade-worker-lambda` | `cascade-worker-lambda*.json` | `lambda.amazonaws.com` | Lambda `cascade-worker` (SQS → AgentCore → DynamoDB + S3 trace) |
+| `cascade-userdata-lambda` | `cascade-userdata-lambda*.json` | `lambda.amazonaws.com` | Lambda `cascade-userdata` (each signed-in user's profile, portfolio and conversations in `cascade-users`) |
+| `cascade-presignup-lambda` | `cascade-presignup-lambda.trust.json` | `lambda.amazonaws.com` | Lambda `cascade-presignup` (Cognito pre sign-up trigger; needs no permissions beyond `AWSLambdaBasicExecutionRole` logs) |
 | `cascade-agentcore-runtime` | `cascade-agentcore-runtime*.json` | `bedrock-agentcore.amazonaws.com` | The AgentCore runtime that hosts `agent/agent.py` |
 | `cascade-agent-role` | `cascade-agent-role*.json` | `bedrock.amazonaws.com` | **Legacy, unused.** For the classic Bedrock Agent (`cascade-agent`, alias `live`). The worker calls AgentCore, not a Bedrock Agent alias. Keep only if you still run the classic agent. |
 

@@ -33,6 +33,10 @@ class FakeAthena:
             h = ["beta_ex2022", "lo_ex2022", "hi_ex2022", "oos_hit_rate", "oos_n", "beta_up",
                  "beta_down", "label", "reason_text"]
             rows = [["0.12345", "0.1", "0.2", "0.6", "100", "0.3", "0.2", "green", "ok"]]
+        elif "FROM sensitivities WHERE ticker IN" in s:
+            h = ["ticker", "beta_simple", "lo_simple", "hi_simple"]
+            table = {"XIU.TO": ["0.01", "-0.03", "0.05"], "ENB.TO": ["0.092", "0.038", "0.145"], "XOM": ["0.357", "0.3", "0.41"]}
+            rows = [[t] + v for t, v in table.items() if "'%s'" % t in s]
         elif "FROM sensitivities" in s:
             h, rows = ["ticker", "beta_simple"], [["TLT", "-0.123456"]]
         elif "FROM confidence" in s:
@@ -176,3 +180,44 @@ def test_athena_failure_does_not_raise(monkeypatch):
     monkeypatch.setattr(app, "run_query", boom)
     _, body = call("get_validation", ticker="TLT")
     assert "error" in body
+
+
+CUSTOM = json.dumps([{"ticker": "xiu.to", "weight": 0.5}, {"ticker": "ENB.TO", "weight": 0.3}, {"ticker": "XOM", "weight": 0.2}])
+
+
+def test_custom_portfolio_exposure_uses_each_holdings_simple_beta(fake):
+    _, b = call("get_portfolio_exposure", persona="Custom", holdings=CUSTOM)
+    assert b["persona"] == "custom"
+    assert [h["ticker"] for h in b["holdings"]] == ["XIU.TO", "ENB.TO", "XOM"]
+    want = 0.5 * 0.01 + 0.3 * 0.092 + 0.2 * 0.357
+    assert b["portfolio_beta"]["beta"] == pytest.approx(want, abs=1e-3)
+    assert b["portfolio_beta"]["lo"] is None and b["portfolio_beta"]["method"] == "weighted_sum_proxy"
+    assert "proxy" in b["note"]
+    assert any("WHERE ticker IN ('XIU.TO', 'ENB.TO', 'XOM')" in s for s in fake.sql)
+    assert not any("persona" in s for s in fake.sql), "custom portfolios never read the sample tables"
+
+
+def test_custom_portfolio_scenario_and_cache(fake):
+    _, b = call("run_scenario", persona="custom", oil_shock_pct="-30", holdings=CUSTOM)
+    k = math.log(0.7)
+    f = lambda beta: 100 * (math.exp(beta * k) - 1)
+    beta = 0.5 * 0.01 + 0.3 * 0.092 + 0.2 * 0.357
+    assert b["scenario"][0]["impact_pct"] == pytest.approx(f(beta), abs=1e-3)
+    assert b["scenario"][0]["lo_pct"] is None
+    xom = next(h for h in b["holding_impacts"] if h["ticker"] == "XOM")
+    assert xom["impact_pct"] == pytest.approx(f(0.357), abs=1e-3)
+    assert xom["lo_pct"] <= xom["impact_pct"] <= xom["hi_pct"]
+    n = len(fake.sql)
+    same = json.dumps([{"ticker": "XOM", "weight": 0.2}, {"ticker": "ENB.TO", "weight": 0.3}, {"ticker": "XIU.TO", "weight": 0.5}])
+    call("run_scenario", persona="custom", oil_shock_pct="-30%", holdings=same)
+    assert len(fake.sql) == n, "same holdings in another order hit the cache"
+
+
+def test_holdings_validation():
+    with pytest.raises(app.InputError):
+        app.norm_holdings('[{"ticker": "XIU", "weight": 1}]')  # the full .TO symbol is required
+    with pytest.raises(app.InputError):
+        app.norm_holdings('[{"ticker": "XIU.TO", "weight": 0.98}]')
+    assert app.norm_holdings('[{"ticker": "XIU.TO", "weight": 0.998}]') == (("XIU.TO", 0.998),)
+    with pytest.raises(app.InputError):
+        app.norm_holdings(json.dumps([{"ticker": "XIU.TO", "weight": 1 / 15}] * 15))

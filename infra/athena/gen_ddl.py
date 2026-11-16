@@ -50,6 +50,9 @@ def build_tables():
         "evidence": evid,
         "confidence": ev.build_confidence(sens, chains, evid),
         "edges": ev.build_edges(links, evid),
+        # Risk and history tables the agent's newer tools read (get_portfolio_facts, test_shield, rates scenarios).
+        **stats.build_risk_tables(data),
+        **stats.build_history_tables(data, test_stats._macro_for_split()),
     }
 
 

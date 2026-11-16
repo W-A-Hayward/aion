@@ -12,6 +12,7 @@ Returns {"answer_text", "trace", "tool_results"}, plus the keys the worker, eval
 """
 import json
 import os
+import re
 import threading
 import time
 
@@ -45,6 +46,7 @@ _citations = []
 _claims = []
 _guardrail_traces = []
 _trace = []
+_request = {"holdings": None}  # the current request's custom holdings, if any
 _tool_results = {}
 
 KB_TOOLS = ("search_evidence",)  # tag "source"; every other tool reads Athena through cascade-tools: "measured"
@@ -295,15 +297,48 @@ def _call_tools_lambda(name, **params):
 
 # ----------------------------------------------------------------------------- tools
 
+def _clean_holdings(raw):
+    """Holdings validated by lambdas/submit; re-checked here so the system prompt only carries clean text."""
+    if not isinstance(raw, list):
+        return None
+    out = []
+    for row in raw[:14]:
+        t = row.get("ticker") if isinstance(row, dict) else None
+        w = row.get("weight") if isinstance(row, dict) else None
+        if not (isinstance(t, str) and re.fullmatch(r"[A-Z0-9.]{1,10}", t)):
+            return None
+        if isinstance(w, bool) or not isinstance(w, (int, float)) or not 0 < w <= 1:
+            return None
+        out.append({"ticker": t, "weight": float(w)})
+    return out or None
+
+
+def _portfolio_params(persona):
+    """Tool parameters for a portfolio: the custom holdings are attached when persona is custom."""
+    if str(persona).strip().lower() == "custom" and _request["holdings"]:
+        return {"persona": "custom", "holdings": json.dumps(_request["holdings"])}
+    return {"persona": persona}
+
+
+def custom_portfolio_prompt(holdings):
+    mix = ", ".join("%s %s%%" % (h["ticker"], ("%.1f" % (h["weight"] * 100)).rstrip("0").rstrip(".")) for h in holdings)
+    return ("\nPortfolio: custom, the user's own holdings: %s.\n"
+            "For this portfolio pass persona \"custom\" to get_portfolio_exposure and run_scenario; the holdings "
+            "are attached automatically. get_portfolio_facts, test_shield, compare_alternative and rates scenarios are not available for a custom portfolio (their tables are built per sample persona); say so if asked. Its portfolio "
+            "beta is the weighted sum of each holding's beta, a proxy with no range: say so once, and do not "
+            "describe it as measured on the portfolio itself. Ignore PERSONA FOCUS." % mix)
+
+
+
 @tool
 def get_portfolio_exposure(persona: str) -> dict:
     """Call first on every question. Returns the persona's holdings, weights, oil beta with 95% range,
     each holding's contribution and the portfolio-level beta.
 
     Args:
-        persona: Persona name. Allowed values: robert, amira, mateo.
+        persona: Persona name. Allowed values: robert, amira, mateo, custom (the user's own portfolio).
     """
-    return _call_tools_lambda("get_portfolio_exposure", persona=persona)
+    return _call_tools_lambda("get_portfolio_exposure", **_portfolio_params(persona))
 
 
 @tool
@@ -348,13 +383,13 @@ def run_scenario(persona: str, oil_shock_pct: str = None, shock_type: str = "oil
     total).
 
     Args:
-        persona: Persona name. Allowed values: robert, amira, mateo.
+        persona: Persona name. Allowed values: robert, amira, mateo, custom (the user's own portfolio; oil only).
         oil_shock_pct: Brent oil move in percent, for shock_type oil. Allowed values: -30, -15, 15, 30.
         shock_type: Allowed values: oil (default), rates.
         rates_shock_bp: Yield move in basis points, for shock_type rates, for example 100 or -50. A non-zero
             whole number between -300 and 300.
     """
-    params = {"persona": persona}
+    params = dict(_portfolio_params(persona))
     if shock_type and str(shock_type).strip().lower() != "oil":
         params["shock_type"] = shock_type
         params["rates_shock_bp"] = rates_shock_bp
@@ -566,6 +601,7 @@ def invoke(payload):
     question = str(payload.get("question") or "")
     persona = str(payload.get("persona") or "")
     level = str(payload.get("level") or "")
+    holdings = _clean_holdings(payload.get("holdings")) if persona == "custom" else None
     with _lock:
         _tool_calls.clear()
         _citations.clear()
@@ -573,7 +609,10 @@ def invoke(payload):
         _guardrail_traces.clear()
         _trace.clear()
         _tool_results.clear()
+        _request["holdings"] = holdings
     system_prompt = "%s\nPersona: %s\nLevel: %s" % (_get_instructions(), persona, level)
+    if holdings:
+        system_prompt += custom_portfolio_prompt(holdings)
     agent = Agent(model=_build_model(), tools=TOOLS, system_prompt=system_prompt,
                   callback_handler=_on_stream_event)
     result = agent(question)

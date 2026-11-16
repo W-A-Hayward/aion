@@ -1,12 +1,17 @@
 // No credentials. Kept unconfigured by request; repository code is not deployment proof.
 // submit/status match lambdas/submit and lambdas/status. The table endpoint is still proposed.
 export const config = Object.freeze({
-  investigationUrl: null,
-  submitUrl: null,
-  statusUrl: null, // Full URL template containing {id}; use the deployed route, not a guessed one.
+  investigationUrl: 'https://wm28zdv834.execute-api.us-east-1.amazonaws.com/research', // GET ?ticker= (lambdas/research); statistics come only from here
+  submitUrl: 'https://wm28zdv834.execute-api.us-east-1.amazonaws.com/jobs',
+  statusUrl: 'https://wm28zdv834.execute-api.us-east-1.amazonaws.com/jobs/{id}', // Full URL template containing {id}; use the deployed route, not a guessed one.
   timeoutMs: 15000,
   pollIntervalMs: 1200,
   jobTimeoutMs: 120000,
+  // Accounts (docs/infrastructure.md, "Accounts"): a Cognito user pool with username + password, and the
+  // cascade-userdata API that stores each user's profile, portfolio and conversations. Leave null until deployed;
+  // the app then keeps everything in this browser only.
+  auth: Object.freeze({ region: 'us-east-1', userPoolId: 'us-east-1_U90KCokr6', clientId: '64v8jj2kbl4fc1jc6gftp9dmi0' }),
+  userDataUrl: 'https://wm28zdv834.execute-api.us-east-1.amazonaws.com', // e.g. https://<api-id>.execute-api.us-east-1.amazonaws.com (routes /me, /me/chats/{id})
 });
 
 // The data contract's 14 MVP ("core") tickers, in contract order (docs/data_contract.md,

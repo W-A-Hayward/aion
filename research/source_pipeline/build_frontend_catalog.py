@@ -87,7 +87,7 @@ def build(inventory_path, target=FRONTEND):
                'limits': ['Research usability is not citation verification.', 'Quarantined sources are excluded from default document search.',
                           'No AWS connection or new beta calculations.', 'Historical holdings are never silently replaced.']}
     body = encoded(catalog)
-    if b'/Users/' in body or b'local_file' in body: raise ValueError('Private workstation metadata leaked')
+    if b'/Users/' in body or b'"local_file":' in body: raise ValueError('Private workstation metadata leaked')
     # Metadata-only exporter improvements get a new immutable catalog without
     # replacing an earlier catalog or duplicating unchanged extraction payloads.
     immutable(target / f'research-data/{version}/catalog-{sha(body)}.json', body)

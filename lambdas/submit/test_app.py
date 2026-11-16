@@ -203,3 +203,20 @@ def test_cors_header_when_configured(env, monkeypatch):
 def test_preflight(env):
     r = app.lambda_handler({"requestContext": {"http": {"method": "OPTIONS"}}}, None)
     assert r["statusCode"] == 204 and env[0].items == []
+
+
+def test_custom_portfolio_is_stored_with_the_job(env):
+    t, q = env
+    holdings = [{"ticker": "XIU.TO", "weight": 0.6}, {"ticker": "ENB.TO", "weight": 0.4}]
+    r = app.lambda_handler(ev(dict(GOOD, persona="custom", holdings=holdings)), None)
+    assert r["statusCode"] == 202
+    item = t.items[0]
+    assert item["persona"] == "custom"
+    assert json.loads(item["holdings"]) == holdings
+    assert all(not isinstance(v, float) for v in item.values()), "DynamoDB items must not hold raw floats"
+
+
+def test_sample_persona_job_has_no_holdings(env):
+    t, _ = env
+    app.lambda_handler(ev(GOOD), None)
+    assert "holdings" not in t.items[0]

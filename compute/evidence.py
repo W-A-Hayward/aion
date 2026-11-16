@@ -729,7 +729,7 @@ def build_evidence(bucket: str | None = None, model_id: str | None = None, s3=No
                    client=None, usage: Usage | None = None) -> tuple[pd.DataFrame, dict[str, dict]]:
     """Read the manifest and documents, call the model and return (evidence frame, passages).
 
-    A document with processed/_evidence_cache/<file>.json is not sent to the model again, so
+    A document with processed/_evidence_cache/<file>.<digest>.json is not sent to the model again, so
     an interrupted run resumes where it stopped. `passages` maps evidence_id to
     {"passage", "page"} for the Knowledge Base documents.
     """

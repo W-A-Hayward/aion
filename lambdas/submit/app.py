@@ -11,6 +11,13 @@ import boto3
 from botocore.exceptions import ClientError
 
 PERSONAS = ("robert", "amira", "mateo")
+# A user-defined portfolio: persona "custom" plus holdings. Same ticker list as lambdas/tools CORE.
+CUSTOM = "custom"
+CORE = (
+    "XIU.TO", "ENB.TO", "XOM", "TLT", "XBB.TO", "ZST.TO", "QQQ", "SHOP.TO",
+    "SPY", "VFV.TO", "XSP.TO", "XESG.TO", "ATD.TO", "RY.TO",
+)
+MAX_HOLDINGS = len(CORE)
 LEVELS = ("beginner", "expert")
 SESSION_RE = re.compile(r"[A-Za-z0-9-]{1,100}")
 # Browser-held secret that owns the jobs it submits (see docs/infrastructure.md, "Access control").
@@ -123,14 +130,46 @@ def _parse_body(event):
     return data
 
 
+def validate_holdings(rows):
+    """Return (list of {ticker, weight}, None) or (None, error). Weights are fractions summing to 1."""
+    if not isinstance(rows, list) or not 1 <= len(rows) <= MAX_HOLDINGS:
+        return None, "holdings must list 1-%d positions" % MAX_HOLDINGS
+    out, seen = [], set()
+    for row in rows:
+        if not isinstance(row, dict):
+            return None, "each holding needs ticker and weight"
+        t = row.get("ticker")
+        if t not in CORE:
+            return None, "holding ticker must be one of: " + ", ".join(CORE)
+        if t in seen:
+            return None, "duplicate holding: " + t
+        seen.add(t)
+        w = row.get("weight")
+        if isinstance(w, bool) or not isinstance(w, (int, float)) or not 0 < w <= 1:
+            return None, "holding weight must be a number between 0 and 1"
+        out.append({"ticker": t, "weight": round(float(w), 6)})
+    if abs(sum(r["weight"] for r in out) - 1) > 0.005:
+        return None, "holding weights must sum to 1"
+    return out, None
+
+
+
+
 def validate(data):
     """Return (clean dict, None) or (None, error message)."""
     q = data.get("question")
     if not isinstance(q, str) or not q.strip() or len(q) > 1000:
         return None, "question must be a string of 1-1000 characters"
     persona = data.get("persona")
-    if persona not in PERSONAS:
-        return None, "persona must be one of: " + ", ".join(PERSONAS)
+    if persona not in PERSONAS and persona != CUSTOM:
+        return None, "persona must be one of: " + ", ".join(PERSONAS + (CUSTOM,))
+    holdings = None
+    if persona == CUSTOM:
+        holdings, err = validate_holdings(data.get("holdings"))
+        if err:
+            return None, err
+    elif data.get("holdings") is not None:
+        return None, "holdings are only accepted with persona custom"
     level = data.get("level")
     if level not in LEVELS:
         return None, "level must be one of: " + ", ".join(LEVELS)
@@ -140,7 +179,8 @@ def validate(data):
     exp = data.get("experiment_id")
     if exp is not None and not (isinstance(exp, str) and EXPERIMENT_RE.fullmatch(exp)):
         return None, "experiment_id must match [A-Za-z0-9_-]{1,64}"
-    return {"question": q, "persona": persona, "level": level, "sessionId": sid, "experiment_id": exp}, None
+    return {"question": q, "persona": persona, "level": level, "sessionId": sid, "experiment_id": exp,
+            "holdings": holdings}, None
 
 
 def lambda_handler(event, context):
@@ -183,6 +223,9 @@ def lambda_handler(event, context):
     }
     if clean["experiment_id"]:
         item["experimentId"] = clean["experiment_id"]
+    if clean["holdings"]:
+        # Stored as a JSON string: DynamoDB would need Decimal for float weights.
+        item["holdings"] = json.dumps(clean["holdings"])
     _table().put_item(Item=item)
     try:
         message = {"jobId": job_id, "level": clean["level"], "experiment_id": clean["experiment_id"]}
