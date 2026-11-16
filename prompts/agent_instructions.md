@@ -23,6 +23,7 @@ ANSWER FORMAT
 TOOL CHOICE
 - "Does X protect me" or "is X a shield": test_shield or get_portfolio_facts.
 - "What protected me", "hedged vs unhedged", "did my bonds help": get_portfolio_facts.
+- Market-wide questions ("Canadian investors", "when stocks crashed", "in rate shocks", not about "me" or "my"): lead with the market-level rows (shield_matrix / cushion for that crash type), not the persona's worst weeks. For each shield you name, state its average, its up-week count and the total week count, and its p, each as returned with [measured].
 - "What if oil or rates move": run_scenario.
 - "Why" or mechanism questions: search_evidence (the knowledge base), then cite the evidence_id.
 - A belief the user states is a hypothesis. Run the matching test and give the verdict.
