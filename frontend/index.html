@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f4f8fb">
-  <meta name="description" content="RIPPLE AI: an agent that checks what moved or protected your portfolio: rates, stocks, oil and the dollar.">
-  <title>RIPPLE AI</title>
-  <link rel="icon" type="image/svg+xml" href="./ripple-mark.svg">
+  <meta name="description" content="AION — Autonomous Intelligence & Observation Network: an agent that checks what moved or protected your portfolio: rates, stocks, oil and the dollar.">
+  <title>AION</title>
+  <link rel="icon" type="image/svg+xml" href="./aion-mark.svg">
   <link rel="stylesheet" href="./chat.css">
   <link rel="stylesheet" href="./investigation-progress.css">
   <link rel="stylesheet" href="./answer-data.css">
-  <link rel="stylesheet" href="./ripple-light.css">
+  <link rel="stylesheet" href="./aion-light.css">
   <link rel="stylesheet" href="./library.css">
   <link rel="stylesheet" href="./views.css">
   <script type="module" src="./chat.js"></script>
@@ -22,7 +22,7 @@
   <div class="app" id="app" data-sidebar="open">
     <aside class="sidebar" id="sidebar" aria-label="Conversations">
       <div class="sb-top">
-        <span class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 14.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0"/><path d="M4 9.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0" opacity=".55"/></svg></span>RIPPLE AI</span>
+        <span class="brand" title="Autonomous Intelligence &amp; Observation Network"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.8"/><circle cx="17" cy="7.4" r="1.9"/></svg></span>AION</span>
         <button type="button" class="icon-btn" id="sb-close" aria-label="Close sidebar" title="Close sidebar">
           <svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="3.5" width="15" height="13" rx="2.5"/><path d="M7.5 3.5v13"/></svg>
         </button>
@@ -60,7 +60,7 @@
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11.5 4.5H5a1.5 1.5 0 0 0-1.5 1.5v9A1.5 1.5 0 0 0 5 16.5h9a1.5 1.5 0 0 0 1.5-1.5V8.5"/><path d="M14.5 3.5l2 2-6 6H8.5v-2z"/></svg>
         </button>
         <div class="mode">
-          <span class="mode-btn mode-static"><span class="mode-dot" aria-hidden="true"></span><span id="view-title">RIPPLE Agent</span></span>
+          <span class="mode-btn mode-static"><span class="mode-dot" aria-hidden="true"></span><span id="view-title">AION Agent</span></span>
         </div>
         <div class="topbar-spacer"></div>
         <button type="button" class="icon-btn" id="export-chat" aria-label="Export conversation as Markdown" title="Export conversation" hidden>
@@ -89,7 +89,7 @@
 
       <form class="composer" id="composer" autocomplete="off">
         <div class="composer-box">
-          <label class="sr-only" for="composer-input">Message RIPPLE AI</label>
+          <label class="sr-only" for="composer-input">Message AION</label>
           <textarea id="composer-input" rows="1" maxlength="900" placeholder="Ask what moved or protected your portfolio…" required></textarea>
           <div class="composer-bar">
             <div class="tools">
@@ -124,7 +124,7 @@
         <div class="page page-wide">
     <section id="research-library" class="research-library" aria-labelledby="rl-title" aria-busy="true">
       <div class="rl-shell">
-        <header class="rl-header"><div><span class="ed-eyebrow">RIPPLE AI / Research Library</span><h2 id="rl-title" tabindex="-1">Source library</h2>
+        <header class="rl-header"><div><span class="ed-eyebrow">AION / Research Library</span><h2 id="rl-title" tabindex="-1">Source library</h2>
           <p>Reports, holdings, fuel prices and economic data, with acquisition and verification status.</p><p id="rl-summary">52 registered sources · loading availability…</p></div>
           <button type="button" class="ghost-button" id="rl-toggle" aria-expanded="false" aria-controls="rl-workspace">Open / close library</button></header>
         <p id="rl-status" class="rl-status" role="status"></p><button type="button" id="rl-retry" hidden>Retry catalog</button>
@@ -147,16 +147,16 @@
       <section class="view view-page" data-view="about" aria-labelledby="about-title" hidden>
         <div class="page about">
           <header class="page-head">
-            <p class="eyebrow-text">About RIPPLE AI</p>
+            <p class="eyebrow-text">About AION</p>
             <h1 id="about-title">See what really moved your portfolio, and what protected it</h1>
-            <p class="lede">RIPPLE is a research agent. Ask about your portfolio in plain words: it measures how interest rates, stocks and oil moved your holdings over 2021–2026, reads company and central-bank sources, and answers with a verdict you can check step by step.</p>
+            <p class="lede">AION — the Autonomous Intelligence &amp; Observation Network — is a research agent. Ask about your portfolio in plain words: it measures how interest rates, stocks and oil moved your holdings over 2021–2026, reads company and central-bank sources, and answers with a verdict you can check step by step.</p>
             <div class="page-actions"><button type="button" class="btn primary" data-go="agent">Ask the agent</button><button type="button" class="btn ghost" data-go="sources">Browse the sources</button></div>
           </header>
 
           <section class="about-why" aria-label="Why it is useful">
-            <article><span class="why-k">01</span><h2>Test what you believe</h2><p>“My bonds protect me.” “Gold is a hedge.” Say it, and RIPPLE runs the matching test on your holdings, then answers with a verdict: REAL, MYTH, WORKING, BROKEN, MINOR…</p></article>
+            <article><span class="why-k">01</span><h2>Test what you believe</h2><p>“My bonds protect me.” “Gold is a hedge.” Say it, and AION runs the matching test on your holdings, then answers with a verdict: REAL, MYTH, WORKING, BROKEN, MINOR…</p></article>
             <article><span class="why-k">02</span><h2>Three risks, one picture</h2><p>Interest rates, stocks and oil are measured separately, so you see which one actually drove your weekly moves instead of guessing.</p></article>
-            <article><span class="why-k">03</span><h2>Numbers you can trace</h2><p>Every figure is tagged <span class="ip-tag" data-kind="measured">measured</span> or <span class="ip-tag" data-kind="source">source</span>, and “How RIPPLE reasoned” lists each tool the agent called and what it found.</p></article>
+            <article><span class="why-k">03</span><h2>Numbers you can trace</h2><p>Every figure is tagged <span class="ip-tag" data-kind="measured">measured</span> or <span class="ip-tag" data-kind="source">source</span>, and “How AION reasoned” lists each tool the agent called and what it found.</p></article>
             <article><span class="why-k">04</span><h2>Honest by design</h2><p>No buy or sell advice, no forecasts. A guardrail checks every answer, and history is described as history: 2021–2026, past behaviour, not a prediction.</p></article>
           </section>
 
@@ -165,7 +165,7 @@
               <p class="eyebrow-text">What a shock looks like</p>
               <h2 id="shock-title">A shock you could feel at the pump</h2>
               <p>Canadian gasoline peaked at <b data-fuel-peak>207.2¢</b> a litre in <b data-fuel-peak-month>Jun 2022</b>. Shocks like this hit oil, interest rates and stock markets at the same time.</p>
-              <p>RIPPLE measures how each of those moved <em>your</em> holdings, then checks whether your shields (bonds, gold, the US dollar) actually cushioned the worst weeks. Latest reading: <b data-fuel-latest>184.3¢</b>.</p>
+              <p>AION measures how each of those moved <em>your</em> holdings, then checks whether your shields (bonds, gold, the US dollar) actually cushioned the worst weeks. Latest reading: <b data-fuel-latest>184.3¢</b>.</p>
               <p class="fine">Statistics Canada table 18-10-0001-01: monthly regular gasoline, self-serve, cents per litre including taxes. Shown as an example of a shock, not an input to the agent.</p>
             </div>
             <div class="fuel-stage"><div id="fuel-card"></div></div>
@@ -175,12 +175,12 @@
             <p class="eyebrow-text">How the agent works</p>
             <h2 id="how-title">From your question to a verdict</h2>
             <ol class="how-steps">
-              <li style="--i:0"><b>You ask</b><span>Your question and portfolio go to the RIPPLE API and wait in a queue.</span><small>API Gateway · SQS</small></li>
+              <li style="--i:0"><b>You ask</b><span>Your question and portfolio go to the AION API and wait in a queue.</span><small>API Gateway · SQS</small></li>
               <li style="--i:1"><b>The agent plans</b><span>It decides which tests answer your question.</span><small>Bedrock AgentCore</small></li>
               <li style="--i:2"><b>It measures</b><span>Betas, scenarios, risk shares and shield tests from 261 weeks of data.</span><small>Athena</small></li>
               <li style="--i:3"><b>It reads sources</b><span>Annual reports and central-bank research explain why.</span><small>Knowledge base</small></li>
               <li style="--i:4"><b>It checks itself</b><span>A guardrail blocks advice and predictions.</span><small>Bedrock guardrail</small></li>
-              <li style="--i:5"><b>You get a verdict</b><span>With every step, figure and source shown.</span><small>How RIPPLE reasoned</small></li>
+              <li style="--i:5"><b>You get a verdict</b><span>With every step, figure and source shown.</span><small>How AION reasoned</small></li>
             </ol>
           </section>
 

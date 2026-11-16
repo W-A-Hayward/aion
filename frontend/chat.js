@@ -1,4 +1,4 @@
-// Cascade chat: one conversation surface, a collapsible conversation sidebar (top left) and a profile menu
+// AION chat: one conversation surface, a collapsible conversation sidebar (top left) and a profile menu
 // (top right). The profile and portfolio are created at sign-up and stored in this browser.
 // Every question goes to the deployed agent (agent-api.js); there is no offline answer mode.
 import { CORE_TICKERS, TICKER_INFO } from './config.js';
@@ -13,6 +13,7 @@ import { createAuth } from './auth.js';
 import { createUserDataClient, createSyncQueue, scopedStorage } from './cloud-sync.js';
 import { mountProgress, renderInvestigationSteps } from './investigation-progress.js';
 import { renderMarkdown } from './safe-markdown.js';
+import { attachMeasuredTips } from './measured-tip.js';
 import { compactData, renderAnswerData } from './answer-data.js';
 import { toolQuestion, portfolioSnapshot, searchChats, paletteResults, chatToMarkdown, tickerOptions, EVIDENCE_TOPICS, SHIELDS, RATE_MOVES, PROTECTION_ASKS, suggestions } from './chat-tools.js';
 
@@ -57,7 +58,7 @@ function renderAccount() {
 }
 async function startSession({ isNew = false } = {}) {
   const s = auth.session();
-  account.scoped = scopedStorage(storage, `ripple.user.${s.sub}`);
+  account.scoped = scopedStorage(storage, `aion.user.${s.sub}`);
   store = createWorkspaceStore(account.scoped);
   chats = createChatStore(account.scoped);
   account.cloud = createUserDataClient(() => auth.idToken());
@@ -107,7 +108,7 @@ function openLogin(message = '') {
   let mode = 'signin';
   const draw = (error = '') => {
     dlg.innerHTML = `<form class="sheet-form auth-form" novalidate>
-      <div class="auth-brand"><span class="auth-mark" aria-hidden="true"></span><b>RIPPLE AI</b></div>
+      <div class="auth-brand"><span class="auth-mark" aria-hidden="true"></span><div class="auth-name"><b>AION</b><small>Autonomous Intelligence &amp; Observation Network</small></div></div>
       <div class="tabs" role="tablist">${[['signin', 'Sign in'], ['signup', 'Create account']].map(([k, l]) => `<button type="button" role="tab" data-auth-tab="${k}" aria-selected="${k === mode}">${l}</button>`).join('')}</div>
       <h2 id="login-title">${mode === 'signin' ? 'Welcome back' : 'Create your account'}</h2>
       <p class="sub">${mode === 'signin' ? 'Sign in to find your conversations, profile and portfolio on any device.' : 'Choose a username and a password of at least 8 characters. No email needed.'}</p>
@@ -203,7 +204,7 @@ const router = createRouter({
     if (name !== 'agent') $('.views').scrollTop = 0;
   },
 });
-document.addEventListener('ripple:show-source', e => openSource(router, e.detail || {}));
+document.addEventListener('aion:show-source', e => openSource(router, e.detail || {}));
 
 // ---------- small helpers ----------
 const initials = name => name.trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('') || '?';
@@ -213,7 +214,7 @@ const MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 const keyLabel = combo => combo.split('+').map(k => ({ mod: MAC ? '⌘' : 'Ctrl', shift: MAC ? '⇧' : 'Shift', alt: MAC ? '⌥' : 'Alt' }[k] ?? k));
 const kbdHTML = combo => keyLabel(combo).map(k => `<kbd>${esc(k)}</kbd>`).join('');
 const ICON = {
-  logo: '<span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 14.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0"/><path d="M4 9.5c2.3-3.6 4.7-3.6 8 0s5.7 3.6 8 0" opacity=".55"/></svg></span>',
+  logo: '<span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6.8"/><circle cx="17" cy="7.4" r="1.9"/></svg></span>',
   shock: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M11 2.5L4.5 11h5L9 17.5 15.5 9h-5z"/></svg>',
   pie: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3a7 7 0 1 0 7 7h-7z"/><path d="M12.5 2.6A7 7 0 0 1 17.4 7.5H12.5z"/></svg>',
   gauge: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 14a6.5 6.5 0 1 1 13 0"/><path d="M10 14l3.2-4.2"/></svg>',
@@ -263,7 +264,7 @@ function renderChatList() {
 function initAgent() {
   $('#app').dataset.mode = 'agent';
   $('#agent-status').innerHTML = agentConfigured()
-    ? '<i class="dot on"></i>RIPPLE agent on AWS'
+    ? '<i class="dot on"></i>AION agent on AWS'
     : '<i class="dot"></i>Agent not configured: set submitUrl and statusUrl in config.js';
 }
 
@@ -321,13 +322,13 @@ function agentHTML(m) {
   let text = splitCaveat(m.answer).text;
   if (m.verdict) text = text.replace(new RegExp(`^\\s*[*_#>]*\\s*${m.verdict.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[*_]*\\s*[.:\u2014-]*[*_]*\\s*`, 'i'), '');
   return renderMarkdown(text)
-    .replace(TAG_RE, '<span class="ip-tag" data-kind="$1">$1</span>')
+    .replace(TAG_RE, '<span class="ip-tag" data-kind="$1" tabindex="0" aria-label="$1 — how this number was computed">$1</span>')
     .replace(/\[(\d{1,2})\]/g, (all, n) => (m.citations ?? []).some(c => c.n === Number(n))
       ? `<a class="cite-ref" href="#cite-${esc(m.jobId)}-${n}">[${n}]</a>` : all);
 }
 function renderAssistant(m, i = 0, q = '') {
   // The pipeline only says something once the job reached the backend (it has a job ID).
-  if (m.kind === 'error') return `<div class="msg assistant">${m.progress?.jobId ? investigation(m) : ''}<div class="msg-body error">${prose(m.text)}</div>${q ? `<div class="msg-actions"><button type="button" class="act" data-act="retry" data-q="${esc(q)}">${ICON.retry}Try again</button></div>` : ''}</div>`;
+  if (m.kind === 'error') return `<div class="msg assistant" data-mi="${i}">${m.progress?.jobId ? investigation(m) : ''}<div class="msg-body error">${prose(m.text)}</div>${q ? `<div class="msg-actions"><button type="button" class="act" data-act="retry" data-q="${esc(q)}">${ICON.retry}Try again</button></div>` : ''}</div>`;
   const tag = m.kind === 'agent' ? '<span class="badge agent">Agent</span>' : '<span class="badge">Earlier saved-data answer</span>';
   const local = m.kind === 'agent' ? [] : m.steps ?? [];
   const stepsHTML = m.kind === 'agent' ? investigation(m)
@@ -343,12 +344,12 @@ function renderAssistant(m, i = 0, q = '') {
   }).join('')}</details>` : '';
   const meta = m.kind === 'agent' && finite(m.durationMs) ? ` · ${number(m.durationMs / 1000, 1)} s` : '';
   const verdict = m.kind === 'agent' && m.verdict ? `<span class="verdict" data-verdict="${esc(m.verdict.toLowerCase().replace(/\s+/g, '-'))}">${esc(m.verdict)}</span>` : '';
-  const refusal = m.kind === 'agent' && m.refusal ? '<p class="refusal-note">RIPPLE declined part of this request: it does not give advice, predictions or buy/sell calls.</p>' : '';
+  const refusal = m.kind === 'agent' && m.refusal ? '<p class="refusal-note">AION declined part of this request: it does not give advice, predictions or buy/sell calls.</p>' : '';
   const caveatText = m.kind === 'agent' ? splitCaveat(m.answer).caveat ?? m.caveat : null;
   const caveat = caveatText ? `<p class="caveat">${esc(caveatText)}</p>` : '';
   const dataCard = m.kind === 'agent' && m.data ? renderAnswerData(m.data) : '';
 
-  return `<div class="msg assistant"><div class="msg-tag">${ICON.logo}${tag}${meta}</div>${stepsHTML}<div class="msg-body">${verdict}${refusal}${body}${dataCard}${table}${quotes}${cites}${caveat}</div>${actions(i, q)}</div>`;
+  return `<div class="msg assistant" data-mi="${i}"><div class="msg-tag">${ICON.logo}${tag}${meta}</div>${stepsHTML}<div class="msg-body">${verdict}${refusal}${body}${dataCard}${table}${quotes}${cites}${caveat}</div>${actions(i, q)}</div>`;
 }
 const BAR_COLORS = ['#4f46e5', '#8b5cf6', '#06b6d4', '#94a3b8', '#cbd5e1'];
 function snapshotHTML(ws) {
@@ -480,7 +481,7 @@ async function send(question) {
 // ---------- profile & portfolio forms (shared by sign-up and settings) ----------
 function profileFields(ws) {
   return `<label class="field">Name<input name="name" required maxlength="60" value="${esc(ws.profile.name === 'Your workspace' ? '' : ws.profile.name)}" placeholder="Your first name" autocomplete="given-name"></label>
-    <fieldset class="field"><legend>How should RIPPLE AI explain things?</legend><div class="seg">
+    <fieldset class="field"><legend>How should AION explain things?</legend><div class="seg">
       <label><input type="radio" name="experience" value="beginner"${ws.profile.experience !== 'expert' ? ' checked' : ''}><span><b>Beginner</b>Plain language</span></label>
       <label><input type="radio" name="experience" value="expert"${ws.profile.experience === 'expert' ? ' checked' : ''}><span><b>Expert</b>Statistics included</span></label>
     </div></fieldset>
@@ -556,7 +557,7 @@ function openSignup() {
       <p class="step">Step ${step} of 2</p>
       ${step === 1
         ? `<h2 id="signup-title">Create your profile</h2><p class="sub">Choose your explanation level. ${signedIn() ? 'It is saved to your account.' : 'Your profile is stored in this browser.'}</p>${profileFields(ws)}`
-        : `<h2 id="signup-title">Add your portfolio</h2><p class="sub">RIPPLE AI checks how your holdings moved with interest rates, stocks and oil, and what protected them.</p>${portfolioFields(ws)}`}
+        : `<h2 id="signup-title">Add your portfolio</h2><p class="sub">AION checks how your holdings moved with interest rates, stocks and oil, and what protected them.</p>${portfolioFields(ws)}`}
       <p class="form-error" role="alert"></p>
       <div class="sheet-actions">${step === 2 ? '<button type="button" class="btn ghost" data-back>Back</button>' : ''}<button type="submit" class="btn primary">${step === 1 ? 'Continue' : 'Start chatting'}</button></div>
     </form>`;
@@ -908,6 +909,9 @@ $('#portfolio-view').addEventListener('click', e => {
     syncWorkspace(); renderPortfolio(); toast('Saved portfolio deleted');
   }
 });
+
+// Hover/focus math explanations for the inline [measured] tags.
+attachMeasuredTips($('#thread'), i => (state.chatId ? chats.get(state.chatId)?.messages[i] : null));
 
 // ---------- start ----------
 initAgent();

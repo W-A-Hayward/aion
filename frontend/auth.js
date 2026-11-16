@@ -1,9 +1,9 @@
 // Username + password accounts on an Amazon Cognito user pool, called directly with fetch (no SDK, no build).
-// Sign-in uses USER_PASSWORD_AUTH over HTTPS to Cognito; the password never reaches the RIPPLE backend.
+// Sign-in uses USER_PASSWORD_AUTH over HTTPS to Cognito; the password never reaches the AION backend.
 // The session (ID, access and refresh tokens) is kept in this browser so a returning user stays signed in.
 import { config } from './config.js';
 
-export const SESSION_KEY = 'ripple.auth.v1';
+export const SESSION_KEY = 'aion.auth.v1';
 export const PASSWORD_MIN = 8;
 export const USERNAME_RE = /^[A-Za-z0-9_.-]{3,32}$/;
 
@@ -77,7 +77,7 @@ export function createAuth(settings = config, transport = globalThis.fetch, stor
       if (problem) throw new AuthError('Invalid', problem);
       const data = await call('InitiateAuth', { AuthFlow: 'USER_PASSWORD_AUTH', ClientId: settings.auth.clientId,
         AuthParameters: { USERNAME: username, PASSWORD: password } });
-      if (!data.AuthenticationResult) throw new AuthError(data.ChallengeName ?? 'Challenge', 'This account needs an extra sign-in step that RIPPLE does not support.');
+      if (!data.AuthenticationResult) throw new AuthError(data.ChallengeName ?? 'Challenge', 'This account needs an extra sign-in step that AION does not support.');
       session = fromResult(data.AuthenticationResult);
       write(session);
       return api.session();

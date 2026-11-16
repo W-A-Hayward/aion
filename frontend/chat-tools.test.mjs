@@ -58,7 +58,7 @@ test('markdown export keeps text, tables and sources without adding anything', (
   assert.match(md, /2026-11-15/);
   assert.match(md, /\| A \| B \|\n\| --- \| --- \|\n\| 1 \| 2 \|/);
   assert.match(md, /> Q\n> — CNQ CNRL, MD&A, PDF p\. 4 \(R1\)/);
-  assert.match(md, /## RIPPLE AI agent\n\nAgent says/);
+  assert.match(md, /## AION agent\n\nAgent says/);
   assert.match(md, /not forecasts or investment advice/);
 });
 

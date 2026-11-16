@@ -1,4 +1,4 @@
-# RIPPLE AI — local research data integration
+# AION — local research data integration
 
 ## What is connected
 

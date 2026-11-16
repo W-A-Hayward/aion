@@ -1,4 +1,4 @@
-# Cascade — local frontend
+# AION — local frontend (repo: cascade)
 
 Buildless HTML, CSS and native JavaScript modules. No dependencies, credentials, external requests,
 analytics or AWS calls. Serve over HTTP rather than opening `file://`.

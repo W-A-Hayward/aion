@@ -2,7 +2,7 @@
 // The URL carries the view (?view=sources) so links, reloads and the back button work. Heavy views load their
 // modules the first time they are opened, so the agent stays fast.
 export const VIEWS = Object.freeze(['agent', 'statistics', 'sources', 'about', 'portfolio']);
-const TITLES = { agent: 'RIPPLE Agent', statistics: 'Statistics', sources: 'Sources', about: 'About', portfolio: 'My portfolio' };
+const TITLES = { agent: 'AION Agent', statistics: 'Statistics', sources: 'Sources', about: 'About', portfolio: 'My portfolio' };
 
 let library = null;
 /** Load the source library once (it fetches the catalog on start). */
@@ -15,7 +15,7 @@ export function ensureLibrary() {
 export async function openSource(router, detail = {}) {
   router.show('sources');
   await ensureLibrary();
-  document.dispatchEvent(new CustomEvent('ripple:open-library', { detail }));
+  document.dispatchEvent(new CustomEvent('aion:open-library', { detail }));
 }
 
 export function createRouter({ onShow = () => {}, doc = document, win = window } = {}) {
@@ -30,7 +30,7 @@ export function createRouter({ onShow = () => {}, doc = document, win = window }
     doc.body.dataset.view = name;
     const title = doc.querySelector('#view-title');
     if (title) title.textContent = TITLES[name];
-    doc.title = name === 'agent' ? 'RIPPLE AI' : `${TITLES[name]} · RIPPLE AI`;
+    doc.title = name === 'agent' ? 'AION' : `${TITLES[name]} · AION`;
     if (push && name !== current) {
       const url = new URL(win.location.href);
       if (name === 'agent') url.searchParams.delete('view'); else url.searchParams.set('view', name);

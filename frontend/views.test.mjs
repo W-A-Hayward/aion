@@ -88,3 +88,44 @@ test('the app has exactly these views; evidence desk and local statistics are go
   const redirect = await readFile(new URL('./explorer.html', import.meta.url), 'utf8');
   assert.match(redirect, /evidence: 'sources'/);
 });
+
+test('statistics load once for every ticker and are kept for the session', async () => {
+  const { loadAllStatistics } = await import('./api.js');
+  const calls = [];
+  const transport = async url => { calls.push(String(url)); return json({ sensitivities: SENS, meta: { ticker: 'ALL', as_of: '2026-11-13', missing: [] } }); };
+  const m = new Map();
+  const storage = { getItem: k => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) };
+  let t = 1_000_000; const now = () => t;
+  const [a, b] = await Promise.all([loadAllStatistics({ settings, transport, storage, now }), loadAllStatistics({ settings, transport, storage, now })]);
+  assert.equal(calls.length, 1, 'parallel callers share one request');
+  assert.match(calls[0], /ticker=ALL/);
+  assert.equal(a.tables.sensitivities.length, 3);
+  assert.equal(b.tables.sensitivities.length, 3);
+  await loadAllStatistics({ settings, transport, storage, now });
+  assert.equal(calls.length, 1, 'repeat loads come from memory');
+  t += 11 * 60 * 1000;
+  await loadAllStatistics({ settings, transport, storage, now });
+  assert.equal(calls.length, 2, 'the cache expires after 10 minutes');
+  await loadAllStatistics({ settings, transport, storage, now, force: true });
+  assert.equal(calls.length, 3, 'retry forces a fresh load');
+});
+
+test('a backend without ticker=ALL falls back to one request per ticker, each made once', async () => {
+  const { loadStatistics, resetStatisticsCache, STATS_CACHE_KEY } = await import('./api.js');
+  resetStatisticsCache();
+  const calls = [];
+  const transport = async url => {
+    const t = new URL(url).searchParams.get('ticker');
+    calls.push(t);
+    return t === 'ALL' ? json({ error: 'unknown ticker', allowed: ['XIU.TO'] }, 400) : json({ sensitivities: SENS, meta: { ticker: t } });
+  };
+  const storage = { getItem: () => null, setItem: () => {} };
+  const a = await loadStatistics('XIU.TO', { settings, transport, storage, force: true });
+  assert.equal(a.meta.ticker, 'XIU.TO');
+  await loadStatistics('XIU.TO', { settings, transport, storage });
+  await loadStatistics('TLT', { settings, transport, storage });
+  await loadStatistics('TLT', { settings, transport, storage });
+  assert.deepEqual(calls, ['ALL', 'XIU.TO', 'TLT'], 'ALL tried once, then each ticker fetched once');
+  assert.ok(STATS_CACHE_KEY.startsWith('aion.'));
+  resetStatisticsCache();
+});

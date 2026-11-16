@@ -44,22 +44,35 @@ def _lit(s):
     return "'%s'" % s
 
 
+ALL = "ALL"  # ?ticker=ALL: every core ticker in one response, so the page loads its statistics once
+
+
 def queries(ticker):
-    """Table name -> SQL. Every table in frontend/api.js TABLES appears exactly once."""
-    t = _lit(ticker)
+    """Table name -> SQL. Every table in frontend/api.js TABLES appears exactly once.
+
+    `ticker` is one core ticker or ALL (then each per-ticker filter becomes IN (<the 14 core tickers>)).
+    """
+    if ticker == ALL:
+        t = "(" + ", ".join(_lit(c) for c in CORE) + ")"
+        eq = " IN " + t
+        evidence_limit = "300"
+    else:
+        t = _lit(ticker)
+        eq = " = " + t
+        evidence_limit = "50"
     return {
         "sensitivities": "SELECT * FROM sensitivities WHERE universe = 'core'",
         "links": "SELECT * FROM links",
-        "chain_reconciliation": "SELECT * FROM chain_reconciliation WHERE ticker = " + t,
-        "scenarios": "SELECT * FROM scenarios WHERE subject_type = 'ticker' AND subject = " + t
-                     + " ORDER BY shock_pct",
-        "evidence": "SELECT " + EVIDENCE_COLS + " FROM evidence WHERE ticker = " + t
-                    + " ORDER BY evidence_id LIMIT 50",
-        "confidence": "SELECT * FROM confidence WHERE ticker = " + t,
-        "edges": "SELECT * FROM edges WHERE to_node = " + t,
-        "rolling": "SELECT ticker, CAST(week AS varchar) AS week, beta_52w FROM rolling WHERE ticker = " + t
-                   + " ORDER BY week",
-        "duration_check": "SELECT * FROM duration_check WHERE ticker = " + t,
+        "chain_reconciliation": "SELECT * FROM chain_reconciliation WHERE ticker" + eq,
+        "scenarios": "SELECT * FROM scenarios WHERE subject_type = 'ticker' AND subject" + eq
+                     + " ORDER BY subject, shock_pct",
+        "evidence": "SELECT " + EVIDENCE_COLS + " FROM evidence WHERE ticker" + eq
+                    + " ORDER BY evidence_id LIMIT " + evidence_limit,
+        "confidence": "SELECT * FROM confidence WHERE ticker" + eq,
+        "edges": "SELECT * FROM edges WHERE to_node" + eq,
+        "rolling": "SELECT ticker, CAST(week AS varchar) AS week, beta_52w FROM rolling WHERE ticker" + eq
+                   + " ORDER BY ticker, week",
+        "duration_check": "SELECT * FROM duration_check WHERE ticker" + eq,
         "persona_holdings": "SELECT * FROM persona_holdings ORDER BY persona, weight DESC",
         "portfolio_exposure": "SELECT * FROM portfolio_exposure ORDER BY persona, weight DESC",
         "portfolio_beta": "SELECT * FROM portfolio_beta ORDER BY persona",
@@ -180,9 +193,9 @@ def lambda_handler(event, context):
     if method == "OPTIONS":
         return _resp(204, {})
     raw = ((event.get("queryStringParameters") or {}).get("ticker") or "").strip().upper()
-    ticker = raw if raw in CORE else raw + ".TO" if raw + ".TO" in CORE else None
+    ticker = ALL if raw == ALL else raw if raw in CORE else raw + ".TO" if raw + ".TO" in CORE else None
     if ticker is None:
-        return _resp(400, {"error": "unknown ticker", "allowed": list(CORE)})
+        return _resp(400, {"error": "unknown ticker", "allowed": list(CORE) + [ALL]})
     hit = _cache.get(ticker)
     if hit and time.time() - hit[0] < CACHE_SECONDS:
         return _resp(200, hit[1], cache=True)
@@ -192,7 +205,7 @@ def lambda_handler(event, context):
                       "durationMs": int((time.time() - started) * 1000)}))
     if required_failed:
         return _resp(502, {"error": "the sensitivities table could not be read", "missing": required_failed})
-    if not any(row.get("ticker") == ticker for row in envelope["sensitivities"]):
+    if ticker != ALL and not any(row.get("ticker") == ticker for row in envelope["sensitivities"]):
         return _resp(404, {"error": "no sensitivity row for %s in this run" % ticker})
     if not envelope["meta"]["missing"]:
         _cache[ticker] = (time.time(), envelope)

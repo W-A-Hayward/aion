@@ -160,3 +160,16 @@ def test_covers_every_table_the_frontend_reads():
     block = re.search(r"TABLES = Object\.freeze\(\[(.*?)\]\)", src, re.S).group(1)
     frontend = set(re.findall(r"'([a-z_]+)'", block))
     assert frontend and frontend <= {n for n in app.queries("XIU.TO") if not n.startswith("_")}
+
+
+def test_all_tickers_in_one_response(athena):
+    fake = athena()
+    r = get("all")
+    assert r["statusCode"] == 200
+    body = json.loads(r["body"])
+    assert body["meta"]["ticker"] == "ALL"
+    sql = [q for q in fake.started if "FROM rolling WHERE" in q or "FROM scenarios WHERE" in q]
+    assert sql and all("IN ('XIU.TO', 'ENB.TO'" in q for q in sql), "per-ticker filters cover every core ticker"
+    n = len(fake.started)
+    get("ALL")
+    assert len(fake.started) == n, "ALL is cached like a single ticker"

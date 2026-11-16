@@ -1,7 +1,7 @@
 // 3D passage wall: a vanilla port of the "3D testimonials" Marquee pattern (vertical columns that scroll in
 // alternating directions, pause on hover, tilted in perspective). The cards are real annual-report passages from
 // evidence-preview.json, with original wording and page numbers. Clicking a card opens that report, at that page,
-// in the source library (the shell listens for ripple:show-source).
+// in the source library (the shell listens for aion:show-source).
 const stage = document.querySelector('#quotes-stage');
 const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -22,7 +22,7 @@ function column(items, reverse, duration) {
 }
 
 function openPassage(ticker, hash, page) {
-  document.dispatchEvent(new CustomEvent('ripple:show-source', { detail: { ticker, ...(hash ? { hash } : {}), ...(Number(page) ? { page: Number(page) } : {}) } }));
+  document.dispatchEvent(new CustomEvent('aion:show-source', { detail: { ticker, ...(hash ? { hash } : {}), ...(Number(page) ? { page: Number(page) } : {}) } }));
 }
 
 async function init() {

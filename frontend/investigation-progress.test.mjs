@@ -93,7 +93,7 @@ test('old jobs with only toolCalls: steps and figures are rebuilt from the tool 
     { name: 'get_portfolio_exposure', input: { persona: 'robert' }, output: '{"persona": "robert", "holdings": [...[truncated]' },
     { name: 'get_validation', input: { ticker: 'BTC' }, output: '{"error": "unknown ticker", "allowed": []}' },
   ] } });
-  assert.match(html, /How RIPPLE reasoned/);
+  assert.match(html, /How AION reasoned/);
   assert.match(html, /5 steps · 3 measured · 1 source · 18 s/);
   assert.match(html, /<em>ENB\.TO beta \+0\.092<\/em>/);
   assert.match(html, /<em>Robert’s portfolio \+1\.07% at Brent -30%<\/em>/);

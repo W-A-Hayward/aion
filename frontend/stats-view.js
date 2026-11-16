@@ -2,7 +2,7 @@
 // Nothing is computed from a local file; if the API is unavailable the view says so and offers a retry.
 import { CORE_TICKERS, TICKER_INFO } from './config.js';
 import { escapeHTML as esc, finite, number, probability, shortTicker, sourceURL } from './formatters.js';
-import { loadInvestigation } from './api.js';
+import { loadStatistics } from './api.js';
 import { lineChart } from './answer-data.js';
 
 const pct = v => (finite(v) ? `${number(v, 2, true)}%` : '—');
@@ -54,30 +54,43 @@ export function tickerDetail(tables, ticker, meta = {}) {
       </tbody></table></div></section>
     ${chains.length ? `<section class="stats-block"><h3>Measured pathways</h3><ul class="chains">${chains.map(c => `<li><code>${esc(String(c.chain).replaceAll('>', ' → '))}</code> ${finite(c.beta_chain) ? `gives ${number(c.beta_chain, 3, true)}` : ''}${finite(c.share_explained) && c.share_explained >= 0 && c.share_explained <= 1.2 ? `, about ${Math.round(c.share_explained * 100)}% of the direct beta` : ', which does not line up with the direct beta'}.</li>`).join('')}</ul><p class="fine">A statistical pathway, not a proven cause.</p></section>` : ''}
     ${evidence.length ? `<section class="stats-block"><h3>Sources</h3>${evidence.map(e => { const link = sourceURL(e.source_url); return `<figure class="quote"><blockquote>${esc(e.excerpt)}</blockquote><figcaption><b>${esc(e.ticker)}</b> ${esc(e.section || e.doc_type || '')}${link ? ` · <a href="${esc(link)}" target="_blank" rel="noopener noreferrer">source ↗</a>` : ''}</figcaption></figure>`; }).join('')}</section>` : ''}
-    <p class="fine">From the RIPPLE backend${meta.as_of ? `, data to ${esc(meta.as_of)}` : ''}${Array.isArray(meta.missing) && meta.missing.length ? `. Not available in this response: ${esc(meta.missing.join(', '))}` : ''}.</p>`;
+    <p class="fine">From the AION backend${meta.as_of ? `, data to ${esc(meta.as_of)}` : ''}${Array.isArray(meta.missing) && meta.missing.length ? `. Not available in this response: ${esc(meta.missing.join(', '))}` : ''}.</p>`;
 }
 
-export function mountStatistics(host, { load = loadInvestigation } = {}) {
-  let ticker = 'XIU.TO', controller = null;
+/** Loads every ticker once (GET ?ticker=ALL) when the backend supports it, otherwise each ticker once;
+ *  either way a ticker already loaded re-renders from memory. */
+export function mountStatistics(host, { load = loadStatistics } = {}) {
+  let ticker = 'XIU.TO', controller = null, data = null;
   host.innerHTML = `<header class="page-head">
       <p class="eyebrow-text">Statistics</p>
       <h1 id="stats-title">How each ticker moved with oil</h1>
-      <p class="lede">Weekly Brent sensitivities, ranges and scenarios for the 14 supported tickers, read live from the RIPPLE backend.</p>
+      <p class="lede">Weekly Brent sensitivities, ranges and scenarios for the 14 supported tickers, read live from the AION backend.</p>
     </header>
     <div class="stats-controls"><label>Ticker <select id="stats-ticker">${CORE_TICKERS.map(t => `<option value="${t}">${esc(shortTicker(t))} · ${esc(TICKER_INFO[t].name)}</option>`).join('')}</select></label>
       <span class="src-badge"><i></i>Live backend</span></div>
     <div id="stats-body" aria-live="polite"></div>`;
   const body = host.querySelector('#stats-body'), select = host.querySelector('#stats-ticker');
-  const run = async () => {
-    controller?.abort(); controller = new AbortController();
+  const draw = () => {
     select.value = ticker;
-    body.innerHTML = '<p class="stats-loading" role="status">Loading from the backend…</p>';
+    const { tables, meta } = data;
+    body.innerHTML = `<div class="stats-grid"><section class="stats-block rank-block"><h3>All tickers</h3><p class="fine">Beta and 95% range; select one.</p>${betaRanking(tables.sensitivities, ticker)}</section>
+      <section class="stats-main" aria-labelledby="stats-ticker-title">${tickerDetail(tables, ticker, meta)}</section></div>`;
+  };
+  const run = async ({ force = false } = {}) => {
+    controller?.abort(); controller = new AbortController();
+    const signal = controller.signal;
+    select.value = ticker;
+    const request = load(ticker, { signal, force });
+    // Only show a loading state when the answer is not already in memory.
+    const slow = setTimeout(() => { if (!signal.aborted) body.innerHTML = '<p class="stats-loading" role="status">Loading from the backend… the first load of a ticker takes a few seconds.</p>'; }, 120);
     try {
-      const { tables, meta } = await load({ ticker, signal: controller.signal });
-      body.innerHTML = `<div class="stats-grid"><section class="stats-block rank-block"><h3>All tickers</h3><p class="fine">Beta and 95% range; select one.</p>${betaRanking(tables.sensitivities, ticker)}</section>
-        <section class="stats-main" aria-labelledby="stats-ticker-title">${tickerDetail(tables, ticker, meta)}</section></div>`;
+      data = await request;
+      clearTimeout(slow);
+      if (signal.aborted) return;
+      draw();
     } catch (error) {
-      if (controller.signal.aborted) return;
+      clearTimeout(slow);
+      if (signal.aborted) return;
       body.innerHTML = `<div class="stats-error" role="alert"><b>Statistics unavailable</b><p>${esc(error.message)}</p><p class="fine">The agent still answers questions about these tickers.</p>
         <div class="page-actions"><button type="button" class="btn primary sm" data-stats-retry>Try again</button><button type="button" class="btn ghost sm" data-go="agent">Ask the agent</button></div></div>`;
     }
@@ -86,7 +99,7 @@ export function mountStatistics(host, { load = loadInvestigation } = {}) {
   host.addEventListener('click', e => {
     const t = e.target.closest('[data-stats-ticker]');
     if (t) { ticker = t.dataset.statsTicker; run(); }
-    if (e.target.closest('[data-stats-retry]')) run();
+    if (e.target.closest('[data-stats-retry]')) run({ force: true });
   });
-  return { refresh: run, select: t => { ticker = t; run(); } };
+  return { refresh: () => run(), select: t => { ticker = t; run(); } };
 }

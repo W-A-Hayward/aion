@@ -1,5 +1,5 @@
 /* One shell for every view (views.js): the agent, statistics, sources, about and the account's portfolio page.
-   Uses the chat tokens from chat.css / ripple-light.css. */
+   Uses the chat tokens from chat.css / aion-light.css. */
 
 /* ---------- shell ---------- */
 .main { grid-template-rows: auto minmax(0, 1fr); }

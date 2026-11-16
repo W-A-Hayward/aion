@@ -170,7 +170,7 @@ export function initLibrary(doc = document) {
     if (el.hasAttribute('data-dimension') || ['rl-from', 'rl-to'].includes(el.id)) { rowOffset = 0; drawRows(); }
   });
   $('#rl-search-form').addEventListener('submit', search);
-  doc.addEventListener('ripple:open-library', event => openDetail(event.detail || {}));
+  doc.addEventListener('aion:open-library', event => openDetail(event.detail || {}));
   doc.addEventListener('click', event => {
     const hit = event.target.closest('[data-library-hit]');
     if (hit) openDetail({ hash: hit.dataset.libraryHit, sourceId: hit.dataset.sourceId, page: Number(hit.dataset.page) });

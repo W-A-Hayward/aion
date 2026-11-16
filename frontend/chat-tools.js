@@ -115,10 +115,10 @@ export function paletteResults(commands, chats, query, limit = 9) {
 
 /** Markdown export of one conversation. Text only; nothing is fetched or invented. */
 export function chatToMarkdown(chat, { now = new Date() } = {}) {
-  const lines = [`# ${chat.title || 'Conversation'}`, '', `_Exported from RIPPLE AI on ${now.toISOString().slice(0, 10)}. Historical relationships from weekly data, not forecasts or investment advice._`, ''];
+  const lines = [`# ${chat.title || 'Conversation'}`, '', `_Exported from AION on ${now.toISOString().slice(0, 10)}. Historical relationships from weekly data, not forecasts or investment advice._`, ''];
   for (const m of chat.messages ?? []) {
     if (m.role === 'user') { lines.push(`## You`, '', m.text, ''); continue; }
-    const tag = m.kind === 'agent' ? 'RIPPLE AI agent' : m.kind === 'error' ? 'RIPPLE AI (no answer)' : 'RIPPLE AI local preview (saved data, no AI)';
+    const tag = m.kind === 'agent' ? 'AION agent' : m.kind === 'error' ? 'AION (no answer)' : 'AION (saved-data answer)';
     lines.push(`## ${tag}`, '', ...(m.verdict ? [`**${m.verdict}**`, ''] : []), m.kind === 'agent' ? m.answer : m.text, '', ...(m.caveat ? [`_${m.caveat}_`, ''] : []));
     if (m.table) {
       lines.push(`| ${m.table.head.join(' | ')} |`, `|${m.table.head.map(() => ' --- ').join('|')}|`, ...m.table.rows.map(r => `| ${r.join(' | ')} |`), '');

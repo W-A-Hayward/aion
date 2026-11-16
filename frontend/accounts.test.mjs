@@ -10,7 +10,7 @@ const b64 = o => Buffer.from(JSON.stringify(o)).toString('base64url');
 const idToken = (sub, username, exp = 9e9) => `h.${b64({ sub, 'cognito:username': username, exp })}.s`;
 const json = (d, status = 200) => ({ ok: status < 400, status, json: async () => d });
 
-/** A minimal Cognito: users by name, tokens, the actions RIPPLE calls. */
+/** A minimal Cognito: users by name, tokens, the actions AION calls. */
 function fakeCognito() {
   const users = new Map(), calls = [];
   let n = 0;
@@ -173,7 +173,7 @@ test('save queue batches changes, retries failures and reports status', async ()
 
 test('per-user storage keeps accounts apart; the chat store merges the accountâ€™s list', () => {
   const raw = memory();
-  const a = scopedStorage(raw, 'ripple.user.sub-a'), b = scopedStorage(raw, 'ripple.user.sub-b');
+  const a = scopedStorage(raw, 'aion.user.sub-a'), b = scopedStorage(raw, 'aion.user.sub-b');
   const ca = createChatStore(a);
   const local = ca.create();
   ca.add(local.id, { role: 'user', text: 'only on this device' });
@@ -186,5 +186,5 @@ test('per-user storage keeps accounts apart; the chat store merges the accountâ€
   assert.equal(ca.get('server-1').remote, undefined);
   assert.equal(ca.get('server-1').messages.length, 1);
   a.clearAll();
-  assert.equal([...raw.m.keys()].filter(k => k.startsWith('ripple.user.sub-a')).length, 0);
+  assert.equal([...raw.m.keys()].filter(k => k.startsWith('aion.user.sub-a')).length, 0);
 });

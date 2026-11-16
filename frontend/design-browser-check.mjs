@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 const root = fileURLToPath(new URL('./', import.meta.url));
 const expectedCatalog = JSON.parse(await readFile(new URL('./library-catalog.json', import.meta.url), 'utf8'));
-const dir = await mkdtemp(join(tmpdir(), 'ripple-evidence-ui-'));
+const dir = await mkdtemp(join(tmpdir(), 'aion-ui-'));
 const profile = join(dir, 'chrome-profile');
 const mime = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml' };
 const server = createServer(async (req, res) => {
@@ -22,7 +22,7 @@ const server = createServer(async (req, res) => {
 });
 await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
 const origin = `http://127.0.0.1:${server.address().port}`;
-const chrome = spawn(process.env.RIPPLE_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
+const chrome = spawn(process.env.AION_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', [
   '--headless', '--remote-debugging-port=0', `--user-data-dir=${profile}`, '--no-first-run',
   '--no-default-browser-check', '--disable-background-networking', '--disable-component-update',
   '--disable-sync', '--disable-default-apps', '--metrics-recording-only',
@@ -33,14 +33,15 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // Statistics come only from the backend (GET /research). The check answers that one URL from this fixture.
 const RESEARCH_URL = 'https://wm28zdv834.execute-api.us-east-1.amazonaws.com/research';
 let failResearch = false;
+const researchHits = [];
 const researchFixture = ticker => ({
   sensitivities: [
     { ticker: 'XIU.TO', beta_simple: 0.011, lo_simple: -0.032, hi_simple: 0.054, p_simple: 0.6, n_weeks: 261 },
     { ticker: 'XOM', beta_simple: 0.357, lo_simple: 0.3, hi_simple: 0.41, p_simple: 0.0001, n_weeks: 261 },
     { ticker: 'TLT', beta_simple: -0.089, lo_simple: -0.126, hi_simple: -0.053, p_simple: 0.001, n_weeks: 261 },
   ],
-  scenarios: [{ subject: ticker, subject_type: 'ticker', shock_pct: 30, impact_pct: 0.28, lo_pct: -0.8, hi_pct: 1.4 }],
-  rolling: [{ ticker, week: '2025-01-03', beta_52w: 0.05 }, { ticker, week: '2026-11-13', beta_52w: -0.01 }],
+  scenarios: ['XIU.TO', 'XOM', 'TLT'].map(t => ({ subject: t, subject_type: 'ticker', shock_pct: 30, impact_pct: 0.28, lo_pct: -0.8, hi_pct: 1.4 })),
+  rolling: ['XIU.TO', 'XOM', 'TLT'].flatMap(t => [{ ticker: t, week: '2025-01-03', beta_52w: 0.05 }, { ticker: t, week: '2026-11-13', beta_52w: -0.01 }]),
   confidence: [], chain_reconciliation: [], evidence: [], meta: { ticker, as_of: '2026-11-13', missing: [] },
 });
 try {
@@ -79,6 +80,7 @@ try {
       const remote = !request.url.startsWith(origin + '/') && !request.url.startsWith('data:');
       if (request.url.startsWith(RESEARCH_URL)) {
         const ticker = new URL(request.url).searchParams.get('ticker');
+        researchHits.push(ticker);
         const body = failResearch ? { message: 'Not Found' } : researchFixture(ticker);
         send('Fetch.fulfillRequest', { requestId, responseCode: failResearch ? 404 : 200,
           responseHeaders: [{ name: 'content-type', value: 'application/json' }, { name: 'access-control-allow-origin', value: '*' }],
@@ -187,7 +189,7 @@ try {
   await waitFor("!document.querySelector('#signup').open && document.body.dataset.view === 'agent' && document.querySelector('[data-suggest]')");
   assert.match(await evaluate("document.querySelector('#pm-account').textContent"),/Signed in as checker/);
   assert.equal(await evaluate("document.querySelector('#app').dataset.mode"),'agent');
-  assert.match(await evaluate('document.title'),/RIPPLE AI/);
+  assert.match(await evaluate('document.title'),/AION/);
   await shellIntact('agent');
   await screenshot('agent-desktop.png');
   await pointer('.start-investigation');
@@ -201,23 +203,26 @@ try {
   await waitFor("document.querySelectorAll('.msg.assistant .verdict').length === 2 && document.querySelector('#stop').hidden");
   assert.match(await evaluate("[...document.querySelectorAll('.msg.assistant')].at(-1).textContent"),/30%/);
 
-  // Statistics: same shell, backend data only.
+  // Statistics: same shell, backend data only, loaded once for every ticker.
+  failResearch = true;
   await pointer('.app-nav [data-go=statistics]');
-  await waitFor("document.querySelectorAll('#stats-view .rank-row').length === 3");
+  await waitFor("document.querySelector('#stats-view .stats-error')");
   await shellIntact('statistics');
   assert.match(await evaluate('location.search'),/view=statistics/);
-  assert.match(await evaluate("document.querySelector('#stats-view').textContent"),/Live backend/);
-  await pointer('#stats-view [data-stats-ticker="TLT"]');
-  await waitFor("document.querySelector('#stats-ticker-title')?.textContent.startsWith('TLT')");
-  await screenshot('statistics-desktop.png');
-  failResearch = true;
-  await pointer('#stats-view [data-stats-ticker="XOM"]');
-  await waitFor("document.querySelector('#stats-view .stats-error')");
   assert.match(await evaluate("document.querySelector('#stats-view .stats-error').textContent"),/not deployed yet/);
   assert.equal(await evaluate("document.querySelectorAll('#stats-view .rank-row').length"),0,'no local fallback');
   failResearch = false;
   await pointer('#stats-view [data-stats-retry]');
+  await waitFor("document.querySelectorAll('#stats-view .rank-row').length === 3");
+  assert.match(await evaluate("document.querySelector('#stats-view').textContent"),/Live backend/);
+  const loads = researchHits.length;
+  assert.deepEqual([...new Set(researchHits)], ['ALL'], 'one envelope covers every ticker');
+  await pointer('#stats-view [data-stats-ticker="TLT"]');
+  await waitFor("document.querySelector('#stats-ticker-title')?.textContent.startsWith('TLT')");
+  await pointer('#stats-view [data-stats-ticker="XOM"]');
   await waitFor("document.querySelector('#stats-ticker-title')?.textContent.startsWith('XOM')");
+  assert.equal(researchHits.length, loads, 'switching tickers does not call the backend again');
+  await screenshot('statistics-desktop.png');
 
   // Sources: the library fills the view.
   await pointer('.app-nav [data-go=sources]');

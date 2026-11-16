@@ -414,3 +414,14 @@ body:has(.app:not(.is-empty)) .aurora { opacity: .5; }
 .sync-status[data-state=error]::before { background: var(--danger); }
 .loading-chat { padding: 24px 0; color: var(--muted); }
 .btn.primary:disabled { opacity: .7; }
+.auth-name { display: grid; gap: 1px; }
+.auth-name b { font-size: 15px; letter-spacing: .04em; }
+.auth-name small { font: 600 9.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.auth-name { display: grid; gap: 1px; }
+.auth-name b { font-size: 15px; letter-spacing: .04em; }
+.auth-name small { font: 600 9.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.agent-text .ip-tag { cursor: help; }
+.tag-tip { position: fixed; z-index: 90; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); box-shadow: var(--shadow-3); font-size: 12.5px; line-height: 1.55; color: var(--text-2); animation: pop .14s var(--ease); }
+.tag-tip > b { display: block; margin-bottom: 6px; font: 600 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--accent-ink); }
+.tag-tip ul { margin: 0; padding-left: 16px; display: grid; gap: 4px; }
+.tag-tip code { font: 11.5px var(--mono); background: var(--side); padding: 1px 5px; border-radius: 5px; }

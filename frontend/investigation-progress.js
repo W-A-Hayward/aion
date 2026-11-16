@@ -344,7 +344,7 @@ export function renderProgressPanel(model, pipeline = null) {
   </div>`;
 }
 
-// ---------- "How RIPPLE reasoned" ----------
+// ---------- "How AION reasoned" ----------
 const TOOL_NAMES = { get_portfolio_exposure: 'Portfolio exposure', get_portfolio_facts: 'Portfolio facts', test_shield: 'Shield test', get_asset_sensitivity: 'Ticker sensitivity', explain_channel: 'Transmission channel',
   run_scenario: 'Scenario', compare_alternative: 'Alternative', get_validation: 'Validation checks', search_evidence: 'Source search' };
 const cap = v => String(v).charAt(0).toUpperCase() + String(v).slice(1);
@@ -375,7 +375,7 @@ export function lookedFor(name, input) {
 
 const json = v => (typeof v === 'string' ? v : JSON.stringify(v ?? null, null, 2));
 /**
- * The collapsible "How RIPPLE reasoned" record under an answer: the AWS pipeline it went through and each
+ * The collapsible "How AION reasoned" record under an answer: the AWS pipeline it went through and each
  * agent step (tool, what it looked for, the figures it got back, measured or source). Returns '' when there
  * is no execution metadata at all, so old messages and offline answers do not get an empty section.
  */
@@ -390,7 +390,7 @@ export function renderInvestigationSteps({ record, result = {} } = {}) {
     total !== null && duration(total)].filter(Boolean).join(' · ');
   const jobId = plain(record) ? text(record.jobId, 40) : null;
   return `<details class="ip-record">
-    <summary><svg class="ip-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg><span>How RIPPLE reasoned</span>${meta ? `<span class="ip-meta">${esc(meta)}</span>` : ''}</summary>
+    <summary><svg class="ip-chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 4l4 4-4 4"/></svg><span>How AION reasoned</span>${meta ? `<span class="ip-meta">${esc(meta)}</span>` : ''}</summary>
     <div class="ip-record-body">
       ${hasPipe ? `<section><h4>Pipeline</h4>${renderPipeline(pm)}
         ${pm.recorded ? '' : '<p class="ip-src">Times between Received, Queued and Agent are as seen by this browser. This backend version does not report the Athena, source and guardrail stages.</p>'}</section>` : ''}
