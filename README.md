@@ -1,6 +1,6 @@
-# cascade
+# AION : Autonomous Intelligence & Observation Network
 
-cascade is a hackathon MVP: an AWS Bedrock agent that explains how oil-price moves reach three demo investor portfolios. Deployment steps are in `docs/infrastructure.md`.
+AION is a hackathon MVP: an AWS Bedrock agent that explains how oil-price moves reach three demo investor portfolios. Deployment steps are in `docs/infrastructure.md`.
 
 ## Folder map
 
@@ -26,7 +26,7 @@ Configuration (bucket, table, queue, agent id) is read from environment variable
 
 ## Installation for judging teams
 
-cascade is deployed by hand in the AWS console (no SAM, CDK or other frameworks). Region `us-east-1`, bucket `cascade-s3-bucket`, every AWS resource prefixed `cascade-`.
+AION is deployed by hand in the AWS console (no SAM, CDK or other frameworks). Region `us-east-1`, bucket `cascade-s3-bucket`, every AWS resource prefixed `cascade-`.
 
 ### Option A: look at it locally (no AWS needed)
 
