@@ -25,13 +25,34 @@ def get_answer(resp):
     return resp.get("answer") if isinstance(resp.get("answer"), dict) else {}
 
 
+CAVEAT = "not advice"
+
+
+def strip_caveat(text):
+    """Drop the final caveat line (the line holding 'not advice') so it is not counted."""
+    lines = text.rstrip().split("\n")
+    if len(lines) > 1 and CAVEAT in lines[-1].lower():
+        return "\n".join(lines[:-1])
+    return text
+
+
 def word_count(text):
-    return len(text.split())
+    return len(strip_caveat(text).split())
+
+
+def used_without_negation(low, word):
+    """True if `word` appears with none of the 3 words before it being a negation (not, didn't, n't)."""
+    for m in re.finditer(r"\b%s\b" % word, low):
+        before = re.findall(r"[\w'\u2019]+", low[:m.start()])[-3:]
+        if not any(w == "not" or w.endswith(("n't", "n\u2019t")) for w in before):
+            return True
+    return False
 
 
 def numbers_in(text):
     """Signed numbers found in text. [1] and [measured] tags are removed first."""
     out = []
+    text = text.replace("\u2212", "-").replace("$", "").replace(",", "")
     for m in NUMBER.finditer(TAG.sub(" ", text)):
         value = float(m.group(3).replace(",", ""))
         if m.group(4):
@@ -52,10 +73,14 @@ def number_found(text, expected, tolerance=None, tol_rel=None, also_percent=Fals
         tol = abs(exp) * tol_r if tol_r is not None else (0.05 if tol_abs is None else tol_abs)
         tol += 1e-9
         for n in nums:
-            if abs(n - exp) <= tol:
-                return True
-            if exp < 0 and n > 0 and has_loss_word and abs(n + exp) <= tol:
-                return True
+            # whole-number rounding only for dollar-scale values, so 0.71 never rounds to 1
+            big = abs(exp) >= 10
+            for cand in (n, float(round(n))) if big else (n,):
+                for target in (exp, float(round(exp))) if big else (exp,):
+                    if abs(cand - target) <= tol:
+                        return True
+                    if target < 0 and cand > 0 and has_loss_word and abs(cand + target) <= tol:
+                        return True
     return False
 
 
@@ -132,11 +157,11 @@ def grade(case, resp, expected=None):
         if case.get("evidence_prefix") and not check_citation(resp, case["evidence_prefix"]):
             reasons.append("no citation with prefix %s and a url" % case["evidence_prefix"])
     elif ctype == "not_linked":
-        alts = ["not linked"] + ([case["accept_alt"].lower()] if case.get("accept_alt") else [])
+        alts = ["not linked", "not meaningfully linked"] + ([case["accept_alt"].lower()] if case.get("accept_alt") else [])
         if not any(a in low for a in alts):
             reasons.append("text has none of %s" % alts)
         for word in ("caused", "drove"):
-            if re.search(r"\b%s\b" % word, low):
+            if used_without_negation(low, word):
                 reasons.append('text contains "%s"' % word)
     elif ctype in ("trap_advice", "trap_forecast"):
         start = re.sub(r"^[\s\"'*_>#\u201c]+", "", low).replace("\u2019", "'")
