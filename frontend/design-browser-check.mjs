@@ -131,6 +131,24 @@ try {
     const real = window.fetch.bind(window);
     window.fetch = async (url, o = {}) => {
       const u = String(url);
+      if (u.startsWith('https://cognito-idp.')) {
+        const db = JSON.parse(sessionStorage.getItem('fake-users') || '{}'), b = JSON.parse(o.body), action = o.headers['X-Amz-Target'].split('.').pop();
+        const b64 = x => btoa(JSON.stringify(x)).replace(/[+]/g, '-').replace(/[/]/g, '_').replace(/=+$/, '');
+        const tokens = name => ({ AuthenticationResult: { IdToken: 'h.' + b64({ sub: 'sub-' + name, 'cognito:username': name }) + '.s', AccessToken: 'acc:' + name, RefreshToken: 'ref:' + name, ExpiresIn: 3600 } });
+        if (action === 'SignUp') { db[b.Username] = b.Password; sessionStorage.setItem('fake-users', JSON.stringify(db)); return json({ UserConfirmed: true }); }
+        if (action === 'InitiateAuth') { const name = b.AuthParameters.USERNAME || String(b.AuthParameters.REFRESH_TOKEN).split(':')[1]; return db[name] ? json(tokens(name)) : json({ __type: 'NotAuthorizedException' }, 400); }
+        return json({});
+      }
+      if (u.includes('execute-api') && new URL(u).pathname.startsWith('/me')) {
+        const store = JSON.parse(sessionStorage.getItem('fake-me') || '{"workspace":null,"chats":{}}'), path = new URL(u).pathname, method = o.method || 'GET';
+        let out = { ok: true };
+        if (path === '/me' && method === 'GET') out = { username: 'checker', workspace: store.workspace, chats: Object.values(store.chats).map(c => ({ id: c.id, title: c.title, updatedAt: c.updatedAt })) };
+        else if (path === '/me' && method === 'PUT') store.workspace = JSON.parse(o.body).workspace;
+        else if (path.startsWith('/me/chats/') && method === 'PUT') { const c = JSON.parse(o.body).conversation; store.chats[c.id] = c; }
+        else if (path.startsWith('/me/chats/') && method === 'GET') out = store.chats[decodeURIComponent(path.split('/').pop())] || {};
+        sessionStorage.setItem('fake-me', JSON.stringify(store));
+        return json(out);
+      }
       if (!u.includes('execute-api') || !u.includes('/jobs')) return real(url, o);   // statistics go to the network (answered by the check)
       if (o.method === 'POST') { const id = '00000000-0000-4000-8000-' + String(++n).padStart(12, '0'); jobs.set(id, JSON.parse(o.body)); return json({ jobId: id, sessionId: 'session-check' }, 202); }
       const id = u.split('/').pop(), q = jobs.get(id)?.question || '';
@@ -155,8 +173,19 @@ try {
 
   // Landing: the agent.
   await navigate('/index.html');
-  await waitFor("document.body?.dataset.view === 'agent' && document.querySelector('[data-suggest]')");
-  assert.equal(await evaluate("document.querySelectorAll('dialog[open]').length"),0,'no forced signup');
+  await waitFor("document.querySelector('#login')?.open");
+  assert.equal(await evaluate("document.querySelector('#login').open"),true,'sign-in is required');
+  await screenshot('signin-desktop.png');
+  await pointer('#login [data-auth-tab=signup]');
+  await change('#login [name=username]','checker');
+  await change('#login [name=password]','password1');
+  await pointer('#login [type=submit]');
+  await waitFor("document.querySelector('#signup')?.open");
+  await change('#signup [name=name]','Check User');
+  await pointer('#signup [type=submit]');
+  await pointer('#signup [type=submit]');
+  await waitFor("!document.querySelector('#signup').open && document.body.dataset.view === 'agent' && document.querySelector('[data-suggest]')");
+  assert.match(await evaluate("document.querySelector('#pm-account').textContent"),/Signed in as checker/);
   assert.equal(await evaluate("document.querySelector('#app').dataset.mode"),'agent');
   assert.match(await evaluate('document.title'),/RIPPLE AI/);
   await shellIntact('agent');
@@ -225,6 +254,8 @@ try {
   await pointer('[data-pf=save]');
   await waitFor("document.querySelectorAll('.pf-list li').length === 1");
   await screenshot('portfolio-desktop.png');
+  await waitFor("document.querySelector('#sync-status')?.dataset.state === 'saved'");
+  await sleep(1200);
   await send('Page.reload',{ignoreCache:true});
   await waitFor("document.querySelector('#pf-current')?.textContent.includes('Research demo') && document.querySelectorAll('.pf-list li').length === 1");
 
@@ -249,7 +280,7 @@ try {
   await screenshot('statistics-mobile.png');
   assert.deepEqual(errors, []);
   assert.deepEqual(externalRequests, [],'no backend calls or external font requests');
-  console.log(JSON.stringify({result:'PASS',checks:'one shell: agent landing, statistics (backend only, failure shown), sources, about (disclosures open sources), my portfolio + saved portfolios, back button, explorer redirects, deep links, mobile; no external requests',screenshots:dir}));
+  console.log(JSON.stringify({result:'PASS',checks:'sign-in required, account created, one shell: agent landing, statistics (backend only, failure shown), sources, about (disclosures open sources), my portfolio + saved portfolios, back button, explorer redirects, deep links, mobile; no external requests',screenshots:dir}));
 } finally {
   ws?.close(); chrome.kill('SIGTERM');
   await new Promise(resolve => { if (chrome.exitCode !== null) resolve(); else { chrome.once('exit', resolve); setTimeout(resolve, 2000); } });
