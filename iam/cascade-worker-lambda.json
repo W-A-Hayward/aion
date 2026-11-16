@@ -8,7 +8,7 @@
         "dynamodb:GetItem",
         "dynamodb:UpdateItem"
       ],
-      "Resource": "arn:aws:dynamodb:us-east-1:339713040194:table/cascade-jobs"
+      "Resource": "arn:aws:dynamodb:us-east-1:ACCOUNT_ID:table/cascade-jobs"
     },
     {
       "Sid": "ConsumeQueue",
@@ -18,15 +18,15 @@
         "sqs:DeleteMessage",
         "sqs:GetQueueAttributes"
       ],
-      "Resource": "arn:aws:sqs:us-east-1:339713040194:agent-jobs"
+      "Resource": "arn:aws:sqs:us-east-1:ACCOUNT_ID:agent-jobs"
     },
     {
       "Sid": "InvokeAgentRuntime",
       "Effect": "Allow",
       "Action": "bedrock-agentcore:InvokeAgentRuntime",
       "Resource": [
-        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/agent-uciA60FqQs",
-        "arn:aws:bedrock-agentcore:us-east-1:339713040194:runtime/agent-uciA60FqQs/*"
+        "arn:aws:bedrock-agentcore:us-east-1:ACCOUNT_ID:runtime/RUNTIME_ID",
+        "arn:aws:bedrock-agentcore:us-east-1:ACCOUNT_ID:runtime/RUNTIME_ID/*"
       ]
     },
     {

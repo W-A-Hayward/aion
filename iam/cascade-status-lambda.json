@@ -5,7 +5,7 @@
       "Sid": "ReadJob",
       "Effect": "Allow",
       "Action": "dynamodb:GetItem",
-      "Resource": "arn:aws:dynamodb:us-east-1:339713040194:table/cascade-jobs"
+      "Resource": "arn:aws:dynamodb:us-east-1:ACCOUNT_ID:table/cascade-jobs"
     }
   ]
 }
